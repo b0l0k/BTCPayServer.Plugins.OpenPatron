@@ -1,0 +1,155 @@
+@using BTCPayServer.Plugins.OpenPatron.Models
+@model BTCPayServer.Plugins.OpenPatron.ViewModels.UpdateOpenPatronViewModel
+
+@{
+    ViewData["Title"] = "OpenPatron";
+}
+
+<div class="sticky-header-setup"></div>
+<div class="sticky-header">
+    <h2>@ViewData["Title"]</h2>
+</div>
+
+<form method="post" asp-action="Update" asp-route-appId="@Model.AppId">
+    <input asp-for="AppId" type="hidden" />
+    <input asp-for="StoreId" type="hidden" />
+    <input asp-for="OfferingId" type="hidden" />
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="row g-4">
+        <div class="col-12 col-lg-8">
+            <div class="form-group mb-3">
+                <label asp-for="AppName" class="form-label"></label>
+                <input asp-for="AppName" class="form-control" />
+                <span asp-validation-for="AppName" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="HeroTitle" class="form-label"></label>
+                <input asp-for="HeroTitle" class="form-control" />
+                <span asp-validation-for="HeroTitle" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="HeroSubtitle" class="form-label"></label>
+                <input asp-for="HeroSubtitle" class="form-control" />
+                <span asp-validation-for="HeroSubtitle" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Description" class="form-label"></label>
+                <textarea asp-for="Description" class="form-control" rows="8"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="SupportMode" class="form-label"></label>
+                <select asp-for="SupportMode" asp-items="Html.GetEnumSelectList<OpenPatronSupportMode>()" class="form-select"></select>
+                <div class="form-text">Choose whether the page accepts one-time payments, subscriptions, or both.</div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label asp-for="PrimaryCallToAction" class="form-label"></label>
+                        <input asp-for="PrimaryCallToAction" class="form-control" />
+                        <span asp-validation-for="PrimaryCallToAction" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label asp-for="PrimaryCallToActionUrl" class="form-label"></label>
+                        <input asp-for="PrimaryCallToActionUrl" class="form-control" />
+                        <span asp-validation-for="PrimaryCallToActionUrl" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label asp-for="ProjectUrl" class="form-label"></label>
+                        <input asp-for="ProjectUrl" class="form-control" />
+                        <span asp-validation-for="ProjectUrl" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label asp-for="GitHubUrl" class="form-label"></label>
+                        <input asp-for="GitHubUrl" class="form-control" />
+                        <span asp-validation-for="GitHubUrl" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="form-group mb-3">
+                        <label asp-for="DefaultCurrency" class="form-label"></label>
+                        <input asp-for="DefaultCurrency" class="form-control" />
+                        <span asp-validation-for="DefaultCurrency" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="form-group mb-3">
+                        <label asp-for="SuggestedAmounts" class="form-label"></label>
+                        <input asp-for="SuggestedAmounts" class="form-control" placeholder="5, 15, 50" />
+                        <div class="form-text">Comma-separated suggested one-time amounts, using '.' for decimals.</div>
+                        <span asp-validation-for="SuggestedAmounts" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="h5 mb-3">Publishing</h3>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Visibility" class="form-label"></label>
+                        <select asp-for="Visibility" asp-items="Html.GetEnumSelectList<OpenPatronVisibility>()" class="form-select"></select>
+                        <div class="form-text">When set to Not published, the public URL returns 404 to visitors.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="text-muted small">Public page</div>
+                        <a href="@Model.PublicPageUrl" target="_blank" rel="noreferrer">@Model.PublicPageUrl</a>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="text-muted small">Subscriptions offering</div>
+                        @if (!string.IsNullOrWhiteSpace(Model.OfferingId))
+                        {
+                            <div class="small mb-2">Offering ID: @Model.OfferingId</div>
+                            <div class="small text-muted mb-2">Active plans: @Model.ActivePlanCount</div>
+                            @if (!string.IsNullOrWhiteSpace(Model.ManageOfferingUrl))
+                            {
+                                <a class="btn btn-outline-secondary btn-sm w-100 mb-2" href="@Model.ManageOfferingUrl">Manage subscription plans</a>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(Model.AddPlanUrl))
+                            {
+                                <a class="btn btn-outline-secondary btn-sm w-100" href="@Model.AddPlanUrl">Add subscription plan</a>
+                            }
+                        }
+                        else
+                        {
+                            <div class="text-muted small">An offering will be created automatically when you save.</div>
+                        }
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Save changes</button>
+                        <a class="btn btn-secondary" href="@Model.PublicPageUrl" target="_blank" rel="noreferrer">Preview page</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-info mt-3 mb-0">
+                OpenPatron now reuses BTCPay Subscriptions for recurring sponsorship. This page controls branding and the linked subscription offering.
+            </div>
+        </div>
+    </div>
+</form>
+
+<partial name="_ValidationScriptsPartial" />

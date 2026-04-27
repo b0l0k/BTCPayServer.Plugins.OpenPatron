@@ -1,0 +1,455 @@
+@model BTCPayServer.Plugins.OpenPatron.ViewModels.OpenPatronPublicViewModel
+
+@{
+    Layout = "_LayoutSimple";
+    ViewData["Title"] = Model.HeroTitle;
+}
+
+@section PageHeadContent {
+    <style>
+        body {
+            background:
+                radial-gradient(circle at top left, rgba(99, 102, 241, 0.14), transparent 28%),
+                radial-gradient(circle at top right, rgba(236, 72, 153, 0.10), transparent 24%),
+                linear-gradient(180deg, #fcfcff 0%, #f7f8fc 100%);
+        }
+
+        .openpatron-page {
+            max-width: 1120px;
+            margin: 0 auto;
+        }
+
+        .openpatron-hero,
+        .openpatron-panel,
+        .openpatron-plan-card {
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: 1.5rem;
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+            backdrop-filter: blur(12px);
+        }
+
+        .openpatron-hero {
+            overflow: hidden;
+            position: relative;
+        }
+
+        .openpatron-hero::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at top right, rgba(99, 102, 241, 0.18), transparent 26%),
+                linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(248, 250, 252, 0.82));
+            pointer-events: none;
+        }
+
+        .openpatron-hero > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .openpatron-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            padding: .45rem .8rem;
+            border-radius: 999px;
+            background: rgba(99, 102, 241, 0.10);
+            color: #4338ca;
+            font-size: .875rem;
+            font-weight: 700;
+        }
+
+        .openpatron-stat {
+            display: inline-flex;
+            align-items: center;
+            gap: .45rem;
+            padding: .65rem .9rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.78);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            color: #475569;
+            font-size: .94rem;
+            font-weight: 600;
+        }
+
+        .openpatron-kicker {
+            font-size: .78rem;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #6366f1;
+            margin-bottom: .75rem;
+        }
+
+        .openpatron-title {
+            font-size: clamp(2.25rem, 4vw, 3.75rem);
+            line-height: 1.05;
+            letter-spacing: -.04em;
+        }
+
+        .openpatron-description {
+            font-size: 1.02rem;
+            line-height: 1.8;
+            color: #475569;
+            white-space: pre-line;
+        }
+
+        .openpatron-link-pill,
+        .openpatron-amount-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: .45rem;
+            border-radius: 999px;
+            padding: .8rem 1rem;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .openpatron-link-pill {
+            border: 1px solid rgba(15, 23, 42, 0.10);
+            background: #fff;
+            color: #0f172a;
+        }
+
+        .openpatron-link-pill:hover,
+        .openpatron-link-pill:focus {
+            background: #f8fafc;
+            color: #0f172a;
+        }
+
+        .openpatron-amount-pill {
+            border: 0;
+            background: linear-gradient(135deg, #ffffff, #eef2ff);
+            box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.14);
+            color: #312e81;
+        }
+
+        .openpatron-amount-pill:hover,
+        .openpatron-amount-pill:focus {
+            background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+        }
+
+        .openpatron-panel {
+            padding: 1.5rem;
+        }
+
+        .openpatron-plan-card {
+            height: 100%;
+            padding: 1.5rem;
+        }
+
+        .openpatron-plan-price {
+            font-size: 1.75rem;
+            line-height: 1;
+            letter-spacing: -.03em;
+            color: #0f172a;
+        }
+
+        .openpatron-plan-meta {
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .openpatron-divider {
+            height: 1px;
+            background: linear-gradient(90deg, rgba(99, 102, 241, 0.16), rgba(99, 102, 241, 0));
+            margin: 1.25rem 0;
+        }
+
+        .openpatron-sidebar-card {
+            position: sticky;
+            top: 2rem;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.96));
+        }
+
+        .openpatron-sidebar-list {
+            display: grid;
+            gap: .75rem;
+        }
+
+        .openpatron-sidebar-item {
+            display: flex;
+            align-items: flex-start;
+            gap: .75rem;
+            color: #475569;
+        }
+
+        .openpatron-sidebar-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 999px;
+            background: rgba(99, 102, 241, 0.10);
+            color: #4338ca;
+            font-weight: 700;
+            flex: 0 0 auto;
+        }
+
+        .openpatron-empty-state {
+            border: 1px dashed rgba(148, 163, 184, 0.7);
+            border-radius: 1rem;
+            background: rgba(248, 250, 252, 0.75);
+        }
+    </style>
+}
+
+<div class="py-5 openpatron-page">
+    <div class="row g-4 align-items-start">
+        <div class="col-12 col-lg-8">
+            <section class="openpatron-hero p-4 p-lg-5 mb-4">
+                <div class="row g-4 align-items-center">
+                    <div class="col-12 col-xl-8">
+                        <div class="openpatron-kicker">Support the work</div>
+                        <span class="openpatron-badge mb-3">☕ OpenPatron</span>
+                        <h1 class="openpatron-title fw-bold mb-3">@Model.HeroTitle</h1>
+                        @if (!string.IsNullOrWhiteSpace(Model.HeroSubtitle))
+                        {
+                            <p class="lead text-muted mb-4">@Model.HeroSubtitle</p>
+                        }
+
+                        <div class="d-flex flex-wrap gap-2 mb-4">
+                            @if (Model.SupportsSubscriptions)
+                            {
+                                <div class="openpatron-stat">↻ Ongoing support</div>
+                            }
+                            @if (Model.SupportsOneTime)
+                            {
+                                <div class="openpatron-stat">⚡ Quick contribution</div>
+                            }
+                            @if (Model.Plans.Count > 0)
+                            {
+                                <div class="openpatron-stat">★ @Model.Plans.Count ways to sponsor</div>
+                            }
+                        </div>
+
+                        @if (Model.Links.Count > 0)
+                        {
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach (var link in Model.Links)
+                                {
+                                    <a class="openpatron-link-pill" href="@link.Url" target="_blank" rel="noreferrer">@link.Label ↗</a>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <div class="col-12 col-xl-4">
+                        <div class="openpatron-panel h-100">
+                            <div class="openpatron-kicker">Why it matters</div>
+                            <h2 class="h4 fw-semibold mb-2">Help sustain this work</h2>
+                            <p class="text-muted mb-4">If this project helps you, sponsoring it gives the maintainer more room to keep building and maintaining it.</p>
+
+                            <div class="openpatron-sidebar-list">
+                                <div class="openpatron-sidebar-item">
+                                    <span class="openpatron-sidebar-icon">1</span>
+                                    <div>
+                                        <div class="fw-semibold text-dark">Back the work</div>
+                                        <div class="small">Choose the kind of support that feels right for you.</div>
+                                    </div>
+                                </div>
+                                <div class="openpatron-sidebar-item">
+                                    <span class="openpatron-sidebar-icon">2</span>
+                                    <div>
+                                        <div class="fw-semibold text-dark">Keep it sustainable</div>
+                                        <div class="small">Your contribution helps protect time for fixes, maintenance, and new work.</div>
+                                    </div>
+                                </div>
+                                <div class="openpatron-sidebar-item">
+                                    <span class="openpatron-sidebar-icon">3</span>
+                                    <div>
+                                        <div class="fw-semibold text-dark">Stay connected</div>
+                                        <div class="small">Use the links below to follow updates and learn more about the project.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            @if (!string.IsNullOrWhiteSpace(Model.Description))
+            {
+                <section class="openpatron-panel mb-4">
+                    <div class="openpatron-kicker">About this page</div>
+                    <h2 class="h3 fw-semibold mb-3">Why sponsor this work?</h2>
+                    <div class="openpatron-description">@Model.Description</div>
+                </section>
+            }
+
+            @if (Model.SupportsSubscriptions && Model.Plans.Count > 0)
+            {
+                <section class="mb-4">
+                    <div class="d-flex justify-content-between align-items-end gap-3 mb-3">
+                        <div>
+                            <div class="openpatron-kicker mb-2">Sponsor tiers</div>
+                            <h2 class="h3 fw-semibold mb-0">Choose a sponsorship tier</h2>
+                        </div>
+                        <div class="text-muted small">Pick the level that fits you best</div>
+                    </div>
+
+                    <div class="row g-3">
+                        @foreach (var plan in Model.Plans)
+                        {
+                            <div class="col-12 col-md-6">
+                                <div class="openpatron-plan-card d-flex flex-column">
+                                    <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                                        <div>
+                                            <div class="openpatron-kicker mb-2">Support tier</div>
+                                            <h3 class="h4 mb-1">@plan.Name</h3>
+                                        </div>
+                                        @if (plan.HasTrial)
+                                        {
+                                            <span class="badge rounded-pill text-bg-light border">@plan.TrialLabel</span>
+                                        }
+                                    </div>
+
+                                    <div class="d-flex align-items-end justify-content-between gap-3 mb-3">
+                                        <div>
+                                            <div class="openpatron-plan-price fw-bold">@plan.Price</div>
+                                            <div class="openpatron-plan-meta mt-1">@plan.BillingPeriod</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="openpatron-divider"></div>
+
+                                    @if (!string.IsNullOrWhiteSpace(plan.Description))
+                                    {
+                                        <p class="text-muted flex-grow-1 mb-4">@plan.Description</p>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted flex-grow-1 mb-4">Support this project on a recurring basis and help fund maintenance over time.</p>
+                                    }
+
+                                    <form method="post" action="@plan.SubscribeUrl" class="mt-auto d-grid gap-2">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-primary btn-lg">Become a subscriber</button>
+                                        @if (plan.HasTrial)
+                                        {
+                                            <button type="submit" class="btn btn-outline-primary" name="isTrial" value="true">Start with a trial</button>
+                                        }
+                                    </form>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </section>
+            }
+            else if (Model.SupportsSubscriptions)
+            {
+                <div class="openpatron-empty-state p-4 mb-4">
+                    <div class="openpatron-kicker mb-2">Sponsor tiers</div>
+                    <h2 class="h4 mb-2">Subscription plans are coming soon</h2>
+                    <p class="text-muted mb-0">More sponsor options will appear here once the maintainer publishes them.</p>
+                </div>
+            }
+
+            @if (Model.SupportsOneTime && Model.SuggestedAmounts.Count > 0)
+            {
+                <section class="openpatron-panel mb-4">
+                    <div class="d-flex justify-content-between align-items-end gap-3 mb-3">
+                        <div>
+                            <div class="openpatron-kicker mb-2">Quick support</div>
+                            <h2 class="h3 fw-semibold mb-0">Send quick support</h2>
+                        </div>
+                        <div class="text-muted small">A simple way to say thanks</div>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var amount in Model.SuggestedAmounts)
+                        {
+                            <form method="post" asp-action="Contribute" asp-route-appId="@Model.AppId" asp-route-area="OpenPatron" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="amount" value="@amount.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
+                                <button type="submit" class="openpatron-amount-pill">@Model.DefaultCurrency @amount.ToString("0.##")</button>
+                            </form>
+                        }
+                    </div>
+                </section>
+            }
+
+            @if (Model.Links.Count > 0)
+            {
+                <div class="openpatron-panel">
+                    <div class="openpatron-kicker mb-2">Explore more</div>
+                    <h2 class="h4 mb-3">Follow the project</h2>
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var link in Model.Links)
+                        {
+                            <a class="openpatron-link-pill" href="@link.Url" target="_blank" rel="noreferrer">@link.Label ↗</a>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="col-12 col-lg-4">
+            <div class="openpatron-panel openpatron-sidebar-card">
+                <div class="openpatron-kicker mb-2">Sponsor now</div>
+                <h2 class="h3 fw-semibold mb-2">Sponsor this project</h2>
+                <p class="text-muted mb-4">Support the maintainer in the way that makes the most sense for you.</p>
+
+                @if (Model.SupportsOneTime)
+                {
+                    <form method="post" asp-action="Contribute" asp-route-appId="@Model.AppId" asp-route-area="OpenPatron" class="mb-4">
+                        @Html.AntiForgeryToken()
+                        <label for="customAmount" class="form-label fw-semibold">Custom one-time amount</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text">@Model.DefaultCurrency</span>
+                            <input id="customAmount" name="amount" type="number" step="0.01" min="0.01" class="form-control" placeholder="25" />
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg w-100 mt-3">Make a one-time payment</button>
+                    </form>
+                }
+
+                @if (Model.SupportsSubscriptions && Model.Plans.Count > 0)
+                {
+                    <div class="mb-4 p-3 rounded-4" style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.14);">
+                        <div class="fw-semibold text-dark mb-1">Want to back this work over time?</div>
+                        <div class="text-muted small">Pick one of the sponsor tiers on this page to get started.</div>
+                    </div>
+                }
+                else if (!string.IsNullOrWhiteSpace(Model.PrimaryCallToActionUrl))
+                {
+                    <a class="btn btn-primary btn-lg w-100 mb-4" href="@Model.PrimaryCallToActionUrl" target="_blank" rel="noreferrer">@Model.PrimaryCallToAction</a>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-primary btn-lg w-100" disabled>@Model.PrimaryCallToAction</button>
+                    <p class="text-muted small mt-3 mb-4">Funding options will appear here once the maintainer configures one-time amounts and/or subscription plans.</p>
+                }
+
+                <div class="openpatron-divider"></div>
+
+                <div class="openpatron-sidebar-list">
+                    <div class="openpatron-sidebar-item">
+                        <span class="openpatron-sidebar-icon">↻</span>
+                        <div>
+                            <div class="fw-semibold text-dark">Sponsor over time</div>
+                            <div class="small">@(Model.SupportsSubscriptions ? "Choose a tier when published." : "Not available on this page.")</div>
+                        </div>
+                    </div>
+                    <div class="openpatron-sidebar-item">
+                        <span class="openpatron-sidebar-icon">⚡</span>
+                        <div>
+                            <div class="fw-semibold text-dark">Send a quick thank-you</div>
+                            <div class="small">@(Model.SupportsOneTime ? "Use a quick amount or enter your own." : "Not available on this page.")</div>
+                        </div>
+                    </div>
+                    <div class="openpatron-sidebar-item">
+                        <span class="openpatron-sidebar-icon">↗</span>
+                        <div>
+                            <div class="fw-semibold text-dark">External links</div>
+                            <div class="small">Visit the project's public links for updates, code, or documentation.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
