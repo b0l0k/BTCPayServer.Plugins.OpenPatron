@@ -30,22 +30,22 @@
                         <div class="form-text mb-3">Choose the layout for this page. <strong>This cannot be changed after saving.</strong></div>
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <div class="form-check border rounded-3 p-3 @(isPersonal ? "border-primary bg-primary bg-opacity-10" : "")">
-                                    <input class="form-check-input" type="radio" asp-for="PageType" value="@((int)OpenPatronPageType.Personal)" id="pageTypePersonal" onchange="togglePageType()" />
-                                    <label class="form-check-label fw-semibold" for="pageTypePersonal">
-                                        Personal
-                                        <div class="fw-normal text-muted small mt-1">Focus on the maintainer — your profile, avatar, and a list of projects you maintain.</div>
-                                    </label>
-                                </div>
+                                <label class="d-block border rounded-3 p-3 cursor-pointer page-type-option @(isPersonal ? "border-primary bg-primary bg-opacity-10" : "")" for="pageTypePersonal">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input" type="radio" asp-for="PageType" value="@((int)OpenPatronPageType.Personal)" id="pageTypePersonal" onchange="togglePageType()" />
+                                        <span class="form-check-label fw-semibold">Personal</span>
+                                    </div>
+                                    <div class="text-muted small mt-1 ms-4 ps-1">Focus on the maintainer — your profile, avatar, and a list of projects you maintain.</div>
+                                </label>
                             </div>
                             <div class="col-md-6">
-                                <div class="form-check border rounded-3 p-3 @(!isPersonal ? "border-primary bg-primary bg-opacity-10" : "")">
-                                    <input class="form-check-input" type="radio" asp-for="PageType" value="@((int)OpenPatronPageType.Project)" id="pageTypeProject" onchange="togglePageType()" />
-                                    <label class="form-check-label fw-semibold" for="pageTypeProject">
-                                        Project
-                                        <div class="fw-normal text-muted small mt-1">Focus on a single project — its description, hero copy, and sponsorship tiers.</div>
-                                    </label>
-                                </div>
+                                <label class="d-block border rounded-3 p-3 cursor-pointer page-type-option @(!isPersonal ? "border-primary bg-primary bg-opacity-10" : "")" for="pageTypeProject">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input" type="radio" asp-for="PageType" value="@((int)OpenPatronPageType.Project)" id="pageTypeProject" onchange="togglePageType()" />
+                                        <span class="form-check-label fw-semibold">Project</span>
+                                    </div>
+                                    <div class="text-muted small mt-1 ms-4 ps-1">Focus on a single project — its description, hero copy, and sponsorship tiers.</div>
+                                </label>
                             </div>
                         </div>
                     }
@@ -299,7 +299,7 @@
                                 <span asp-validation-for="AccentColor" class="text-danger"></span>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-4" id="fundingGoalSection" style="@(isPersonal ? "display:none" : "")">
                             <div class="form-group">
                                 <label asp-for="FundingGoal" class="form-label"></label>
                                 <div class="input-group">
@@ -383,8 +383,22 @@
     function togglePageType() {
         var isPersonal = document.getElementById('pageTypePersonal')?.checked;
         var projectsSection = document.getElementById('projectsSection');
+        var fundingGoalSection = document.getElementById('fundingGoalSection');
         if (projectsSection) {
             projectsSection.style.display = isPersonal ? '' : 'none';
+        }
+        if (fundingGoalSection) {
+            fundingGoalSection.style.display = isPersonal ? 'none' : '';
+        }
+        // Update highlight on page type options
+        document.querySelectorAll('.page-type-option').forEach(function (el) {
+            el.classList.remove('border-primary', 'bg-primary', 'bg-opacity-10');
+        });
+        var active = isPersonal
+            ? document.querySelector('label[for="pageTypePersonal"]')
+            : document.querySelector('label[for="pageTypeProject"]');
+        if (active) {
+            active.classList.add('border-primary', 'bg-primary', 'bg-opacity-10');
         }
     }
 
