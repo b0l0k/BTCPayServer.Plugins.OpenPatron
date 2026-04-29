@@ -87,6 +87,19 @@ public class UIOpenPatronController(
             return Forbid();
         }
 
+        var existingSettings = app.GetSettings<OpenPatronAppSettings>();
+
+        // Initial setup: just confirm the page type and redirect to full editor
+        if (!existingSettings.PageTypeConfirmed)
+        {
+            existingSettings.PageType = viewModel.PageType;
+            existingSettings.PageTypeConfirmed = true;
+            app.SetSettings(existingSettings);
+            await appService.UpdateOrCreateApp(app);
+            TempData[WellKnownTempData.SuccessMessage] = "Page type saved. You can now configure your page.";
+            return RedirectToAction(nameof(Update), new { appId = app.Id });
+        }
+
         ValidateSuggestedAmounts(viewModel.SuggestedAmounts);
 
         if (!ModelState.IsValid)
@@ -97,12 +110,8 @@ public class UIOpenPatronController(
             return View(UpdateViewPath, viewModel);
         }
 
-        var existingSettings = app.GetSettings<OpenPatronAppSettings>();
-
         // Lock page type after first save
-        var pageType = existingSettings.PageTypeConfirmed
-            ? existingSettings.PageType
-            : viewModel.PageType;
+        var pageType = existingSettings.PageType;
 
         var settings = new OpenPatronAppSettings
         {

@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BTCPayServer.Plugins.OpenPatron\BTCPayServer.Plugins.OpenPatron.csproj" />
+    <ProjectReference Include="..\submodules\btcpayserver\BTCPayServer.Tests\BTCPayServer.Tests.csproj" />
   </ItemGroup>
 
 </Project>
