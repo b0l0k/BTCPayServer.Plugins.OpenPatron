@@ -3,6 +3,7 @@
 @using BTCPayServer.Client
 @using BTCPayServer.Components.MainNav
 @using BTCPayServer.Plugins.OpenPatron
+@using BTCPayServer.Plugins.OpenPatron.Models
 @using BTCPayServer.Services.Apps
 @inject AppService AppService
 @model MainNavViewModel
@@ -33,8 +34,11 @@
     }
     @foreach (var app in apps)
     {
+        var settings = app.Data.GetSettings<OpenPatronAppSettings>();
+        var isPublished = settings.Visibility == OpenPatronVisibility.Published;
         <li class="nav-item nav-item-sub" permission="@Policies.CanViewStoreSettings">
             <a layout-menu-item="@($"{nameof(OpenPatronPlugin)}-{app.Id}")" asp-area="@OpenPatronPlugin.Area" asp-controller="UIOpenPatron" asp-action="Update" asp-route-appId="@app.Id">
+                <span class="@(isPublished ? "text-success" : "text-muted")" style="font-size:0.5em;vertical-align:middle">●</span>
                 <span>@app.AppName</span>
             </a>
         </li>
