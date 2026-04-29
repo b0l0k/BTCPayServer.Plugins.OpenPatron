@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using BTCPayServer.Configuration;
 using BTCPayServer.Data;
@@ -37,6 +36,8 @@ public class OpenPatronAppType(
     {
         appData.SetSettings(new OpenPatronAppSettings
         {
+            PageType = OpenPatronPageType.Project,
+            PageTypeConfirmed = false,
             SupportMode = OpenPatronSupportMode.Both,
             HeroTitle = appData.Name,
             HeroSubtitle = "Support ongoing maintenance and development.",
@@ -44,12 +45,7 @@ public class OpenPatronAppType(
             DefaultCurrency = defaultCurrency,
             PrimaryCallToAction = "Sponsor this project",
             SuggestedAmounts = [5m, 15m, 50m],
-            Visibility = OpenPatronVisibility.Unpublished,
-            Links = new List<OpenPatronLink>
-            {
-                new() { Label = "Project", Url = string.Empty },
-                new() { Label = "GitHub", Url = string.Empty }
-            }
+            Visibility = OpenPatronVisibility.Unpublished
         });
 
         return Task.CompletedTask;

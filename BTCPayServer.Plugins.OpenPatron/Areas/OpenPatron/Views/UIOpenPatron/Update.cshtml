@@ -3,6 +3,7 @@
 
 @{
     ViewData["Title"] = "OpenPatron";
+    var isPersonal = Model.PageType == OpenPatronPageType.Personal;
 }
 
 <div class="sticky-header-setup"></div>
@@ -14,93 +15,316 @@
     <input asp-for="AppId" type="hidden" />
     <input asp-for="StoreId" type="hidden" />
     <input asp-for="OfferingId" type="hidden" />
+    <input asp-for="PageTypeConfirmed" type="hidden" />
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
     <div class="row g-4">
         <div class="col-12 col-lg-8">
+
+            @* ── Page type selector (locked after first save) ── *@
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3 class="h5 mb-3">Page type</h3>
+                    @if (!Model.PageTypeConfirmed)
+                    {
+                        <div class="form-text mb-3">Choose the layout for this page. <strong>This cannot be changed after saving.</strong></div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-check border rounded-3 p-3 @(isPersonal ? "border-primary bg-primary bg-opacity-10" : "")">
+                                    <input class="form-check-input" type="radio" asp-for="PageType" value="@((int)OpenPatronPageType.Personal)" id="pageTypePersonal" onchange="togglePageType()" />
+                                    <label class="form-check-label fw-semibold" for="pageTypePersonal">
+                                        Personal
+                                        <div class="fw-normal text-muted small mt-1">Focus on the maintainer — your profile, avatar, and a list of projects you maintain.</div>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check border rounded-3 p-3 @(!isPersonal ? "border-primary bg-primary bg-opacity-10" : "")">
+                                    <input class="form-check-input" type="radio" asp-for="PageType" value="@((int)OpenPatronPageType.Project)" id="pageTypeProject" onchange="togglePageType()" />
+                                    <label class="form-check-label fw-semibold" for="pageTypeProject">
+                                        Project
+                                        <div class="fw-normal text-muted small mt-1">Focus on a single project — its description, hero copy, and sponsorship tiers.</div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <input asp-for="PageType" type="hidden" />
+                        <span class="badge text-bg-secondary">@(isPersonal ? "Personal" : "Project")</span>
+                        <span class="text-muted small ms-2">Page type is locked after the first save.</span>
+                    }
+                </div>
+            </div>
+
+            @* ── Basic settings ── *@
             <div class="form-group mb-3">
                 <label asp-for="AppName" class="form-label"></label>
                 <input asp-for="AppName" class="form-control" />
                 <span asp-validation-for="AppName" class="text-danger"></span>
             </div>
 
-            <div class="form-group mb-3">
-                <label asp-for="HeroTitle" class="form-label"></label>
-                <input asp-for="HeroTitle" class="form-control" />
-                <span asp-validation-for="HeroTitle" class="text-danger"></span>
-            </div>
+            @* ── Profile section ── *@
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3 class="h5 mb-3">@(isPersonal ? "Your profile" : "Maintainer profile")</h3>
 
-            <div class="form-group mb-3">
-                <label asp-for="HeroSubtitle" class="form-label"></label>
-                <input asp-for="HeroSubtitle" class="form-control" />
-                <span asp-validation-for="HeroSubtitle" class="text-danger"></span>
-            </div>
-
-            <div class="form-group mb-3">
-                <label asp-for="Description" class="form-label"></label>
-                <textarea asp-for="Description" class="form-control" rows="8"></textarea>
-                <span asp-validation-for="Description" class="text-danger"></span>
-            </div>
-
-            <div class="form-group mb-3">
-                <label asp-for="SupportMode" class="form-label"></label>
-                <select asp-for="SupportMode" asp-items="Html.GetEnumSelectList<OpenPatronSupportMode>()" class="form-select"></select>
-                <div class="form-text">Choose whether the page accepts one-time payments, subscriptions, or both.</div>
-            </div>
-
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <div class="form-group mb-3">
-                        <label asp-for="PrimaryCallToAction" class="form-label"></label>
-                        <input asp-for="PrimaryCallToAction" class="form-control" />
-                        <span asp-validation-for="PrimaryCallToAction" class="text-danger"></span>
+                    <div class="row g-3 align-items-start">
+                        <div class="col-md-8">
+                            <div class="form-group mb-3">
+                                <label asp-for="DisplayName" class="form-label"></label>
+                                <input asp-for="DisplayName" class="form-control" placeholder="e.g. Jane Doe" />
+                                <span asp-validation-for="DisplayName" class="text-danger"></span>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label asp-for="GitHubUsername" class="form-label"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">@@</span>
+                                    <input asp-for="GitHubUsername" class="form-control" placeholder="octocat" />
+                                </div>
+                                <div class="form-text">Used to suggest repositories on Personal pages.</div>
+                                <span asp-validation-for="GitHubUsername" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div id="gravatarPreview" class="mb-2">
+                                @if (!string.IsNullOrWhiteSpace(Model.GravatarEmail))
+                                {
+                                    <img src="@BTCPayServer.Plugins.OpenPatron.Controllers.UIOpenPatronController.ComputeGravatarUrl(Model.GravatarEmail)"
+                                         alt="Gravatar" class="rounded-circle" width="96" height="96" />
+                                }
+                                else
+                                {
+                                    <div class="rounded-circle bg-secondary bg-opacity-25 d-inline-flex align-items-center justify-content-center" style="width:96px;height:96px;">
+                                        <span class="text-muted">?</span>
+                                    </div>
+                                }
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="GravatarEmail" class="form-label small"></label>
+                                <input asp-for="GravatarEmail" class="form-control form-control-sm" placeholder="you@example.com" id="gravatarEmailInput" />
+                                <span asp-validation-for="GravatarEmail" class="text-danger"></span>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group mb-3">
-                        <label asp-for="PrimaryCallToActionUrl" class="form-label"></label>
-                        <input asp-for="PrimaryCallToActionUrl" class="form-control" />
-                        <span asp-validation-for="PrimaryCallToActionUrl" class="text-danger"></span>
-                    </div>
-                </div>
-            </div>
 
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <div class="form-group mb-3">
-                        <label asp-for="ProjectUrl" class="form-label"></label>
-                        <input asp-for="ProjectUrl" class="form-control" />
-                        <span asp-validation-for="ProjectUrl" class="text-danger"></span>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group mb-3">
-                        <label asp-for="GitHubUrl" class="form-label"></label>
-                        <input asp-for="GitHubUrl" class="form-control" />
-                        <span asp-validation-for="GitHubUrl" class="text-danger"></span>
+                    <div class="form-group mb-0">
+                        <label asp-for="Bio" class="form-label"></label>
+                        <textarea asp-for="Bio" class="form-control" rows="3" placeholder="A few words about yourself or your work…"></textarea>
+                        <span asp-validation-for="Bio" class="text-danger"></span>
                     </div>
                 </div>
             </div>
 
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <div class="form-group mb-3">
-                        <label asp-for="DefaultCurrency" class="form-label"></label>
-                        <input asp-for="DefaultCurrency" class="form-control" />
-                        <span asp-validation-for="DefaultCurrency" class="text-danger"></span>
+            @* ── Projects section (Personal pages only) ── *@
+            <div id="projectsSection" class="card mb-4" style="@(isPersonal ? "" : "display:none")">
+                <div class="card-body">
+                    <h3 class="h5 mb-3">Projects you maintain</h3>
+                    <div id="projectsList">
+                        @for (var i = 0; i < Model.Projects.Count; i++)
+                        {
+                            <div class="border rounded-3 p-3 mb-3 project-row">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <strong>Project @(i + 1)</strong>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.project-row').remove()">Remove</button>
+                                </div>
+                                <input type="hidden" name="Projects[@i].Language" value="@Model.Projects[i].Language" />
+                                <input type="hidden" name="Projects[@i].Stars" value="@Model.Projects[i].Stars" />
+                                <div class="row g-2">
+                                    <div class="col-md-4">
+                                        <input name="Projects[@i].Name" value="@Model.Projects[i].Name" class="form-control form-control-sm" placeholder="Name" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input name="Projects[@i].Url" value="@Model.Projects[i].Url" class="form-control form-control-sm" placeholder="URL" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input name="Projects[@i].Description" value="@Model.Projects[i].Description" class="form-control form-control-sm" placeholder="Description" />
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="addProjectBtn">+ Add project manually</button>
+
+                    @if (Model.AvailableGitHubRepos.Count > 0)
+                    {
+                        <div class="mt-4 p-3 rounded-3 bg-light border">
+                            <h4 class="h6 mb-2">Suggested from GitHub</h4>
+                            <div class="form-text mb-3">Select repos to add them to your project list, then save.</div>
+                            @foreach (var repo in Model.AvailableGitHubRepos)
+                            {
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input gh-repo-check" type="checkbox"
+                                           data-name="@repo.Name"
+                                           data-url="@repo.HtmlUrl"
+                                           data-desc="@(repo.Description ?? "")"
+                                           data-lang="@(repo.Language ?? "")"
+                                           data-stars="@repo.StargazersCount"
+                                           id="gh-@repo.Name" />
+                                    <label class="form-check-label" for="gh-@repo.Name">
+                                        <strong>@repo.Name</strong>
+                                        @if (repo.StargazersCount > 0)
+                                        {
+                                            <span class="badge text-bg-light">★ @repo.StargazersCount</span>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(repo.Language))
+                                        {
+                                            <span class="badge text-bg-info text-white">@repo.Language</span>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(repo.Description))
+                                        {
+                                            <div class="text-muted small">@repo.Description</div>
+                                        }
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @* ── Social links ── *@
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3 class="h5 mb-3">Social links</h3>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="SocialX" class="form-label"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">@@</span>
+                                    <input asp-for="SocialX" class="form-control" placeholder="handle" />
+                                </div>
+                                <span asp-validation-for="SocialX" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="SocialMastodon" class="form-label"></label>
+                                <input asp-for="SocialMastodon" class="form-control" placeholder="https://mastodon.social/@@user" />
+                                <span asp-validation-for="SocialMastodon" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="SocialNostr" class="form-label"></label>
+                                <input asp-for="SocialNostr" class="form-control" placeholder="npub1…" />
+                                <span asp-validation-for="SocialNostr" class="text-danger"></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-8">
+            </div>
+
+            @* ── Hero & description ── *@
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3 class="h5 mb-3">@(isPersonal ? "About you" : "About this project")</h3>
+
                     <div class="form-group mb-3">
-                        <label asp-for="SuggestedAmounts" class="form-label"></label>
-                        <input asp-for="SuggestedAmounts" class="form-control" placeholder="5, 15, 50" />
-                        <div class="form-text">Comma-separated suggested one-time amounts, using '.' for decimals.</div>
-                        <span asp-validation-for="SuggestedAmounts" class="text-danger"></span>
+                        <label asp-for="HeroTitle" class="form-label"></label>
+                        <input asp-for="HeroTitle" class="form-control" />
+                        <span asp-validation-for="HeroTitle" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="HeroSubtitle" class="form-label"></label>
+                        <input asp-for="HeroSubtitle" class="form-control" />
+                        <span asp-validation-for="HeroSubtitle" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Description" class="form-label"></label>
+                        <textarea asp-for="Description" class="form-control" rows="8"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="SupportMode" class="form-label"></label>
+                        <select asp-for="SupportMode" asp-items="Html.GetEnumSelectList<OpenPatronSupportMode>()" class="form-select"></select>
+                        <div class="form-text">Choose whether the page accepts one-time payments, subscriptions, or both.</div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="PrimaryCallToAction" class="form-label"></label>
+                                <input asp-for="PrimaryCallToAction" class="form-control" />
+                                <span asp-validation-for="PrimaryCallToAction" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="PrimaryCallToActionUrl" class="form-label"></label>
+                                <input asp-for="PrimaryCallToActionUrl" class="form-control" />
+                                <span asp-validation-for="PrimaryCallToActionUrl" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label asp-for="DefaultCurrency" class="form-label"></label>
+                                <input asp-for="DefaultCurrency" class="form-control" />
+                                <span asp-validation-for="DefaultCurrency" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="form-group mb-3">
+                                <label asp-for="SuggestedAmounts" class="form-label"></label>
+                                <input asp-for="SuggestedAmounts" class="form-control" placeholder="5, 15, 50" />
+                                <div class="form-text">Comma-separated suggested one-time amounts, using '.' for decimals.</div>
+                                <span asp-validation-for="SuggestedAmounts" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* ── Appearance ── *@
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3 class="h5 mb-3">Appearance</h3>
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="AccentColor" class="form-label"></label>
+                                <div class="d-flex gap-2 align-items-center">
+                                    <input type="color" id="accentColorPicker" value="@(Model.AccentColor ?? "#6366f1")" class="form-control form-control-color" />
+                                    <input asp-for="AccentColor" class="form-control form-control-sm" placeholder="#6366f1" style="max-width:120px" />
+                                </div>
+                                <div class="form-text">Brand color for the public page.</div>
+                                <span asp-validation-for="AccentColor" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="FundingGoal" class="form-label"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">@Model.DefaultCurrency</span>
+                                    <input asp-for="FundingGoal" class="form-control" placeholder="1000" />
+                                </div>
+                                <div class="form-text">Set a goal and show progress on the public page. Leave empty to hide.</div>
+                                <span asp-validation-for="FundingGoal" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <div class="form-check form-switch mt-2">
+                                    <input asp-for="ShowSponsorWall" class="form-check-input" />
+                                    <label asp-for="ShowSponsorWall" class="form-check-label"></label>
+                                </div>
+                                <div class="form-text">Show an anonymous list of contributions (date + amount, no names).</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
+        @* ── Sidebar ── *@
         <div class="col-12 col-lg-4">
             <div class="card">
                 <div class="card-body">
@@ -146,10 +370,82 @@
             </div>
 
             <div class="alert alert-info mt-3 mb-0">
-                OpenPatron now reuses BTCPay Subscriptions for recurring sponsorship. This page controls branding and the linked subscription offering.
+                OpenPatron reuses BTCPay Subscriptions for recurring sponsorship. This page controls branding and the linked subscription offering.
             </div>
         </div>
     </div>
 </form>
 
 <partial name="_ValidationScriptsPartial" />
+
+<script>
+    // Page type toggle
+    function togglePageType() {
+        var isPersonal = document.getElementById('pageTypePersonal')?.checked;
+        var projectsSection = document.getElementById('projectsSection');
+        if (projectsSection) {
+            projectsSection.style.display = isPersonal ? '' : 'none';
+        }
+    }
+
+    // Accent color picker sync
+    (function () {
+        var picker = document.getElementById('accentColorPicker');
+        var input = document.getElementById('AccentColor');
+        if (picker && input) {
+            picker.addEventListener('input', function () { input.value = picker.value; });
+            input.addEventListener('input', function () {
+                if (/^#[0-9a-fA-F]{6}$/.test(input.value)) picker.value = input.value;
+            });
+        }
+    })();
+
+    // Add project row dynamically
+    (function () {
+        var addBtn = document.getElementById('addProjectBtn');
+        var list = document.getElementById('projectsList');
+        if (!addBtn || !list) return;
+        addBtn.addEventListener('click', function () {
+            var idx = list.querySelectorAll('.project-row').length;
+            var row = document.createElement('div');
+            row.className = 'border rounded-3 p-3 mb-3 project-row';
+            row.innerHTML = '<div class="d-flex justify-content-between align-items-start mb-2">' +
+                '<strong>Project ' + (idx + 1) + '</strong>' +
+                '<button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest(\'.project-row\').remove()">Remove</button></div>' +
+                '<input type="hidden" name="Projects[' + idx + '].Language" value="" />' +
+                '<input type="hidden" name="Projects[' + idx + '].Stars" value="" />' +
+                '<div class="row g-2">' +
+                '<div class="col-md-4"><input name="Projects[' + idx + '].Name" class="form-control form-control-sm" placeholder="Name" /></div>' +
+                '<div class="col-md-4"><input name="Projects[' + idx + '].Url" class="form-control form-control-sm" placeholder="URL" /></div>' +
+                '<div class="col-md-4"><input name="Projects[' + idx + '].Description" class="form-control form-control-sm" placeholder="Description" /></div></div>';
+            list.appendChild(row);
+        });
+    })();
+
+    // GitHub repo checkbox -> add as project row
+    document.querySelectorAll('.gh-repo-check').forEach(function (cb) {
+        cb.addEventListener('change', function () {
+            var list = document.getElementById('projectsList');
+            if (!list) return;
+            if (this.checked) {
+                var idx = list.querySelectorAll('.project-row').length;
+                var row = document.createElement('div');
+                row.className = 'border rounded-3 p-3 mb-3 project-row';
+                row.dataset.ghName = this.dataset.name;
+                row.innerHTML = '<div class="d-flex justify-content-between align-items-start mb-2">' +
+                    '<strong>' + this.dataset.name + '</strong>' +
+                    '<button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest(\'.project-row\').remove()">Remove</button></div>' +
+                    '<input type="hidden" name="Projects[' + idx + '].Language" value="' + (this.dataset.lang || '') + '" />' +
+                    '<input type="hidden" name="Projects[' + idx + '].Stars" value="' + (this.dataset.stars || '') + '" />' +
+                    '<div class="row g-2">' +
+                    '<div class="col-md-4"><input name="Projects[' + idx + '].Name" value="' + this.dataset.name + '" class="form-control form-control-sm" placeholder="Name" /></div>' +
+                    '<div class="col-md-4"><input name="Projects[' + idx + '].Url" value="' + this.dataset.url + '" class="form-control form-control-sm" placeholder="URL" /></div>' +
+                    '<div class="col-md-4"><input name="Projects[' + idx + '].Description" value="' + (this.dataset.desc || '') + '" class="form-control form-control-sm" placeholder="Description" /></div></div>';
+                list.appendChild(row);
+            } else {
+                var existing = list.querySelector('.project-row[data-gh-name="' + this.dataset.name + '"]');
+                if (existing) existing.remove();
+            }
+        });
+    });
+</script>

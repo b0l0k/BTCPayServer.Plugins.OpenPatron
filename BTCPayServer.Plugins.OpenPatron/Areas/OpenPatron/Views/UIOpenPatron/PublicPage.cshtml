@@ -3,13 +3,22 @@
 @{
     Layout = "_LayoutSimple";
     ViewData["Title"] = Model.HeroTitle;
+    var accent = Model.AccentColor ?? "#6366f1";
+    var hasSocialLinks = !string.IsNullOrWhiteSpace(Model.SocialX) || !string.IsNullOrWhiteSpace(Model.SocialMastodon) || !string.IsNullOrWhiteSpace(Model.SocialNostr);
 }
 
 @section PageHeadContent {
     <style>
+        :root {
+            --op-accent: @accent;
+            --op-accent-10: @(accent)1a;
+            --op-accent-18: @(accent)2e;
+            --op-accent-dark: color-mix(in srgb, @accent 85%, #000);
+        }
+
         body {
             background:
-                radial-gradient(circle at top left, rgba(99, 102, 241, 0.14), transparent 28%),
+                radial-gradient(circle at top left, color-mix(in srgb, var(--op-accent) 14%, transparent), transparent 28%),
                 radial-gradient(circle at top right, rgba(236, 72, 153, 0.10), transparent 24%),
                 linear-gradient(180deg, #fcfcff 0%, #f7f8fc 100%);
         }
@@ -39,7 +48,7 @@
             position: absolute;
             inset: 0;
             background:
-                radial-gradient(circle at top right, rgba(99, 102, 241, 0.18), transparent 26%),
+                radial-gradient(circle at top right, var(--op-accent-18), transparent 26%),
                 linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(248, 250, 252, 0.82));
             pointer-events: none;
         }
@@ -55,8 +64,8 @@
             gap: .5rem;
             padding: .45rem .8rem;
             border-radius: 999px;
-            background: rgba(99, 102, 241, 0.10);
-            color: #4338ca;
+            background: var(--op-accent-10);
+            color: var(--op-accent-dark);
             font-size: .875rem;
             font-weight: 700;
         }
@@ -79,7 +88,7 @@
             letter-spacing: .08em;
             text-transform: uppercase;
             font-weight: 700;
-            color: #6366f1;
+            color: var(--op-accent);
             margin-bottom: .75rem;
         }
 
@@ -122,14 +131,14 @@
 
         .openpatron-amount-pill {
             border: 0;
-            background: linear-gradient(135deg, #ffffff, #eef2ff);
-            box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.14);
-            color: #312e81;
+            background: linear-gradient(135deg, #ffffff, color-mix(in srgb, var(--op-accent) 8%, #fff));
+            box-shadow: inset 0 0 0 1px var(--op-accent-18);
+            color: var(--op-accent-dark);
         }
 
         .openpatron-amount-pill:hover,
         .openpatron-amount-pill:focus {
-            background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--op-accent) 8%, #fff), color-mix(in srgb, var(--op-accent) 14%, #fff));
         }
 
         .openpatron-panel {
@@ -155,7 +164,7 @@
 
         .openpatron-divider {
             height: 1px;
-            background: linear-gradient(90deg, rgba(99, 102, 241, 0.16), rgba(99, 102, 241, 0));
+            background: linear-gradient(90deg, var(--op-accent-18), transparent);
             margin: 1.25rem 0;
         }
 
@@ -184,8 +193,8 @@
             width: 2rem;
             height: 2rem;
             border-radius: 999px;
-            background: rgba(99, 102, 241, 0.10);
-            color: #4338ca;
+            background: var(--op-accent-10);
+            color: var(--op-accent-dark);
             font-weight: 700;
             flex: 0 0 auto;
         }
@@ -194,6 +203,48 @@
             border: 1px dashed rgba(148, 163, 184, 0.7);
             border-radius: 1rem;
             background: rgba(248, 250, 252, 0.75);
+        }
+
+        .openpatron-progress {
+            height: 10px;
+            border-radius: 5px;
+            background: rgba(15, 23, 42, 0.06);
+            overflow: hidden;
+        }
+
+        .openpatron-progress-bar {
+            height: 100%;
+            border-radius: 5px;
+            background: linear-gradient(90deg, var(--op-accent), color-mix(in srgb, var(--op-accent) 70%, #ec4899));
+            transition: width 0.6s ease;
+        }
+
+        .openpatron-social-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            padding: .55rem .85rem;
+            border-radius: 999px;
+            border: 1px solid rgba(15, 23, 42, 0.10);
+            background: #fff;
+            color: #0f172a;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: .9rem;
+        }
+
+        .openpatron-social-pill:hover {
+            background: #f8fafc;
+            color: #0f172a;
+        }
+
+        .openpatron-wall-entry {
+            display: flex;
+            justify-content: space-between;
+            padding: .5rem 0;
+            border-bottom: 1px solid rgba(15, 23, 42, 0.05);
+            font-size: .9rem;
+            color: #475569;
         }
     </style>
 }
@@ -227,12 +278,24 @@
                             }
                         </div>
 
-                        @if (Model.Links.Count > 0)
+                        @if (Model.Links.Count > 0 || hasSocialLinks)
                         {
                             <div class="d-flex flex-wrap gap-2">
                                 @foreach (var link in Model.Links)
                                 {
                                     <a class="openpatron-link-pill" href="@link.Url" target="_blank" rel="noreferrer">@link.Label ↗</a>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(Model.SocialX))
+                                {
+                                    <a class="openpatron-social-pill" href="https://x.com/@Model.SocialX" target="_blank" rel="noreferrer">𝕏 @@@Model.SocialX</a>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(Model.SocialMastodon))
+                                {
+                                    <a class="openpatron-social-pill" href="@Model.SocialMastodon" target="_blank" rel="noreferrer">🐘 Mastodon</a>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(Model.SocialNostr))
+                                {
+                                    <span class="openpatron-social-pill" title="@Model.SocialNostr">⚡ Nostr</span>
                                 }
                             </div>
                         }
@@ -240,6 +303,24 @@
 
                     <div class="col-12 col-xl-4">
                         <div class="openpatron-panel h-100">
+                            @if (!string.IsNullOrWhiteSpace(Model.GravatarUrl) || !string.IsNullOrWhiteSpace(Model.DisplayName))
+                            {
+                                <div class="text-center mb-3">
+                                    @if (!string.IsNullOrWhiteSpace(Model.GravatarUrl))
+                                    {
+                                        <img src="@Model.GravatarUrl" alt="@(Model.DisplayName ?? "Avatar")" class="rounded-circle mb-2" width="64" height="64" />
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(Model.DisplayName))
+                                    {
+                                        <div class="fw-semibold">@Model.DisplayName</div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(Model.GitHubProfileUrl))
+                                    {
+                                        <a href="@Model.GitHubProfileUrl" target="_blank" rel="noreferrer" class="small text-muted">GitHub ↗</a>
+                                    }
+                                </div>
+                                <div class="openpatron-divider"></div>
+                            }
                             <div class="openpatron-kicker">Why it matters</div>
                             <h2 class="h4 fw-semibold mb-2">Help sustain this work</h2>
                             <p class="text-muted mb-4">If this project helps you, sponsoring it gives the maintainer more room to keep building and maintaining it.</p>
@@ -271,6 +352,24 @@
                     </div>
                 </div>
             </section>
+
+            @* ── Funding goal progress bar ── *@
+            @if (Model.FundingGoal is > 0)
+            {
+                <section class="openpatron-panel mb-4">
+                    <div class="openpatron-kicker">Funding progress</div>
+                    <div class="d-flex justify-content-between align-items-end mb-2">
+                        <div>
+                            <span class="h4 fw-bold mb-0">@Model.DefaultCurrency @Model.AmountRaised.ToString("N2")</span>
+                            <span class="text-muted"> raised of @Model.DefaultCurrency @Model.FundingGoal.Value.ToString("N2") goal</span>
+                        </div>
+                        <span class="fw-semibold" style="color: var(--op-accent);">@Model.FundingPercentage%</span>
+                    </div>
+                    <div class="openpatron-progress">
+                        <div class="openpatron-progress-bar" style="width: @Model.FundingPercentage%"></div>
+                    </div>
+                </section>
+            }
 
             @if (!string.IsNullOrWhiteSpace(Model.Description))
             {
@@ -375,7 +474,7 @@
 
             @if (Model.Links.Count > 0)
             {
-                <div class="openpatron-panel">
+                <div class="openpatron-panel mb-4">
                     <div class="openpatron-kicker mb-2">Explore more</div>
                     <h2 class="h4 mb-3">Follow the project</h2>
                     <div class="d-flex flex-wrap gap-2">
@@ -385,6 +484,25 @@
                         }
                     </div>
                 </div>
+            }
+
+            @* ── Sponsor wall ── *@
+            @if (Model.ShowSponsorWall && Model.SponsorWallEntries.Count > 0)
+            {
+                <section class="openpatron-panel mb-4">
+                    <div class="openpatron-kicker">Recent contributions</div>
+                    <h2 class="h4 fw-semibold mb-3">Who's supporting this work</h2>
+                    <div>
+                        @foreach (var entry in Model.SponsorWallEntries)
+                        {
+                            <div class="openpatron-wall-entry">
+                                <span>Anonymous</span>
+                                <span class="fw-semibold">@entry.Currency @entry.Amount.ToString("N2")</span>
+                                <span class="text-muted small">@entry.Timestamp.ToString("MMM d, yyyy")</span>
+                            </div>
+                        }
+                    </div>
+                </section>
             }
         </div>
 
@@ -403,20 +521,20 @@
                             <span class="input-group-text">@Model.DefaultCurrency</span>
                             <input id="customAmount" name="amount" type="number" step="0.01" min="0.01" class="form-control" placeholder="25" />
                         </div>
-                        <button type="submit" class="btn btn-primary btn-lg w-100 mt-3">Make a one-time payment</button>
+                        <button type="submit" class="btn btn-primary btn-lg w-100 mt-3" style="background: var(--op-accent); border-color: var(--op-accent);">Make a one-time payment</button>
                     </form>
                 }
 
                 @if (Model.SupportsSubscriptions && Model.Plans.Count > 0)
                 {
-                    <div class="mb-4 p-3 rounded-4" style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.14);">
+                    <div class="mb-4 p-3 rounded-4" style="background: var(--op-accent-10); border: 1px solid var(--op-accent-18);">
                         <div class="fw-semibold text-dark mb-1">Want to back this work over time?</div>
                         <div class="text-muted small">Pick one of the sponsor tiers on this page to get started.</div>
                     </div>
                 }
                 else if (!string.IsNullOrWhiteSpace(Model.PrimaryCallToActionUrl))
                 {
-                    <a class="btn btn-primary btn-lg w-100 mb-4" href="@Model.PrimaryCallToActionUrl" target="_blank" rel="noreferrer">@Model.PrimaryCallToAction</a>
+                    <a class="btn btn-primary btn-lg w-100 mb-4" href="@Model.PrimaryCallToActionUrl" target="_blank" rel="noreferrer" style="background: var(--op-accent); border-color: var(--op-accent);">@Model.PrimaryCallToAction</a>
                 }
                 else
                 {

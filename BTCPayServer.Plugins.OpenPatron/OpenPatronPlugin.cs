@@ -1,5 +1,6 @@
 using BTCPayServer.Abstractions.Contracts;
 using BTCPayServer.Abstractions.Models;
+using BTCPayServer.Plugins.OpenPatron.Services;
 using BTCPayServer.Services.Apps;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -26,6 +27,10 @@ public class OpenPatronPlugin : BaseBTCPayServerPlugin
     {
         services.AddSingleton<AppBaseType, OpenPatronAppType>();
         services.AddUIExtension("header-nav", "OpenPatron/NavExtension");
+        services.AddHttpClient("GitHub");
+        services.AddTransient<GitHubRepoService>();
+        services.AddTransient<SponsorWallService>();
+        services.AddTransient<FundingProgressService>();
 
         base.Execute(services);
     }
