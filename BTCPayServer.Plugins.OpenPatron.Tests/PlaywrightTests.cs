@@ -268,6 +268,87 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
     }
 
     /// <summary>
+    /// Adding a project to the project list (via "+ Add project manually")
+    /// should persist after save and be visible after reload.
+    /// </summary>
+    [Fact]
+    public async Task CanAddAndSaveProject()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+
+        await s.CreateApp("OpenPatron");
+
+        // Choose Personal so the projects section is visible
+        await s.Page.Locator("label[for='pageTypePersonal']").ClickAsync();
+        await s.Page.Locator("button[type='submit']:has-text('Continue')").ClickAsync();
+        await s.FindAlertMessage(partialText: "Page type saved");
+
+        // Add a project row
+        await s.Page.Locator("#addProjectBtn").ClickAsync();
+        await s.Page.Locator("[name='Projects[0].Name']").FillAsync("My Project");
+        await s.Page.Locator("[name='Projects[0].Url']").FillAsync("https://example.com/myproject");
+        await s.Page.Locator("[name='Projects[0].Description']").FillAsync("Cool project");
+
+        // Save
+        await s.Page.Locator("button[type='submit']:has-text('Save changes')").ClickAsync();
+        await s.FindAlertMessage(partialText: "updated");
+
+        // Project should still be there after reload
+        await Expect(s.Page.Locator("[name='Projects[0].Name']")).ToHaveValueAsync("My Project");
+        await Expect(s.Page.Locator("[name='Projects[0].Url']")).ToHaveValueAsync("https://example.com/myproject");
+        await Expect(s.Page.Locator("[name='Projects[0].Description']")).ToHaveValueAsync("Cool project");
+    }
+
+    /// <summary>
+    /// Removing a project from the middle of the list should renumber the
+    /// remaining rows so they keep contiguous indices and survive a save.
+    /// </summary>
+    [Fact]
+    public async Task RemovingMiddleProjectKeepsOthersAfterSave()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+
+        await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("label[for='pageTypePersonal']").ClickAsync();
+        await s.Page.Locator("button[type='submit']:has-text('Continue')").ClickAsync();
+        await s.FindAlertMessage(partialText: "Page type saved");
+
+        // Add three projects
+        for (var i = 0; i < 3; i++)
+        {
+            await s.Page.Locator("#addProjectBtn").ClickAsync();
+        }
+        await s.Page.Locator("[name='Projects[0].Name']").FillAsync("A");
+        await s.Page.Locator("[name='Projects[0].Url']").FillAsync("https://example.com/a");
+        await s.Page.Locator("[name='Projects[1].Name']").FillAsync("B");
+        await s.Page.Locator("[name='Projects[1].Url']").FillAsync("https://example.com/b");
+        await s.Page.Locator("[name='Projects[2].Name']").FillAsync("C");
+        await s.Page.Locator("[name='Projects[2].Url']").FillAsync("https://example.com/c");
+
+        // Remove the middle one (B)
+        await s.Page.Locator(".project-row").Nth(1).Locator(".project-remove-btn").ClickAsync();
+
+        // After renumbering, A is [0] and C is [1]
+        await Expect(s.Page.Locator("[name='Projects[0].Name']")).ToHaveValueAsync("A");
+        await Expect(s.Page.Locator("[name='Projects[1].Name']")).ToHaveValueAsync("C");
+
+        await s.Page.Locator("button[type='submit']:has-text('Save changes')").ClickAsync();
+        await s.FindAlertMessage(partialText: "updated");
+
+        // Both A and C should survive the save
+        await Expect(s.Page.Locator("[name='Projects[0].Name']")).ToHaveValueAsync("A");
+        await Expect(s.Page.Locator("[name='Projects[1].Name']")).ToHaveValueAsync("C");
+        await Expect(s.Page.Locator(".project-row")).ToHaveCountAsync(2);
+    }
+
+    /// <summary>
     /// The sponsor wall toggle should be off by default and togglable.
     /// </summary>
     [Fact]

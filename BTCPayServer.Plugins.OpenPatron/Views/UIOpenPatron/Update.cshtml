@@ -145,20 +145,20 @@
                         {
                             <div class="border rounded-3 p-3 mb-3 project-row">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <strong>Project @(i + 1)</strong>
-                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.project-row').remove()">Remove</button>
+                                    <strong class="project-row-title">Project @(i + 1)</strong>
+                                    <button type="button" class="btn btn-sm btn-outline-danger project-remove-btn">Remove</button>
                                 </div>
-                                <input type="hidden" name="Projects[@i].Language" value="@Model.Projects[i].Language" />
-                                <input type="hidden" name="Projects[@i].Stars" value="@Model.Projects[i].Stars" />
+                                <input type="hidden" data-field="Language" name="Projects[@i].Language" value="@Model.Projects[i].Language" />
+                                <input type="hidden" data-field="Stars" name="Projects[@i].Stars" value="@Model.Projects[i].Stars" />
                                 <div class="row g-2">
                                     <div class="col-md-4">
-                                        <input name="Projects[@i].Name" value="@Model.Projects[i].Name" class="form-control form-control-sm" placeholder="Name" />
+                                        <input data-field="Name" name="Projects[@i].Name" value="@Model.Projects[i].Name" class="form-control form-control-sm" placeholder="Name" />
                                     </div>
                                     <div class="col-md-4">
-                                        <input name="Projects[@i].Url" value="@Model.Projects[i].Url" class="form-control form-control-sm" placeholder="URL" />
+                                        <input data-field="Url" name="Projects[@i].Url" value="@Model.Projects[i].Url" class="form-control form-control-sm" placeholder="URL" />
                                     </div>
                                     <div class="col-md-4">
-                                        <input name="Projects[@i].Description" value="@Model.Projects[i].Description" class="form-control form-control-sm" placeholder="Description" />
+                                        <input data-field="Description" name="Projects[@i].Description" value="@Model.Projects[i].Description" class="form-control form-control-sm" placeholder="Description" />
                                     </div>
                                 </div>
                             </div>
@@ -421,53 +421,92 @@
         }
     })();
 
-    // Add project row dynamically
+    // Project row management: ASP.NET Core's default model binder requires
+    // contiguous, zero-based indices for List<T>; renumber after every change.
     (function () {
-        var addBtn = document.getElementById('addProjectBtn');
         var list = document.getElementById('projectsList');
-        if (!addBtn || !list) return;
-        addBtn.addEventListener('click', function () {
-            var idx = list.querySelectorAll('.project-row').length;
+        if (!list) return;
+
+        function renumberProjects() {
+            list.querySelectorAll('.project-row').forEach(function (row, idx) {
+                var title = row.querySelector('.project-row-title');
+                if (title && !row.dataset.ghName) title.textContent = 'Project ' + (idx + 1);
+                row.querySelectorAll('input[data-field]').forEach(function (input) {
+                    input.name = 'Projects[' + idx + '].' + input.dataset.field;
+                });
+            });
+        }
+
+        function buildProjectRow(opts) {
+            opts = opts || {};
             var row = document.createElement('div');
             row.className = 'border rounded-3 p-3 mb-3 project-row';
-            row.innerHTML = '<div class="d-flex justify-content-between align-items-start mb-2">' +
-                '<strong>Project ' + (idx + 1) + '</strong>' +
-                '<button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest(\'.project-row\').remove()">Remove</button></div>' +
-                '<input type="hidden" name="Projects[' + idx + '].Language" value="" />' +
-                '<input type="hidden" name="Projects[' + idx + '].Stars" value="" />' +
+            if (opts.ghName) row.dataset.ghName = opts.ghName;
+            var title = opts.ghName || 'Project';
+            row.innerHTML =
+                '<div class="d-flex justify-content-between align-items-start mb-2">' +
+                    '<strong class="project-row-title"></strong>' +
+                    '<button type="button" class="btn btn-sm btn-outline-danger project-remove-btn">Remove</button>' +
+                '</div>' +
+                '<input type="hidden" data-field="Language" />' +
+                '<input type="hidden" data-field="Stars" />' +
                 '<div class="row g-2">' +
-                '<div class="col-md-4"><input name="Projects[' + idx + '].Name" class="form-control form-control-sm" placeholder="Name" /></div>' +
-                '<div class="col-md-4"><input name="Projects[' + idx + '].Url" class="form-control form-control-sm" placeholder="URL" /></div>' +
-                '<div class="col-md-4"><input name="Projects[' + idx + '].Description" class="form-control form-control-sm" placeholder="Description" /></div></div>';
-            list.appendChild(row);
-        });
-    })();
+                    '<div class="col-md-4"><input data-field="Name" class="form-control form-control-sm" placeholder="Name" /></div>' +
+                    '<div class="col-md-4"><input data-field="Url" class="form-control form-control-sm" placeholder="URL" /></div>' +
+                    '<div class="col-md-4"><input data-field="Description" class="form-control form-control-sm" placeholder="Description" /></div>' +
+                '</div>';
+            row.querySelector('.project-row-title').textContent = title;
+            row.querySelector('[data-field="Language"]').value = opts.language || '';
+            row.querySelector('[data-field="Stars"]').value = opts.stars || '';
+            row.querySelector('[data-field="Name"]').value = opts.name || '';
+            row.querySelector('[data-field="Url"]').value = opts.url || '';
+            row.querySelector('[data-field="Description"]').value = opts.description || '';
+            return row;
+        }
 
-    // GitHub repo checkbox -> add as project row
-    document.querySelectorAll('.gh-repo-check').forEach(function (cb) {
-        cb.addEventListener('change', function () {
-            var list = document.getElementById('projectsList');
-            if (!list) return;
-            if (this.checked) {
-                var idx = list.querySelectorAll('.project-row').length;
-                var row = document.createElement('div');
-                row.className = 'border rounded-3 p-3 mb-3 project-row';
-                row.dataset.ghName = this.dataset.name;
-                row.innerHTML = '<div class="d-flex justify-content-between align-items-start mb-2">' +
-                    '<strong>' + this.dataset.name + '</strong>' +
-                    '<button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest(\'.project-row\').remove()">Remove</button></div>' +
-                    '<input type="hidden" name="Projects[' + idx + '].Language" value="' + (this.dataset.lang || '') + '" />' +
-                    '<input type="hidden" name="Projects[' + idx + '].Stars" value="' + (this.dataset.stars || '') + '" />' +
-                    '<div class="row g-2">' +
-                    '<div class="col-md-4"><input name="Projects[' + idx + '].Name" value="' + this.dataset.name + '" class="form-control form-control-sm" placeholder="Name" /></div>' +
-                    '<div class="col-md-4"><input name="Projects[' + idx + '].Url" value="' + this.dataset.url + '" class="form-control form-control-sm" placeholder="URL" /></div>' +
-                    '<div class="col-md-4"><input name="Projects[' + idx + '].Description" value="' + (this.dataset.desc || '') + '" class="form-control form-control-sm" placeholder="Description" /></div></div>';
-                list.appendChild(row);
-            } else {
-                var existing = list.querySelector('.project-row[data-gh-name="' + this.dataset.name + '"]');
-                if (existing) existing.remove();
+        list.addEventListener('click', function (event) {
+            if (!event.target.classList.contains('project-remove-btn')) return;
+            var row = event.target.closest('.project-row');
+            if (!row) return;
+            // If this row was added from a GitHub suggestion, also uncheck that suggestion
+            if (row.dataset.ghName) {
+                var cb = document.querySelector('.gh-repo-check[data-name="' + CSS.escape(row.dataset.ghName) + '"]');
+                if (cb) cb.checked = false;
             }
+            row.remove();
+            renumberProjects();
         });
-    });
+
+        var addBtn = document.getElementById('addProjectBtn');
+        if (addBtn) {
+            addBtn.addEventListener('click', function () {
+                list.appendChild(buildProjectRow());
+                renumberProjects();
+            });
+        }
+
+        document.querySelectorAll('.gh-repo-check').forEach(function (cb) {
+            cb.addEventListener('change', function () {
+                if (this.checked) {
+                    list.appendChild(buildProjectRow({
+                        ghName: this.dataset.name,
+                        name: this.dataset.name,
+                        url: this.dataset.url,
+                        description: this.dataset.desc,
+                        language: this.dataset.lang,
+                        stars: this.dataset.stars
+                    }));
+                } else {
+                    var existing = list.querySelector('.project-row[data-gh-name="' + CSS.escape(this.dataset.name) + '"]');
+                    if (existing) existing.remove();
+                }
+                renumberProjects();
+            });
+        });
+
+        // Re-bind existing server-rendered remove buttons as well (handled by delegated listener above).
+        // Renumber once at startup to ensure server-rendered names line up after any partial-state weirdness.
+        renumberProjects();
+    })();
 </script>
 }
