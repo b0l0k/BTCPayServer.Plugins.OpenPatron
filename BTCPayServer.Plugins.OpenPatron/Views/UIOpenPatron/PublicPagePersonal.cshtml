@@ -2,7 +2,7 @@
 
 @{
     Layout = "_LayoutSimple";
-    ViewData["Title"] = Model.DisplayName ?? Model.HeroTitle;
+    ViewData["Title"] = Model.DisplayName ?? Model.AppName;
     var accent = Model.AccentColor ?? "#6366f1";
     var hasSocialLinks = !string.IsNullOrWhiteSpace(Model.SocialX) || !string.IsNullOrWhiteSpace(Model.SocialMastodon) || !string.IsNullOrWhiteSpace(Model.SocialNostr);
 }
@@ -217,14 +217,7 @@
                 {
                     <img src="@Model.GravatarUrl" alt="@(Model.DisplayName ?? "Avatar")" class="openpatron-avatar mb-3" />
                 }
-                @if (!string.IsNullOrWhiteSpace(Model.DisplayName))
-                {
-                    <h1 class="openpatron-profile-name mb-2">@Model.DisplayName</h1>
-                }
-                else
-                {
-                    <h1 class="openpatron-profile-name mb-2">@Model.HeroTitle</h1>
-                }
+                <h1 class="openpatron-profile-name mb-2">@(Model.DisplayName ?? Model.AppName)</h1>
                 @if (!string.IsNullOrWhiteSpace(Model.HeroSubtitle))
                 {
                     <p class="lead text-muted mb-3">@Model.HeroSubtitle</p>
@@ -250,10 +243,6 @@
                     @if (!string.IsNullOrWhiteSpace(Model.SocialNostr))
                     {
                         <span class="openpatron-social-pill" title="@Model.SocialNostr">⚡ Nostr</span>
-                    }
-                    @foreach (var link in Model.Links)
-                    {
-                        <a class="openpatron-social-pill" href="@link.Url" target="_blank" rel="noreferrer">@link.Label ↗</a>
                     }
                 </div>
             </section>
@@ -377,14 +366,6 @@
                     </div>
                 </section>
             }
-            else if (Model.SupportsSubscriptions)
-            {
-                <div class="openpatron-empty-state p-4 mb-4">
-                    <div class="openpatron-kicker mb-2">Sponsor tiers</div>
-                    <h2 class="h4 mb-2">Subscription plans are coming soon</h2>
-                    <p class="text-muted mb-0">More sponsor options will appear here once they are published.</p>
-                </div>
-            }
 
             @* ── Quick support ── *@
             @if (Model.SupportsOneTime && Model.SuggestedAmounts.Count > 0)
@@ -434,7 +415,7 @@
         <div class="col-12 col-lg-4">
             <div class="openpatron-panel openpatron-sidebar-card">
                 <div class="openpatron-kicker mb-2">Sponsor now</div>
-                <h2 class="h3 fw-semibold mb-2">@Model.PrimaryCallToAction</h2>
+                <h2 class="h3 fw-semibold mb-2">Support @(Model.DisplayName ?? "this work")</h2>
                 <p class="text-muted mb-4">Support this maintainer in the way that makes the most sense for you.</p>
 
                 @if (Model.SupportsOneTime)
@@ -457,41 +438,34 @@
                         <div class="text-muted small">Pick one of the sponsor tiers on this page to get started.</div>
                     </div>
                 }
-                else if (!string.IsNullOrWhiteSpace(Model.PrimaryCallToActionUrl))
-                {
-                    <a class="btn btn-primary btn-lg w-100 mb-4" href="@Model.PrimaryCallToActionUrl" target="_blank" rel="noreferrer" style="background: var(--op-accent); border-color: var(--op-accent);">@Model.PrimaryCallToAction</a>
-                }
-                else
-                {
-                    <button type="button" class="btn btn-primary btn-lg w-100" disabled>@Model.PrimaryCallToAction</button>
-                    <p class="text-muted small mt-3 mb-4">Funding options will appear here once configured.</p>
-                }
 
-                <div class="openpatron-divider"></div>
+                @if (Model.SupportsSubscriptions || Model.SupportsOneTime)
+                {
+                    <div class="openpatron-divider"></div>
 
-                <div class="openpatron-sidebar-list">
-                    <div class="openpatron-sidebar-item">
-                        <span class="openpatron-sidebar-icon">↻</span>
-                        <div>
-                            <div class="fw-semibold text-dark">Sponsor over time</div>
-                            <div class="small">@(Model.SupportsSubscriptions ? "Choose a tier when published." : "Not available on this page.")</div>
-                        </div>
+                    <div class="openpatron-sidebar-list">
+                        @if (Model.SupportsSubscriptions)
+                        {
+                            <div class="openpatron-sidebar-item">
+                                <span class="openpatron-sidebar-icon">↻</span>
+                                <div>
+                                    <div class="fw-semibold text-dark">Sponsor over time</div>
+                                    <div class="small">Pick a sponsorship tier above.</div>
+                                </div>
+                            </div>
+                        }
+                        @if (Model.SupportsOneTime)
+                        {
+                            <div class="openpatron-sidebar-item">
+                                <span class="openpatron-sidebar-icon">⚡</span>
+                                <div>
+                                    <div class="fw-semibold text-dark">Send a quick thank-you</div>
+                                    <div class="small">Use a quick amount or enter your own.</div>
+                                </div>
+                            </div>
+                        }
                     </div>
-                    <div class="openpatron-sidebar-item">
-                        <span class="openpatron-sidebar-icon">⚡</span>
-                        <div>
-                            <div class="fw-semibold text-dark">Send a quick thank-you</div>
-                            <div class="small">@(Model.SupportsOneTime ? "Use a quick amount or enter your own." : "Not available on this page.")</div>
-                        </div>
-                    </div>
-                    <div class="openpatron-sidebar-item">
-                        <span class="openpatron-sidebar-icon">↗</span>
-                        <div>
-                            <div class="fw-semibold text-dark">External links</div>
-                            <div class="small">Visit the maintainer's profiles and projects above.</div>
-                        </div>
-                    </div>
-                </div>
+                }
             </div>
         </div>
     </div>

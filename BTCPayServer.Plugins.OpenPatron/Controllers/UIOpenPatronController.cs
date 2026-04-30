@@ -158,17 +158,20 @@ public class UIOpenPatronController(
             // Core settings
             OfferingId = viewModel.OfferingId,
             SupportMode = viewModel.SupportMode,
-            HeroTitle = viewModel.HeroTitle.Trim(),
+            HeroTitle = string.IsNullOrWhiteSpace(viewModel.HeroTitle)
+                ? viewModel.AppName.Trim()
+                : viewModel.HeroTitle.Trim(),
             HeroSubtitle = viewModel.HeroSubtitle.Trim(),
             Description = viewModel.Description.Trim(),
             PrimaryCallToAction = string.IsNullOrWhiteSpace(viewModel.PrimaryCallToAction)
                 ? "Sponsor this project"
                 : viewModel.PrimaryCallToAction.Trim(),
-            PrimaryCallToActionUrl = NormalizeUrl(viewModel.PrimaryCallToActionUrl),
             DefaultCurrency = viewModel.DefaultCurrency.Trim().ToUpperInvariant(),
             SuggestedAmounts = ParseSuggestedAmounts(viewModel.SuggestedAmounts),
             Visibility = viewModel.Visibility,
-            Links = settings_BuildLinks(viewModel)
+            // Preserve inert settings fields that no longer have admin UI
+            PrimaryCallToActionUrl = existingSettings.PrimaryCallToActionUrl,
+            Links = existingSettings.Links
         };
 
         settings.OfferingId = await ResolveOfferingId(
@@ -401,7 +404,6 @@ public class UIOpenPatronController(
             HeroSubtitle = settings.HeroSubtitle,
             Description = settings.Description,
             PrimaryCallToAction = settings.PrimaryCallToAction,
-            PrimaryCallToActionUrl = settings.PrimaryCallToActionUrl,
             DefaultCurrency = settings.DefaultCurrency,
             SuggestedAmounts = string.Join(", ", settings.SuggestedAmounts.Select(a => a.ToString("0.##", CultureInfo.InvariantCulture))),
             Visibility = settings.Visibility
@@ -461,17 +463,8 @@ public class UIOpenPatronController(
             PrimaryCallToAction = string.IsNullOrWhiteSpace(settings.PrimaryCallToAction)
                 ? "Sponsor this project"
                 : settings.PrimaryCallToAction,
-            PrimaryCallToActionUrl = settings.PrimaryCallToActionUrl,
             DefaultCurrency = settings.DefaultCurrency,
             SuggestedAmounts = settings.SuggestedAmounts,
-            Links = settings.Links
-                .Where(link => !string.IsNullOrWhiteSpace(link.Url))
-                .Select(link => new OpenPatronPublicLinkViewModel
-                {
-                    Label = link.Label,
-                    Url = link.Url
-                })
-                .ToList(),
             Plans = offering?.Plans
                 .Where(plan => plan.Status == PlanData.PlanStatus.Active)
                 .OrderBy(plan => plan.Price)
@@ -589,12 +582,6 @@ public class UIOpenPatronController(
 
     private static string? NormalizeString(string? value)
         => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
-
-    private static List<OpenPatronLink> settings_BuildLinks(UpdateOpenPatronViewModel vm)
-    {
-        // Keep generic links from form; social links are stored separately
-        return new List<OpenPatronLink>();
-    }
 
     public static string? ComputeGravatarUrl(string? email)
     {

@@ -79,6 +79,7 @@
             <div class="form-group mb-3">
                 <label asp-for="AppName" class="form-label"></label>
                 <input asp-for="AppName" class="form-control" />
+                <div class="form-text">Used in admin nav and invoice descriptions. Not shown to visitors.</div>
                 <span asp-validation-for="AppName" class="text-danger"></span>
             </div>
 
@@ -239,15 +240,17 @@
                 <div class="card-body">
                     <h3 class="h5 mb-3">@(isPersonal ? "About you" : "About this project")</h3>
 
-                    <div class="form-group mb-3">
+                    <div class="form-group mb-3" id="heroTitleSection" style="@(isPersonal ? "display:none" : "")">
                         <label asp-for="HeroTitle" class="form-label"></label>
                         <input asp-for="HeroTitle" class="form-control" />
+                        <div class="form-text">Main heading on the public page. Defaults to the internal name when blank.</div>
                         <span asp-validation-for="HeroTitle" class="text-danger"></span>
                     </div>
 
                     <div class="form-group mb-3">
                         <label asp-for="HeroSubtitle" class="form-label"></label>
                         <input asp-for="HeroSubtitle" class="form-control" />
+                        <div class="form-text">Short line shown under the headline / your name.</div>
                         <span asp-validation-for="HeroSubtitle" class="text-danger"></span>
                     </div>
 
@@ -263,21 +266,10 @@
                         <div class="form-text">Choose whether the page accepts one-time payments, subscriptions, or both.</div>
                     </div>
 
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label asp-for="PrimaryCallToAction" class="form-label"></label>
-                                <input asp-for="PrimaryCallToAction" class="form-control" />
-                                <span asp-validation-for="PrimaryCallToAction" class="text-danger"></span>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label asp-for="PrimaryCallToActionUrl" class="form-label"></label>
-                                <input asp-for="PrimaryCallToActionUrl" class="form-control" />
-                                <span asp-validation-for="PrimaryCallToActionUrl" class="text-danger"></span>
-                            </div>
-                        </div>
+                    <div class="form-group mb-3">
+                        <label asp-for="PrimaryCallToAction" class="form-label"></label>
+                        <input asp-for="PrimaryCallToAction" class="form-control" />
+                        <span asp-validation-for="PrimaryCallToAction" class="text-danger"></span>
                     </div>
 
                     <div class="row g-3">

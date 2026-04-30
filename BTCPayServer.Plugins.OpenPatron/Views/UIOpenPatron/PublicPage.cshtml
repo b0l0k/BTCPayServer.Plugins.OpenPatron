@@ -5,6 +5,7 @@
     ViewData["Title"] = Model.HeroTitle;
     var accent = Model.AccentColor ?? "#6366f1";
     var hasSocialLinks = !string.IsNullOrWhiteSpace(Model.SocialX) || !string.IsNullOrWhiteSpace(Model.SocialMastodon) || !string.IsNullOrWhiteSpace(Model.SocialNostr);
+    var hasProfile = !string.IsNullOrWhiteSpace(Model.GravatarUrl) || !string.IsNullOrWhiteSpace(Model.DisplayName) || !string.IsNullOrWhiteSpace(Model.GitHubProfileUrl);
 }
 
 @section PageHeadContent {
@@ -254,9 +255,8 @@
         <div class="col-12 col-lg-8">
             <section class="openpatron-hero p-4 p-lg-5 mb-4">
                 <div class="row g-4 align-items-center">
-                    <div class="col-12 col-xl-8">
+                    <div class="col-12 @(hasProfile ? "col-xl-8" : "")">
                         <div class="openpatron-kicker">Support the work</div>
-                        <span class="openpatron-badge mb-3">☕ OpenPatron</span>
                         <h1 class="openpatron-title fw-bold mb-3">@Model.HeroTitle</h1>
                         @if (!string.IsNullOrWhiteSpace(Model.HeroSubtitle))
                         {
@@ -278,13 +278,9 @@
                             }
                         </div>
 
-                        @if (Model.Links.Count > 0 || hasSocialLinks)
+                        @if (hasSocialLinks)
                         {
                             <div class="d-flex flex-wrap gap-2">
-                                @foreach (var link in Model.Links)
-                                {
-                                    <a class="openpatron-link-pill" href="@link.Url" target="_blank" rel="noreferrer">@link.Label ↗</a>
-                                }
                                 @if (!string.IsNullOrWhiteSpace(Model.SocialX))
                                 {
                                     <a class="openpatron-social-pill" href="https://x.com/@Model.SocialX" target="_blank" rel="noreferrer">𝕏 @@@Model.SocialX</a>
@@ -301,55 +297,25 @@
                         }
                     </div>
 
-                    <div class="col-12 col-xl-4">
-                        <div class="openpatron-panel h-100">
-                            @if (!string.IsNullOrWhiteSpace(Model.GravatarUrl) || !string.IsNullOrWhiteSpace(Model.DisplayName))
-                            {
-                                <div class="text-center mb-3">
-                                    @if (!string.IsNullOrWhiteSpace(Model.GravatarUrl))
-                                    {
-                                        <img src="@Model.GravatarUrl" alt="@(Model.DisplayName ?? "Avatar")" class="rounded-circle mb-2" width="64" height="64" />
-                                    }
-                                    @if (!string.IsNullOrWhiteSpace(Model.DisplayName))
-                                    {
-                                        <div class="fw-semibold">@Model.DisplayName</div>
-                                    }
-                                    @if (!string.IsNullOrWhiteSpace(Model.GitHubProfileUrl))
-                                    {
-                                        <a href="@Model.GitHubProfileUrl" target="_blank" rel="noreferrer" class="small text-muted">GitHub ↗</a>
-                                    }
-                                </div>
-                                <div class="openpatron-divider"></div>
-                            }
-                            <div class="openpatron-kicker">Why it matters</div>
-                            <h2 class="h4 fw-semibold mb-2">Help sustain this work</h2>
-                            <p class="text-muted mb-4">If this project helps you, sponsoring it gives the maintainer more room to keep building and maintaining it.</p>
-
-                            <div class="openpatron-sidebar-list">
-                                <div class="openpatron-sidebar-item">
-                                    <span class="openpatron-sidebar-icon">1</span>
-                                    <div>
-                                        <div class="fw-semibold text-dark">Back the work</div>
-                                        <div class="small">Choose the kind of support that feels right for you.</div>
-                                    </div>
-                                </div>
-                                <div class="openpatron-sidebar-item">
-                                    <span class="openpatron-sidebar-icon">2</span>
-                                    <div>
-                                        <div class="fw-semibold text-dark">Keep it sustainable</div>
-                                        <div class="small">Your contribution helps protect time for fixes, maintenance, and new work.</div>
-                                    </div>
-                                </div>
-                                <div class="openpatron-sidebar-item">
-                                    <span class="openpatron-sidebar-icon">3</span>
-                                    <div>
-                                        <div class="fw-semibold text-dark">Stay connected</div>
-                                        <div class="small">Use the links below to follow updates and learn more about the project.</div>
-                                    </div>
-                                </div>
+                    @if (hasProfile)
+                    {
+                        <div class="col-12 col-xl-4">
+                            <div class="openpatron-panel h-100 text-center">
+                                @if (!string.IsNullOrWhiteSpace(Model.GravatarUrl))
+                                {
+                                    <img src="@Model.GravatarUrl" alt="@(Model.DisplayName ?? "Avatar")" class="rounded-circle mb-3" width="96" height="96" />
+                                }
+                                @if (!string.IsNullOrWhiteSpace(Model.DisplayName))
+                                {
+                                    <div class="fw-semibold mb-1">@Model.DisplayName</div>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(Model.GitHubProfileUrl))
+                                {
+                                    <a href="@Model.GitHubProfileUrl" target="_blank" rel="noreferrer" class="small text-muted">GitHub ↗</a>
+                                }
                             </div>
                         </div>
-                    </div>
+                    }
                 </div>
             </section>
 
@@ -439,14 +405,6 @@
                     </div>
                 </section>
             }
-            else if (Model.SupportsSubscriptions)
-            {
-                <div class="openpatron-empty-state p-4 mb-4">
-                    <div class="openpatron-kicker mb-2">Sponsor tiers</div>
-                    <h2 class="h4 mb-2">Subscription plans are coming soon</h2>
-                    <p class="text-muted mb-0">More sponsor options will appear here once the maintainer publishes them.</p>
-                </div>
-            }
 
             @if (Model.SupportsOneTime && Model.SuggestedAmounts.Count > 0)
             {
@@ -470,20 +428,6 @@
                         }
                     </div>
                 </section>
-            }
-
-            @if (Model.Links.Count > 0)
-            {
-                <div class="openpatron-panel mb-4">
-                    <div class="openpatron-kicker mb-2">Explore more</div>
-                    <h2 class="h4 mb-3">Follow the project</h2>
-                    <div class="d-flex flex-wrap gap-2">
-                        @foreach (var link in Model.Links)
-                        {
-                            <a class="openpatron-link-pill" href="@link.Url" target="_blank" rel="noreferrer">@link.Label ↗</a>
-                        }
-                    </div>
-                </div>
             }
 
             @* ── Sponsor wall ── *@
@@ -532,41 +476,34 @@
                         <div class="text-muted small">Pick one of the sponsor tiers on this page to get started.</div>
                     </div>
                 }
-                else if (!string.IsNullOrWhiteSpace(Model.PrimaryCallToActionUrl))
-                {
-                    <a class="btn btn-primary btn-lg w-100 mb-4" href="@Model.PrimaryCallToActionUrl" target="_blank" rel="noreferrer" style="background: var(--op-accent); border-color: var(--op-accent);">@Model.PrimaryCallToAction</a>
-                }
-                else
-                {
-                    <button type="button" class="btn btn-primary btn-lg w-100" disabled>@Model.PrimaryCallToAction</button>
-                    <p class="text-muted small mt-3 mb-4">Funding options will appear here once the maintainer configures one-time amounts and/or subscription plans.</p>
-                }
 
-                <div class="openpatron-divider"></div>
+                @if (Model.SupportsSubscriptions || Model.SupportsOneTime)
+                {
+                    <div class="openpatron-divider"></div>
 
-                <div class="openpatron-sidebar-list">
-                    <div class="openpatron-sidebar-item">
-                        <span class="openpatron-sidebar-icon">↻</span>
-                        <div>
-                            <div class="fw-semibold text-dark">Sponsor over time</div>
-                            <div class="small">@(Model.SupportsSubscriptions ? "Choose a tier when published." : "Not available on this page.")</div>
-                        </div>
+                    <div class="openpatron-sidebar-list">
+                        @if (Model.SupportsSubscriptions)
+                        {
+                            <div class="openpatron-sidebar-item">
+                                <span class="openpatron-sidebar-icon">↻</span>
+                                <div>
+                                    <div class="fw-semibold text-dark">Sponsor over time</div>
+                                    <div class="small">Pick a sponsorship tier above.</div>
+                                </div>
+                            </div>
+                        }
+                        @if (Model.SupportsOneTime)
+                        {
+                            <div class="openpatron-sidebar-item">
+                                <span class="openpatron-sidebar-icon">⚡</span>
+                                <div>
+                                    <div class="fw-semibold text-dark">Send a quick thank-you</div>
+                                    <div class="small">Use a quick amount or enter your own.</div>
+                                </div>
+                            </div>
+                        }
                     </div>
-                    <div class="openpatron-sidebar-item">
-                        <span class="openpatron-sidebar-icon">⚡</span>
-                        <div>
-                            <div class="fw-semibold text-dark">Send a quick thank-you</div>
-                            <div class="small">@(Model.SupportsOneTime ? "Use a quick amount or enter your own." : "Not available on this page.")</div>
-                        </div>
-                    </div>
-                    <div class="openpatron-sidebar-item">
-                        <span class="openpatron-sidebar-icon">↗</span>
-                        <div>
-                            <div class="fw-semibold text-dark">External links</div>
-                            <div class="small">Visit the project's public links for updates, code, or documentation.</div>
-                        </div>
-                    </div>
-                </div>
+                }
             </div>
         </div>
     </div>

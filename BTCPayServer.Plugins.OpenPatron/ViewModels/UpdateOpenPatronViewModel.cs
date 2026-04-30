@@ -75,16 +75,15 @@ public class UpdateOpenPatronViewModel
     public OpenPatronSupportMode SupportMode { get; set; } = OpenPatronSupportMode.Both;
 
     [Required]
-    [Display(Name = "App name")]
+    [Display(Name = "Internal name")]
     [MaxLength(50)]
     public string AppName { get; set; } = string.Empty;
 
-    [Required]
-    [Display(Name = "Hero title")]
+    [Display(Name = "Public headline")]
     [MaxLength(80)]
     public string HeroTitle { get; set; } = string.Empty;
 
-    [Display(Name = "Hero subtitle")]
+    [Display(Name = "Tagline")]
     [MaxLength(140)]
     public string HeroSubtitle { get; set; } = string.Empty;
 
@@ -95,10 +94,6 @@ public class UpdateOpenPatronViewModel
     [Display(Name = "Primary CTA")]
     [MaxLength(40)]
     public string PrimaryCallToAction { get; set; } = string.Empty;
-
-    [Display(Name = "Primary CTA URL")]
-    [Url]
-    public string? PrimaryCallToActionUrl { get; set; }
 
     [Required]
     [Display(Name = "Default currency")]

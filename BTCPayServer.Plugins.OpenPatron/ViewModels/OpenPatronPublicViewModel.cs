@@ -47,10 +47,8 @@ public class OpenPatronPublicViewModel
     public string HeroSubtitle { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string PrimaryCallToAction { get; set; } = string.Empty;
-    public string? PrimaryCallToActionUrl { get; set; }
     public string DefaultCurrency { get; set; } = "USD";
     public IReadOnlyList<decimal> SuggestedAmounts { get; set; } = [];
-    public IReadOnlyList<OpenPatronPublicLinkViewModel> Links { get; set; } = [];
     public IReadOnlyList<OpenPatronPublicPlanViewModel> Plans { get; set; } = [];
 }
 
@@ -68,12 +66,6 @@ public class SponsorWallEntryViewModel
     public DateTimeOffset Timestamp { get; set; }
     public decimal Amount { get; set; }
     public string Currency { get; set; } = "USD";
-}
-
-public class OpenPatronPublicLinkViewModel
-{
-    public string Label { get; set; } = string.Empty;
-    public string Url { get; set; } = string.Empty;
 }
 
 public class OpenPatronPublicPlanViewModel
