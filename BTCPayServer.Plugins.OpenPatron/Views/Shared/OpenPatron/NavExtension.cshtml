@@ -19,7 +19,7 @@
 
     <li class="nav-item" permission="@Policies.CanModifyStoreSettings">
         <a layout-menu-item="@nameof(OpenPatronPlugin)" asp-area="" asp-controller="UIApps" asp-action="CreateApp" asp-route-storeId="@store.Id" asp-route-appType="@appType.Type">
-            <vc:icon symbol="nav-crowdfund" />
+            <vc:icon symbol="donate" />
             <span text-translate="true">OpenPatron</span>
         </a>
     </li>
@@ -27,7 +27,7 @@
     {
         <li class="nav-item" not-permission="@Policies.CanModifyStoreSettings" permission="@Policies.CanViewStoreSettings">
             <span layout-menu-item="@nameof(OpenPatronPlugin)">
-                <vc:icon symbol="nav-crowdfund" />
+                <vc:icon symbol="donate" />
                 <span text-translate="true">OpenPatron</span>
             </span>
         </li>
@@ -37,9 +37,10 @@
         var settings = app.Data.GetSettings<OpenPatronAppSettings>();
         var isPublished = settings.Visibility == OpenPatronVisibility.Published;
         var statusTitle = isPublished ? "Published" : "Not published";
+        var statusModifier = isPublished ? "enabled" : "pending";
         <li class="nav-item nav-item-sub" permission="@Policies.CanViewStoreSettings">
             <a layout-menu-item="@($"{nameof(OpenPatronPlugin)}-{app.Id}")" asp-area="@OpenPatronPlugin.Area" asp-controller="UIOpenPatron" asp-action="Update" asp-route-appId="@app.Id">
-                <span class="d-inline-block rounded-circle me-2 flex-shrink-0 @(isPublished ? "bg-success" : "bg-secondary")" style="width:.5rem;height:.5rem" title="@statusTitle" aria-label="@statusTitle"></span>
+                <span class="me-2 btcpay-status btcpay-status--@statusModifier" title="@statusTitle" aria-label="@statusTitle"></span>
                 <span>@app.AppName</span>
             </a>
         </li>
