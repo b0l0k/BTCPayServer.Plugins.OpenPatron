@@ -36,9 +36,10 @@
     {
         var settings = app.Data.GetSettings<OpenPatronAppSettings>();
         var isPublished = settings.Visibility == OpenPatronVisibility.Published;
+        var statusTitle = isPublished ? "Published" : "Not published";
         <li class="nav-item nav-item-sub" permission="@Policies.CanViewStoreSettings">
             <a layout-menu-item="@($"{nameof(OpenPatronPlugin)}-{app.Id}")" asp-area="@OpenPatronPlugin.Area" asp-controller="UIOpenPatron" asp-action="Update" asp-route-appId="@app.Id">
-                <span class="@(isPublished ? "text-success" : "text-muted")" style="font-size:0.5em;vertical-align:middle">●</span>
+                <span class="d-inline-block rounded-circle me-2 flex-shrink-0 @(isPublished ? "bg-success" : "bg-secondary")" style="width:.5rem;height:.5rem" title="@statusTitle" aria-label="@statusTitle"></span>
                 <span>@app.AppName</span>
             </a>
         </li>

@@ -14,6 +14,7 @@ public class UpdateOpenPatronViewModel
     public string? ManageOfferingUrl { get; set; }
     public string? AddPlanUrl { get; set; }
     public int ActivePlanCount { get; set; }
+    public bool Archived { get; set; }
 
     // Page type (locked after first save)
     [Display(Name = "Page type")]

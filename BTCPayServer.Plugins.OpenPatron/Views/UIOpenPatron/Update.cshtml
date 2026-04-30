@@ -1,3 +1,4 @@
+@using BTCPayServer.Client
 @using BTCPayServer.Plugins.OpenPatron.Models
 @model BTCPayServer.Plugins.OpenPatron.ViewModels.UpdateOpenPatronViewModel
 
@@ -385,6 +386,23 @@
     </div>
     } @* end else (PageTypeConfirmed) *@
 </form>
+
+@if (Model.PageTypeConfirmed)
+{
+    <div class="d-grid d-sm-flex flex-wrap gap-3 mt-3" permission="@Policies.CanModifyStoreSettings">
+        <form method="post" asp-area="" asp-controller="UIApps" asp-action="ToggleArchive" asp-route-appId="@Model.AppId">
+            <button type="submit" class="w-100 btn btn-outline-secondary" id="btn-archive-toggle">
+                @(Model.Archived ? "Unarchive this app" : "Archive this app")
+            </button>
+        </form>
+        <a id="DeleteApp" class="btn btn-outline-danger" asp-area="" asp-controller="UIApps" asp-action="DeleteApp" asp-route-appId="@Model.AppId"
+           data-bs-toggle="modal" data-bs-target="#ConfirmModal"
+           data-description="The app <strong>@Html.Encode(Model.AppName)</strong> and its settings will be permanently deleted."
+           data-confirm-input="DELETE">Delete this app</a>
+    </div>
+
+    <partial name="_Confirm" model="@(new BTCPayServer.Abstractions.Models.ConfirmModel("Delete app", "This app will be removed from this store.", "Delete"))" permission="@Policies.CanModifyStoreSettings" />
+}
 
 <partial name="_ValidationScriptsPartial" />
 

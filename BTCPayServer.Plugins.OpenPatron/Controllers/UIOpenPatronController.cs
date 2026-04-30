@@ -180,7 +180,6 @@ public class UIOpenPatronController(
             createIfMissing: AllowsSubscriptions(settings));
 
         app.Name = viewModel.AppName.Trim();
-        app.Archived = false;
         app.SetSettings(settings);
 
         await appService.UpdateOrCreateApp(app);
@@ -362,6 +361,7 @@ public class UIOpenPatronController(
             ManageOfferingUrl = offering is null ? null : GetManageOfferingUrl(app.StoreDataId, offering.Id),
             AddPlanUrl = offering is null ? null : GetAddPlanUrl(app.StoreDataId, offering.Id),
             ActivePlanCount = offering?.Plans.Count(p => p.Status == PlanData.PlanStatus.Active) ?? 0,
+            Archived = app.Archived,
 
             // Page type
             PageType = settings.PageType,
