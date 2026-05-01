@@ -363,23 +363,14 @@ public class UIOpenPatronController(
     }
 
     /// <summary>
-    /// Ensures <see cref="OpenPatronAppSettings.PageLayout"/> is populated.
-    /// For pages created before the block-based builder, generates a default layout
-    /// matching the original page type.
+    /// Ensures <see cref="OpenPatronAppSettings.PageLayout"/> and
+    /// <see cref="OpenPatronAppSettings.Theme"/> are never null.
+    /// Old pages that predate the block builder simply start empty.
     /// </summary>
     public static void EnsurePageLayout(OpenPatronAppSettings settings)
     {
-        if (settings.PageLayout is { Count: > 0 })
-            return;
-
-        settings.PageLayout = settings.PageTypeConfirmed
-            ? BlockRegistry.DefaultLayoutFor(settings.PageType)
-            : [];
-
-        settings.Theme ??= new PageTheme
-        {
-            AccentColor = settings.AccentColor ?? "#6366f1"
-        };
+        settings.PageLayout ??= [];
+        settings.Theme ??= new PageTheme();
     }
 
     private async Task<bool> IsAuthorized(AppData app, string policy)

@@ -264,43 +264,22 @@ public class FastTests
         Assert.Equal(ids.Count, ids.Distinct().Count());
     }
 
-    // ── Migration logic tests ──
+    // ── EnsurePageLayout tests ──
 
     [Fact]
-    public void EnsurePageLayoutMigratesPersonalPage()
+    public void EnsurePageLayoutStartsEmptyForOldPages()
     {
         var settings = new OpenPatronAppSettings
         {
             PageType = OpenPatronPageType.Personal,
             PageTypeConfirmed = true,
-            AccentColor = "#ff0000",
             PageLayout = null
         };
 
         UIOpenPatronController.EnsurePageLayout(settings);
 
         Assert.NotNull(settings.PageLayout);
-        Assert.Equal("profile-hero", settings.PageLayout![0].Type);
-        Assert.Contains(settings.PageLayout, b => b.Type == "projects-grid");
-        Assert.NotNull(settings.Theme);
-        Assert.Equal("#ff0000", settings.Theme!.AccentColor);
-    }
-
-    [Fact]
-    public void EnsurePageLayoutMigratesProjectPage()
-    {
-        var settings = new OpenPatronAppSettings
-        {
-            PageType = OpenPatronPageType.Project,
-            PageTypeConfirmed = true,
-            PageLayout = null
-        };
-
-        UIOpenPatronController.EnsurePageLayout(settings);
-
-        Assert.NotNull(settings.PageLayout);
-        Assert.Equal("project-hero", settings.PageLayout![0].Type);
-        Assert.DoesNotContain(settings.PageLayout, b => b.Type == "projects-grid");
+        Assert.Empty(settings.PageLayout!);
     }
 
     [Fact]
@@ -323,33 +302,32 @@ public class FastTests
     }
 
     [Fact]
-    public void EnsurePageLayoutUsesDefaultAccentWhenNull()
+    public void EnsurePageLayoutCreatesDefaultThemeWhenNull()
     {
         var settings = new OpenPatronAppSettings
         {
-            PageType = OpenPatronPageType.Project,
-            PageTypeConfirmed = true,
-            AccentColor = null,
-            PageLayout = null
+            PageLayout = null,
+            Theme = null
         };
 
         UIOpenPatronController.EnsurePageLayout(settings);
 
+        Assert.NotNull(settings.Theme);
         Assert.Equal("#6366f1", settings.Theme!.AccentColor);
     }
 
     [Fact]
-    public void EnsurePageLayoutEmptyForUnconfirmedPage()
+    public void EnsurePageLayoutPreservesExistingTheme()
     {
         var settings = new OpenPatronAppSettings
         {
-            PageTypeConfirmed = false,
-            PageLayout = null
+            PageLayout = null,
+            Theme = new PageTheme { AccentColor = "#ff0000" }
         };
 
         UIOpenPatronController.EnsurePageLayout(settings);
 
-        Assert.Empty(settings.PageLayout!);
+        Assert.Equal("#ff0000", settings.Theme!.AccentColor);
     }
 
     // ── JSON round-trip tests ──
