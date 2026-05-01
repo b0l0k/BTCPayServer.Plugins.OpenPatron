@@ -29,7 +29,6 @@
 
     @if (!Model.PageTypeConfirmed)
     {
-        @* ── Initial setup: choose a starting template ── *@
         <div class="row justify-content-center mt-5">
             <div class="col-12 col-md-8 col-lg-6">
                 <div class="card">
@@ -72,13 +71,11 @@
     }
     else
     {
-    @* ── Block-based editor ── *@
     <input asp-for="PageType" type="hidden" />
 
     <div class="row g-4">
         <div class="col-12 col-lg-8">
 
-            @* ── Basic settings ── *@
             <div class="form-group mb-3">
                 <label asp-for="AppName" class="form-label"></label>
                 <input asp-for="AppName" class="form-control" />
@@ -99,214 +96,37 @@
                     </div>
                 </div>
                 <div class="card-body p-0" id="visualEditor">
-                    <div id="blockList" class="list-group list-group-flush">
-                    </div>
+                    <div id="blockList" class="list-group list-group-flush"></div>
                     <div id="emptyBlockState" class="text-center text-muted py-4 d-none">
                         No blocks yet. Add blocks from the panel on the right.
                     </div>
                 </div>
                 <div class="card-body d-none" id="jsonEditor">
                     <div class="form-text mb-2">Edit the raw block layout JSON. Switch back to Visual to see changes.</div>
-                    <textarea id="jsonEditorTextarea" class="form-control font-monospace" rows="16" spellcheck="false" style="font-size:.85rem;tab-size:2;"></textarea>
+                    <textarea id="jsonEditorTextarea" class="form-control font-monospace" rows="20" spellcheck="false" style="font-size:.85rem;tab-size:2;"></textarea>
                     <div id="jsonEditorError" class="text-danger small mt-1 d-none"></div>
                 </div>
             </div>
 
-            @* ── Page content settings ── *@
+            @* ── Global settings ── *@
             <div class="card mb-4">
                 <div class="card-body">
-                    <h3 class="h5 mb-3">Page content</h3>
-
-                    @* ── Profile ── *@
-                    <div class="row g-3 align-items-start mb-3">
-                        <div class="col-md-8">
-                            <div class="form-group mb-3">
-                                <label asp-for="DisplayName" class="form-label"></label>
-                                <input asp-for="DisplayName" class="form-control" placeholder="e.g. Jane Doe" />
-                                <span asp-validation-for="DisplayName" class="text-danger"></span>
-                            </div>
-                            <div class="form-group mb-3">
-                                <label asp-for="GitHubUsername" class="form-label"></label>
-                                <div class="input-group">
-                                    <span class="input-group-text">@@</span>
-                                    <input asp-for="GitHubUsername" class="form-control" placeholder="octocat" />
-                                </div>
-                                <span asp-validation-for="GitHubUsername" class="text-danger"></span>
-                            </div>
-                        </div>
-                        <div class="col-md-4 text-center">
-                            <div id="gravatarPreview" class="mb-2">
-                                @if (!string.IsNullOrWhiteSpace(Model.GravatarEmail))
-                                {
-                                    <img src="@BTCPayServer.Plugins.OpenPatron.Controllers.UIOpenPatronController.ComputeGravatarUrl(Model.GravatarEmail)"
-                                         alt="Gravatar" class="rounded-circle" width="96" height="96" />
-                                }
-                                else
-                                {
-                                    <div class="rounded-circle bg-secondary bg-opacity-25 d-inline-flex align-items-center justify-content-center" style="width:96px;height:96px;">
-                                        <span class="text-muted">?</span>
-                                    </div>
-                                }
-                            </div>
-                            <div class="form-group">
-                                <label asp-for="GravatarEmail" class="form-label small"></label>
-                                <input asp-for="GravatarEmail" class="form-control form-control-sm" placeholder="you@example.com" />
-                                <span asp-validation-for="GravatarEmail" class="text-danger"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label asp-for="Bio" class="form-label"></label>
-                        <textarea asp-for="Bio" class="form-control" rows="3" placeholder="A few words about yourself or your work…"></textarea>
-                        <span asp-validation-for="Bio" class="text-danger"></span>
-                    </div>
-
-                    @* ── Social links ── *@
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label asp-for="SocialX" class="form-label"></label>
-                                <div class="input-group">
-                                    <span class="input-group-text">@@</span>
-                                    <input asp-for="SocialX" class="form-control" placeholder="handle" />
-                                </div>
-                                <span asp-validation-for="SocialX" class="text-danger"></span>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label asp-for="SocialMastodon" class="form-label"></label>
-                                <input asp-for="SocialMastodon" class="form-control" placeholder="https://mastodon.social/@@user" />
-                                <span asp-validation-for="SocialMastodon" class="text-danger"></span>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label asp-for="SocialNostr" class="form-label"></label>
-                                <input asp-for="SocialNostr" class="form-control" placeholder="npub1…" />
-                                <span asp-validation-for="SocialNostr" class="text-danger"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    @* ── Hero & description ── *@
-                    <div class="form-group mb-3">
-                        <label asp-for="HeroTitle" class="form-label"></label>
-                        <input asp-for="HeroTitle" class="form-control" />
-                        <div class="form-text">Main heading on the public page. Defaults to the internal name when blank.</div>
-                        <span asp-validation-for="HeroTitle" class="text-danger"></span>
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label asp-for="HeroSubtitle" class="form-label"></label>
-                        <input asp-for="HeroSubtitle" class="form-control" />
-                        <div class="form-text">Short line shown under the headline / your name.</div>
-                        <span asp-validation-for="HeroSubtitle" class="text-danger"></span>
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label asp-for="Description" class="form-label"></label>
-                        <textarea asp-for="Description" class="form-control" rows="8"></textarea>
-                        <span asp-validation-for="Description" class="text-danger"></span>
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label asp-for="SupportMode" class="form-label"></label>
-                        <select asp-for="SupportMode" asp-items="Html.GetEnumSelectList<OpenPatronSupportMode>()" class="form-select"></select>
-                        <div class="form-text">Choose whether the page accepts one-time payments, subscriptions, or both.</div>
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label asp-for="PrimaryCallToAction" class="form-label"></label>
-                        <input asp-for="PrimaryCallToAction" class="form-control" />
-                        <span asp-validation-for="PrimaryCallToAction" class="text-danger"></span>
-                    </div>
-
+                    <h3 class="h5 mb-3">Global settings</h3>
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <div class="form-group mb-3">
+                            <div class="form-group">
+                                <label asp-for="SupportMode" class="form-label"></label>
+                                <select asp-for="SupportMode" asp-items="Html.GetEnumSelectList<OpenPatronSupportMode>()" class="form-select"></select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
                                 <label asp-for="DefaultCurrency" class="form-label"></label>
                                 <input asp-for="DefaultCurrency" class="form-control" />
                                 <span asp-validation-for="DefaultCurrency" class="text-danger"></span>
                             </div>
                         </div>
-                        <div class="col-md-8">
-                            <div class="form-group mb-3">
-                                <label asp-for="SuggestedAmounts" class="form-label"></label>
-                                <input asp-for="SuggestedAmounts" class="form-control" placeholder="5, 15, 50" />
-                                <div class="form-text">Comma-separated suggested one-time amounts, using '.' for decimals.</div>
-                                <span asp-validation-for="SuggestedAmounts" class="text-danger"></span>
-                            </div>
-                        </div>
                     </div>
-                </div>
-            </div>
-
-            @* ── Projects ── *@
-            <div id="projectsSection" class="card mb-4">
-                <div class="card-body">
-                    <h3 class="h5 mb-3">Projects you maintain</h3>
-                    <div id="projectsList">
-                        @for (var i = 0; i < Model.Projects.Count; i++)
-                        {
-                            <div class="border rounded-3 p-3 mb-3 project-row">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <strong class="project-row-title">Project @(i + 1)</strong>
-                                    <button type="button" class="btn btn-sm btn-outline-danger project-remove-btn">Remove</button>
-                                </div>
-                                <input type="hidden" data-field="Language" name="Projects[@i].Language" value="@Model.Projects[i].Language" />
-                                <input type="hidden" data-field="Stars" name="Projects[@i].Stars" value="@Model.Projects[i].Stars" />
-                                <div class="row g-2">
-                                    <div class="col-md-4">
-                                        <input data-field="Name" name="Projects[@i].Name" value="@Model.Projects[i].Name" class="form-control form-control-sm" placeholder="Name" />
-                                    </div>
-                                    <div class="col-md-4">
-                                        <input data-field="Url" name="Projects[@i].Url" value="@Model.Projects[i].Url" class="form-control form-control-sm" placeholder="URL" />
-                                    </div>
-                                    <div class="col-md-4">
-                                        <input data-field="Description" name="Projects[@i].Description" value="@Model.Projects[i].Description" class="form-control form-control-sm" placeholder="Description" />
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="addProjectBtn">+ Add project manually</button>
-
-                    @if (Model.AvailableGitHubRepos.Count > 0)
-                    {
-                        <div class="mt-4 p-3 rounded-3 bg-light border">
-                            <h4 class="h6 mb-2">Suggested from GitHub</h4>
-                            <div class="form-text mb-3">Select repos to add them to your project list, then save.</div>
-                            @foreach (var repo in Model.AvailableGitHubRepos)
-                            {
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input gh-repo-check" type="checkbox"
-                                           data-name="@repo.Name"
-                                           data-url="@repo.HtmlUrl"
-                                           data-desc="@(repo.Description ?? "")"
-                                           data-lang="@(repo.Language ?? "")"
-                                           data-stars="@repo.StargazersCount"
-                                           id="gh-@repo.Name" />
-                                    <label class="form-check-label" for="gh-@repo.Name">
-                                        <strong>@repo.Name</strong>
-                                        @if (repo.StargazersCount > 0)
-                                        {
-                                            <span class="badge text-bg-light">★ @repo.StargazersCount</span>
-                                        }
-                                        @if (!string.IsNullOrWhiteSpace(repo.Language))
-                                        {
-                                            <span class="badge text-bg-info text-white">@repo.Language</span>
-                                        }
-                                        @if (!string.IsNullOrWhiteSpace(repo.Description))
-                                        {
-                                            <div class="text-muted small">@repo.Description</div>
-                                        }
-                                    </label>
-                                </div>
-                            }
-                        </div>
-                    }
                 </div>
             </div>
         </div>
@@ -314,11 +134,8 @@
         @* ── Sidebar ── *@
         <div class="col-12 col-lg-4">
 
-            @* ── Add blocks panel ── *@
             <div class="card mb-3">
-                <div class="card-header">
-                    <h3 class="h5 mb-0">Add blocks</h3>
-                </div>
+                <div class="card-header"><h3 class="h5 mb-0">Add blocks</h3></div>
                 <div class="card-body p-0">
                     <div class="list-group list-group-flush" id="blockPicker">
                         @foreach (var (typeKey, typeInfo) in blockTypes)
@@ -335,7 +152,6 @@
                 </div>
             </div>
 
-            @* ── Theme settings ── *@
             <div class="card mb-3">
                 <div class="card-body">
                     <h3 class="h5 mb-3">Theme</h3>
@@ -369,51 +185,22 @@
                 </div>
             </div>
 
-            @* ── Extras ── *@
-            <div class="card mb-3">
-                <div class="card-body">
-                    <h3 class="h5 mb-3">Extras</h3>
-                    <div class="form-group mb-3">
-                        <label asp-for="FundingGoal" class="form-label"></label>
-                        <div class="input-group">
-                            <span class="input-group-text">@Model.DefaultCurrency</span>
-                            <input asp-for="FundingGoal" class="form-control" placeholder="1000" />
-                        </div>
-                        <div class="form-text">Set a goal and show progress on the public page. Leave empty to hide.</div>
-                        <span asp-validation-for="FundingGoal" class="text-danger"></span>
-                    </div>
-                    <div class="form-group">
-                        <div class="form-check form-switch mt-2">
-                            <input asp-for="ShowSponsorWall" class="form-check-input" />
-                            <label asp-for="ShowSponsorWall" class="form-check-label"></label>
-                        </div>
-                        <div class="form-text">Show an anonymous list of contributions (date + amount, no names).</div>
-                    </div>
-                </div>
-            </div>
-
-            @* ── Publishing ── *@
             <div class="card">
                 <div class="card-body">
                     <h3 class="h5 mb-3">Publishing</h3>
-
                     <div class="form-group mb-3">
                         <label asp-for="Visibility" class="form-label"></label>
                         <select asp-for="Visibility" asp-items="Html.GetEnumSelectList<OpenPatronVisibility>()" class="form-select"></select>
-                        <div class="form-text">When set to Not published, the public URL returns 404 to visitors.</div>
                     </div>
-
                     <div class="mb-3">
                         <div class="text-muted small">Public page</div>
                         <a href="@Model.PublicPageUrl" target="_blank" rel="noreferrer">@Model.PublicPageUrl</a>
                     </div>
-
                     <div class="mb-3">
                         <div class="text-muted small">Subscriptions offering</div>
                         @if (!string.IsNullOrWhiteSpace(Model.OfferingId))
                         {
-                            <div class="small mb-2">Offering ID: @Model.OfferingId</div>
-                            <div class="small text-muted mb-2">Active plans: @Model.ActivePlanCount</div>
+                            <div class="small mb-2">Active plans: @Model.ActivePlanCount</div>
                             @if (!string.IsNullOrWhiteSpace(Model.ManageOfferingUrl))
                             {
                                 <a class="btn btn-outline-secondary btn-sm w-100 mb-2" href="@Model.ManageOfferingUrl">Manage subscription plans</a>
@@ -428,20 +215,15 @@
                             <div class="text-muted small">An offering will be created automatically when you save.</div>
                         }
                     </div>
-
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-primary" id="saveBtn">Save changes</button>
                         <a class="btn btn-secondary" href="@Model.PublicPageUrl" target="_blank" rel="noreferrer">Preview page</a>
                     </div>
                 </div>
             </div>
-
-            <div class="alert alert-info mt-3 mb-0">
-                OpenPatron reuses BTCPay Subscriptions for recurring sponsorship. This page controls branding and the linked subscription offering.
-            </div>
         </div>
     </div>
-    } @* end else (PageTypeConfirmed) *@
+    }
 </form>
 
 @if (Model.PageTypeConfirmed)
@@ -457,7 +239,6 @@
            data-description="The app <strong>@Html.Encode(Model.AppName)</strong> and its settings will be permanently deleted."
            data-confirm-input="DELETE">Delete this app</a>
     </div>
-
     <partial name="_Confirm" model="@(new BTCPayServer.Abstractions.Models.ConfirmModel("Delete app", "This app will be removed from this store.", "Delete"))" permission="@Policies.CanModifyStoreSettings" />
 }
 
@@ -467,64 +248,220 @@
 {
 <script>
 (function () {
-    // ── Block type catalog ──
     var BLOCK_TYPES = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(
         blockTypes.ToDictionary(kv => kv.Key, kv => new { name = kv.Value.DisplayName, description = kv.Value.Description })));
 
-    // ── DOM refs ──
-    var layoutInput     = document.getElementById('pageLayoutJson');
-    var blockListEl     = document.getElementById('blockList');
-    var emptyState      = document.getElementById('emptyBlockState');
-    var blockCountEl    = document.getElementById('blockCount');
-    var visualEditor    = document.getElementById('visualEditor');
-    var jsonEditor      = document.getElementById('jsonEditor');
-    var jsonTextarea     = document.getElementById('jsonEditorTextarea');
-    var jsonError        = document.getElementById('jsonEditorError');
-    var modeVisualBtn   = document.getElementById('modeVisualBtn');
-    var modeJsonBtn     = document.getElementById('modeJsonBtn');
+    // ── Per-block-type form definitions ──
+    // Each returns {html, read(formEl) -> settings}
+    var BLOCK_FORMS = {
+        'profile-hero': {
+            fields: [
+                { key: 'displayName', label: 'Display name', type: 'text', placeholder: 'Jane Doe' },
+                { key: 'subtitle', label: 'Subtitle', type: 'text', placeholder: 'Open source maintainer' },
+                { key: 'bio', label: 'Bio', type: 'textarea', placeholder: 'A few words about yourself…' },
+                { key: 'gravatarEmail', label: 'Gravatar email', type: 'email', placeholder: 'you@example.com' },
+                { key: 'gitHubUsername', label: 'GitHub username', type: 'text', placeholder: 'octocat' },
+                { key: 'socialX', label: 'X (Twitter)', type: 'text', placeholder: 'handle' },
+                { key: 'socialMastodon', label: 'Mastodon URL', type: 'url', placeholder: 'https://mastodon.social/@@user' },
+                { key: 'socialNostr', label: 'Nostr (npub)', type: 'text', placeholder: 'npub1…' }
+            ]
+        },
+        'project-hero': {
+            fields: [
+                { key: 'title', label: 'Headline', type: 'text', placeholder: 'Support My Work' },
+                { key: 'subtitle', label: 'Subtitle', type: 'text', placeholder: 'Help fund open source development' },
+                { key: 'displayName', label: 'Maintainer name', type: 'text', placeholder: 'Jane Doe' },
+                { key: 'gravatarEmail', label: 'Gravatar email', type: 'email', placeholder: 'you@example.com' },
+                { key: 'gitHubUsername', label: 'GitHub username', type: 'text', placeholder: 'octocat' },
+                { key: 'socialX', label: 'X (Twitter)', type: 'text', placeholder: 'handle' },
+                { key: 'socialMastodon', label: 'Mastodon URL', type: 'url', placeholder: 'https://mastodon.social/@@user' },
+                { key: 'socialNostr', label: 'Nostr (npub)', type: 'text', placeholder: 'npub1…' }
+            ]
+        },
+        'funding-progress': {
+            fields: [
+                { key: 'goal', label: 'Funding goal amount', type: 'number', placeholder: '1000' }
+            ]
+        },
+        'description': {
+            fields: [
+                { key: 'heading', label: 'Section heading', type: 'text', placeholder: 'Why sponsor this work?' },
+                { key: 'content', label: 'Content', type: 'textarea', placeholder: 'Tell visitors why they should sponsor…', rows: 8 }
+            ]
+        },
+        'projects-grid': {
+            custom: true
+        },
+        'subscription-tiers': {
+            fields: [
+                { key: 'heading', label: 'Section heading', type: 'text', placeholder: 'Choose a sponsorship tier' },
+                { key: 'subtitle', label: 'Subtitle', type: 'text', placeholder: 'Pick the level that fits you best' }
+            ]
+        },
+        'quick-support': {
+            fields: [
+                { key: 'heading', label: 'Section heading', type: 'text', placeholder: 'Send quick support' },
+                { key: 'suggestedAmounts', label: 'Suggested amounts (comma-separated)', type: 'text', placeholder: '5, 15, 50' }
+            ]
+        },
+        'sponsor-wall': {
+            fields: [
+                { key: 'heading', label: 'Section heading', type: 'text', placeholder: "Who's supporting this work" }
+            ]
+        }
+    };
 
-    // ── Block data ──
+    var layoutInput = document.getElementById('pageLayoutJson');
+    var blockListEl = document.getElementById('blockList');
+    var emptyState = document.getElementById('emptyBlockState');
+    var blockCountEl = document.getElementById('blockCount');
+    var visualEditor = document.getElementById('visualEditor');
+    var jsonEditor = document.getElementById('jsonEditor');
+    var jsonTextarea = document.getElementById('jsonEditorTextarea');
+    var jsonError = document.getElementById('jsonEditorError');
+    var modeVisualBtn = document.getElementById('modeVisualBtn');
+    var modeJsonBtn = document.getElementById('modeJsonBtn');
+
     var blocks = [];
     try { blocks = JSON.parse(layoutInput.value); } catch (_) { blocks = []; }
     if (!Array.isArray(blocks)) blocks = [];
 
-    function generateId() {
-        return Math.random().toString(36).substring(2, 14);
-    }
+    var expandedBlockId = null;
+
+    function generateId() { return Math.random().toString(36).substring(2, 14); }
 
     function esc(s) {
         var d = document.createElement('div');
-        d.textContent = s;
+        d.textContent = s || '';
         return d.innerHTML;
     }
 
-    // ── Render visual block list ──
+    function val(settings, key) {
+        if (!settings || settings[key] == null) return '';
+        return settings[key];
+    }
+
+    // ── Render a block's config form HTML ──
+    function renderBlockForm(block) {
+        var def = BLOCK_FORMS[block.Type];
+        if (!def) return '<div class="text-muted small p-3">No configuration for this block type.</div>';
+        var s = block.Settings || {};
+
+        if (def.custom && block.Type === 'projects-grid') {
+            return renderProjectsForm(s);
+        }
+
+        var html = '<div class="p-3 bg-light border-top">';
+        (def.fields || []).forEach(function (f) {
+            var v = val(s, f.key);
+            // suggestedAmounts is stored as array, display as comma-separated
+            if (f.key === 'suggestedAmounts' && Array.isArray(v)) {
+                v = v.join(', ');
+            }
+            var id = 'bf_' + block.Id + '_' + f.key;
+            html += '<div class="form-group mb-2">';
+            html += '<label class="form-label small" for="' + id + '">' + esc(f.label) + '</label>';
+            if (f.type === 'textarea') {
+                html += '<textarea class="form-control form-control-sm block-field" id="' + id + '" data-key="' + f.key + '" rows="' + (f.rows || 3) + '" placeholder="' + esc(f.placeholder) + '">' + esc(v) + '</textarea>';
+            } else {
+                html += '<input class="form-control form-control-sm block-field" id="' + id + '" data-key="' + f.key + '" type="' + (f.type || 'text') + '" placeholder="' + esc(f.placeholder) + '" value="' + esc(v) + '" />';
+            }
+            html += '</div>';
+        });
+        html += '</div>';
+        return html;
+    }
+
+    function renderProjectsForm(s) {
+        var projects = (s && s.projects) || [];
+        var html = '<div class="p-3 bg-light border-top" data-projects-form>';
+        projects.forEach(function (p, i) {
+            html += '<div class="border rounded-3 p-2 mb-2 project-entry">' +
+                '<div class="d-flex justify-content-between align-items-center mb-1">' +
+                    '<strong class="small">Project ' + (i + 1) + '</strong>' +
+                    '<button type="button" class="btn btn-sm btn-outline-danger py-0 px-1 project-entry-remove" data-pidx="' + i + '">&times;</button>' +
+                '</div>' +
+                '<div class="row g-1">' +
+                    '<div class="col-4"><input class="form-control form-control-sm proj-field" data-pkey="name" placeholder="Name" value="' + esc(p.name || '') + '" /></div>' +
+                    '<div class="col-4"><input class="form-control form-control-sm proj-field" data-pkey="url" placeholder="URL" value="' + esc(p.url || '') + '" /></div>' +
+                    '<div class="col-4"><input class="form-control form-control-sm proj-field" data-pkey="description" placeholder="Description" value="' + esc(p.description || '') + '" /></div>' +
+                '</div>' +
+            '</div>';
+        });
+        html += '<button type="button" class="btn btn-sm btn-outline-secondary project-add-btn">+ Add project</button>';
+        html += '</div>';
+        return html;
+    }
+
+    // ── Collect form data back into block.Settings ──
+    function collectBlockSettings(blockEl, block) {
+        var def = BLOCK_FORMS[block.Type];
+        if (!def) return;
+        if (!block.Settings) block.Settings = {};
+
+        if (def.custom && block.Type === 'projects-grid') {
+            collectProjectsSettings(blockEl, block);
+            return;
+        }
+
+        blockEl.querySelectorAll('.block-field').forEach(function (input) {
+            var key = input.dataset.key;
+            var value = input.value;
+            if (key === 'suggestedAmounts') {
+                block.Settings[key] = value.split(/[,;]/).map(function (s) { return parseFloat(s.trim()); }).filter(function (n) { return !isNaN(n) && n > 0; });
+            } else if (key === 'goal') {
+                block.Settings[key] = parseFloat(value) || 0;
+            } else {
+                block.Settings[key] = value;
+            }
+        });
+    }
+
+    function collectProjectsSettings(blockEl, block) {
+        if (!block.Settings) block.Settings = {};
+        var projects = [];
+        blockEl.querySelectorAll('.project-entry').forEach(function (entry) {
+            var p = {};
+            entry.querySelectorAll('.proj-field').forEach(function (f) { p[f.dataset.pkey] = f.value; });
+            if (p.name || p.url) projects.push(p);
+        });
+        block.Settings.projects = projects;
+    }
+
+    // ── Render the full visual block list ──
     function renderBlockList() {
+        // Collect settings from any open forms first
+        collectAllOpenForms();
+
         blockListEl.innerHTML = '';
         blocks.forEach(function (block, idx) {
             var info = BLOCK_TYPES[block.Type] || { name: block.Type, description: '' };
-            var item = document.createElement('div');
-            item.className = 'list-group-item block-row';
-            item.dataset.idx = idx;
-
+            var isExpanded = expandedBlockId === block.Id;
             var isFirst = idx === 0;
             var isLast = idx === blocks.length - 1;
 
-            item.innerHTML =
-                '<div class="d-flex justify-content-between align-items-center">' +
+            var item = document.createElement('div');
+            item.className = 'list-group-item p-0 block-row';
+            item.dataset.idx = idx;
+            item.dataset.blockId = block.Id;
+
+            var headerHtml =
+                '<div class="d-flex justify-content-between align-items-center p-2 block-header" style="cursor:pointer;" data-block-id="' + block.Id + '">' +
                     '<div class="d-flex align-items-center gap-2">' +
                         '<div class="d-flex flex-column">' +
                             '<button type="button" class="btn btn-sm btn-link p-0 lh-1 block-move-btn" data-dir="up" data-idx="' + idx + '"' + (isFirst ? ' disabled' : '') + ' title="Move up">&#9650;</button>' +
                             '<button type="button" class="btn btn-sm btn-link p-0 lh-1 block-move-btn" data-dir="down" data-idx="' + idx + '"' + (isLast ? ' disabled' : '') + ' title="Move down">&#9660;</button>' +
                         '</div>' +
                         '<div>' +
-                            '<div class="fw-semibold">' + esc(info.name) + '</div>' +
+                            '<div class="fw-semibold">' + esc(info.name) + ' <span class="text-muted fw-normal">' + (isExpanded ? '&#9660;' : '&#9654;') + '</span></div>' +
                             '<div class="text-muted small">' + esc(info.description) + '</div>' +
                         '</div>' +
                     '</div>' +
-                    '<button type="button" class="btn btn-sm btn-outline-danger block-remove-btn" data-idx="' + idx + '">&times; Remove</button>' +
+                    '<button type="button" class="btn btn-sm btn-outline-danger block-remove-btn" data-idx="' + idx + '">&times;</button>' +
                 '</div>';
 
+            var formHtml = isExpanded ? renderBlockForm(block) : '';
+            item.innerHTML = headerHtml + formHtml;
             blockListEl.appendChild(item);
         });
 
@@ -533,16 +470,24 @@
         syncToInput();
     }
 
+    function collectAllOpenForms() {
+        if (!expandedBlockId) return;
+        var openEl = blockListEl.querySelector('[data-block-id="' + expandedBlockId + '"]');
+        var openBlock = blocks.find(function (b) { return b.Id === expandedBlockId; });
+        if (openEl && openBlock) collectBlockSettings(openEl, openBlock);
+    }
+
     function syncToInput() {
         layoutInput.value = JSON.stringify(blocks);
     }
 
-    // ── Block list: remove ──
+    // ── Event: click on block list (remove, move, expand/collapse) ──
     blockListEl.addEventListener('click', function (e) {
         var removeBtn = e.target.closest('.block-remove-btn');
         if (removeBtn) {
-            e.preventDefault();
+            e.preventDefault(); e.stopPropagation();
             var idx = parseInt(removeBtn.dataset.idx, 10);
+            if (blocks[idx] && blocks[idx].Id === expandedBlockId) expandedBlockId = null;
             blocks.splice(idx, 1);
             renderBlockList();
             return;
@@ -550,41 +495,87 @@
 
         var moveBtn = e.target.closest('.block-move-btn');
         if (moveBtn) {
-            e.preventDefault();
+            e.preventDefault(); e.stopPropagation();
             var idx = parseInt(moveBtn.dataset.idx, 10);
             var dir = moveBtn.dataset.dir;
-            if (dir === 'up' && idx > 0) {
-                var tmp = blocks[idx - 1];
-                blocks[idx - 1] = blocks[idx];
-                blocks[idx] = tmp;
-            } else if (dir === 'down' && idx < blocks.length - 1) {
-                var tmp = blocks[idx + 1];
-                blocks[idx + 1] = blocks[idx];
-                blocks[idx] = tmp;
-            }
+            if (dir === 'up' && idx > 0) { var t = blocks[idx-1]; blocks[idx-1] = blocks[idx]; blocks[idx] = t; if (expandedBlockId) {} }
+            else if (dir === 'down' && idx < blocks.length - 1) { var t = blocks[idx+1]; blocks[idx+1] = blocks[idx]; blocks[idx] = t; }
             renderBlockList();
+            return;
+        }
+
+        var header = e.target.closest('.block-header');
+        if (header) {
+            e.preventDefault();
+            var bid = header.dataset.blockId;
+            collectAllOpenForms();
+            expandedBlockId = (expandedBlockId === bid) ? null : bid;
+            renderBlockList();
+            return;
+        }
+
+        // Project entry remove
+        var projRemove = e.target.closest('.project-entry-remove');
+        if (projRemove) {
+            e.preventDefault();
+            var entry = projRemove.closest('.project-entry');
+            if (entry) entry.remove();
+            return;
+        }
+
+        // Project add
+        var projAdd = e.target.closest('.project-add-btn');
+        if (projAdd) {
+            e.preventDefault();
+            var form = projAdd.closest('[data-projects-form]');
+            var newEntry = document.createElement('div');
+            newEntry.className = 'border rounded-3 p-2 mb-2 project-entry';
+            var count = form.querySelectorAll('.project-entry').length;
+            newEntry.innerHTML =
+                '<div class="d-flex justify-content-between align-items-center mb-1">' +
+                    '<strong class="small">Project ' + (count + 1) + '</strong>' +
+                    '<button type="button" class="btn btn-sm btn-outline-danger py-0 px-1 project-entry-remove">&times;</button>' +
+                '</div>' +
+                '<div class="row g-1">' +
+                    '<div class="col-4"><input class="form-control form-control-sm proj-field" data-pkey="name" placeholder="Name" /></div>' +
+                    '<div class="col-4"><input class="form-control form-control-sm proj-field" data-pkey="url" placeholder="URL" /></div>' +
+                    '<div class="col-4"><input class="form-control form-control-sm proj-field" data-pkey="description" placeholder="Description" /></div>' +
+                '</div>';
+            form.insertBefore(newEntry, projAdd);
         }
     });
 
-    // ── Block picker: add ──
+    // ── Block picker ──
     document.getElementById('blockPicker').addEventListener('click', function (e) {
         e.preventDefault();
         var item = e.target.closest('.block-picker-item');
         if (!item) return;
+        collectAllOpenForms();
         var type = item.dataset.blockType;
-        blocks.push({ Id: generateId(), Type: type, Settings: null });
+        var defaults = {};
+        var def = BLOCK_FORMS[type];
+        if (def && def.fields) {
+            def.fields.forEach(function (f) {
+                if (f.key === 'suggestedAmounts') defaults[f.key] = [];
+                else if (f.key === 'goal') defaults[f.key] = 0;
+                else defaults[f.key] = '';
+            });
+        }
+        if (type === 'projects-grid') defaults = { projects: [] };
+        var newBlock = { Id: generateId(), Type: type, Settings: defaults };
+        blocks.push(newBlock);
+        expandedBlockId = newBlock.Id;
         renderBlockList();
         blockListEl.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
 
-    // ── Visual / JSON mode toggle ──
+    // ── Visual / JSON toggle ──
     var currentMode = 'visual';
 
     function switchToVisual() {
         if (currentMode === 'json') {
-            var raw = jsonTextarea.value.trim();
             try {
-                var parsed = JSON.parse(raw);
+                var parsed = JSON.parse(jsonTextarea.value.trim());
                 if (!Array.isArray(parsed)) throw new Error('Must be an array');
                 blocks = parsed;
                 jsonError.classList.add('d-none');
@@ -595,6 +586,7 @@
             }
         }
         currentMode = 'visual';
+        expandedBlockId = null;
         visualEditor.classList.remove('d-none');
         jsonEditor.classList.add('d-none');
         modeVisualBtn.classList.add('active');
@@ -603,6 +595,7 @@
     }
 
     function switchToJson() {
+        collectAllOpenForms();
         currentMode = 'json';
         jsonTextarea.value = JSON.stringify(blocks, null, 2);
         jsonError.classList.add('d-none');
@@ -615,30 +608,21 @@
     modeVisualBtn.addEventListener('click', function (e) { e.preventDefault(); switchToVisual(); });
     modeJsonBtn.addEventListener('click', function (e) { e.preventDefault(); switchToJson(); });
 
-    // Keep hidden input in sync when JSON textarea changes
     jsonTextarea.addEventListener('input', function () {
         try {
             var parsed = JSON.parse(jsonTextarea.value);
-            if (Array.isArray(parsed)) {
-                blocks = parsed;
-                syncToInput();
-                jsonError.classList.add('d-none');
-            }
-        } catch (_) { /* will validate on mode switch */ }
+            if (Array.isArray(parsed)) { blocks = parsed; syncToInput(); jsonError.classList.add('d-none'); }
+        } catch (_) {}
     });
 
-    // Sync before form submit
     document.getElementById('openpatronForm').addEventListener('submit', function () {
+        collectAllOpenForms();
         if (currentMode === 'json') {
-            try {
-                var parsed = JSON.parse(jsonTextarea.value);
-                if (Array.isArray(parsed)) blocks = parsed;
-            } catch (_) {}
+            try { var p = JSON.parse(jsonTextarea.value); if (Array.isArray(p)) blocks = p; } catch (_) {}
         }
         syncToInput();
     });
 
-    // ── Initial render ──
     renderBlockList();
 
     // ── Accent color picker sync ──
@@ -649,87 +633,6 @@
         colorInput.addEventListener('input', function () {
             if (/^#[0-9a-fA-F]{6}$/.test(colorInput.value)) picker.value = colorInput.value;
         });
-    }
-
-    // ── Project row management ──
-    var projectList = document.getElementById('projectsList');
-    if (projectList) {
-        function renumberProjects() {
-            projectList.querySelectorAll('.project-row').forEach(function (row, idx) {
-                var title = row.querySelector('.project-row-title');
-                if (title && !row.dataset.ghName) title.textContent = 'Project ' + (idx + 1);
-                row.querySelectorAll('input[data-field]').forEach(function (inp) {
-                    inp.name = 'Projects[' + idx + '].' + inp.dataset.field;
-                });
-            });
-        }
-
-        function buildProjectRow(opts) {
-            opts = opts || {};
-            var row = document.createElement('div');
-            row.className = 'border rounded-3 p-3 mb-3 project-row';
-            if (opts.ghName) row.dataset.ghName = opts.ghName;
-            row.innerHTML =
-                '<div class="d-flex justify-content-between align-items-start mb-2">' +
-                    '<strong class="project-row-title"></strong>' +
-                    '<button type="button" class="btn btn-sm btn-outline-danger project-remove-btn">Remove</button>' +
-                '</div>' +
-                '<input type="hidden" data-field="Language" />' +
-                '<input type="hidden" data-field="Stars" />' +
-                '<div class="row g-2">' +
-                    '<div class="col-md-4"><input data-field="Name" class="form-control form-control-sm" placeholder="Name" /></div>' +
-                    '<div class="col-md-4"><input data-field="Url" class="form-control form-control-sm" placeholder="URL" /></div>' +
-                    '<div class="col-md-4"><input data-field="Description" class="form-control form-control-sm" placeholder="Description" /></div>' +
-                '</div>';
-            row.querySelector('.project-row-title').textContent = opts.ghName || 'Project';
-            row.querySelector('[data-field="Language"]').value = opts.language || '';
-            row.querySelector('[data-field="Stars"]').value = opts.stars || '';
-            row.querySelector('[data-field="Name"]').value = opts.name || '';
-            row.querySelector('[data-field="Url"]').value = opts.url || '';
-            row.querySelector('[data-field="Description"]').value = opts.description || '';
-            return row;
-        }
-
-        projectList.addEventListener('click', function (e) {
-            if (!e.target.classList.contains('project-remove-btn')) return;
-            var row = e.target.closest('.project-row');
-            if (!row) return;
-            if (row.dataset.ghName) {
-                var cb = document.querySelector('.gh-repo-check[data-name="' + CSS.escape(row.dataset.ghName) + '"]');
-                if (cb) cb.checked = false;
-            }
-            row.remove();
-            renumberProjects();
-        });
-
-        var addBtn = document.getElementById('addProjectBtn');
-        if (addBtn) {
-            addBtn.addEventListener('click', function () {
-                projectList.appendChild(buildProjectRow());
-                renumberProjects();
-            });
-        }
-
-        document.querySelectorAll('.gh-repo-check').forEach(function (cb) {
-            cb.addEventListener('change', function () {
-                if (this.checked) {
-                    projectList.appendChild(buildProjectRow({
-                        ghName: this.dataset.name,
-                        name: this.dataset.name,
-                        url: this.dataset.url,
-                        description: this.dataset.desc,
-                        language: this.dataset.lang,
-                        stars: this.dataset.stars
-                    }));
-                } else {
-                    var existing = projectList.querySelector('.project-row[data-gh-name="' + CSS.escape(this.dataset.name) + '"]');
-                    if (existing) existing.remove();
-                }
-                renumberProjects();
-            });
-        });
-
-        renumberProjects();
     }
 })();
 </script>

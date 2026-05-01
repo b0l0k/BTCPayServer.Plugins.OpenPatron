@@ -1,15 +1,18 @@
+@using BTCPayServer.Plugins.OpenPatron.Services
 @model BTCPayServer.Plugins.OpenPatron.ViewModels.BlockRenderContext
 @{
-    var m = Model.Page;
+    var s = Model.Block.Settings;
+    var heading = BlockSettingsHelper.Str(s, "heading", "Who's supporting this work");
+    var entries = Model.Page.SponsorWallEntries;
 }
 
-@if (m.ShowSponsorWall && m.SponsorWallEntries.Count > 0)
+@if (entries.Count > 0)
 {
     <section class="openpatron-panel mb-block" data-block-type="sponsor-wall" data-block-id="@Model.Block.Id">
         <div class="openpatron-kicker">Recent contributions</div>
-        <h2 class="h4 fw-semibold mb-3">Who's supporting this work</h2>
+        <h2 class="h4 fw-semibold mb-3">@heading</h2>
         <div>
-            @foreach (var entry in m.SponsorWallEntries)
+            @foreach (var entry in entries)
             {
                 <div class="openpatron-wall-entry">
                     <span>Anonymous</span>

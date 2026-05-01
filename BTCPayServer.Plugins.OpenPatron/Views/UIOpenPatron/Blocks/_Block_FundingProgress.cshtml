@@ -1,21 +1,26 @@
+@using BTCPayServer.Plugins.OpenPatron.Services
 @model BTCPayServer.Plugins.OpenPatron.ViewModels.BlockRenderContext
 @{
-    var m = Model.Page;
+    var s = Model.Block.Settings;
+    var goal = BlockSettingsHelper.Dec(s, "goal");
+    var currency = Model.Page.DefaultCurrency;
+    var raised = Model.Page.AmountRaised;
+    var pct = Model.Page.FundingPercentage;
 }
 
-@if (m.FundingGoal is > 0)
+@if (goal is > 0)
 {
     <section class="openpatron-panel mb-block" data-block-type="funding-progress" data-block-id="@Model.Block.Id">
         <div class="openpatron-kicker">Funding progress</div>
         <div class="d-flex justify-content-between align-items-end mb-2">
             <div>
-                <span class="h4 fw-bold mb-0">@m.DefaultCurrency @m.AmountRaised.ToString("N2")</span>
-                <span class="text-muted"> raised of @m.DefaultCurrency @m.FundingGoal.Value.ToString("N2") goal</span>
+                <span class="h4 fw-bold mb-0">@currency @raised.ToString("N2")</span>
+                <span class="text-muted"> raised of @currency @goal.Value.ToString("N2") goal</span>
             </div>
-            <span class="fw-semibold" style="color: var(--op-accent);">@m.FundingPercentage%</span>
+            <span class="fw-semibold" style="color: var(--op-accent);">@pct%</span>
         </div>
         <div class="openpatron-progress">
-            <div class="openpatron-progress-bar" style="width: @m.FundingPercentage%"></div>
+            <div class="openpatron-progress-bar" style="width: @pct%"></div>
         </div>
     </section>
 }

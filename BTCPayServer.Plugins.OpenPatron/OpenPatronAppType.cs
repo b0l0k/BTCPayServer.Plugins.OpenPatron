@@ -39,12 +39,7 @@ public class OpenPatronAppType(
             PageType = OpenPatronPageType.Project,
             PageTypeConfirmed = false,
             SupportMode = OpenPatronSupportMode.Both,
-            HeroTitle = appData.Name,
-            HeroSubtitle = "Support ongoing maintenance and development.",
-            Description = "Tell sponsors what you maintain, why it matters, and what their support unlocks.",
             DefaultCurrency = defaultCurrency,
-            PrimaryCallToAction = "Sponsor this project",
-            SuggestedAmounts = [5m, 15m, 50m],
             Visibility = OpenPatronVisibility.Unpublished
         });
 

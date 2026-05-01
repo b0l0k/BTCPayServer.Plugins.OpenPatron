@@ -23,6 +23,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace BTCPayServer.Plugins.OpenPatron.Controllers;
 
@@ -33,7 +34,6 @@ public class UIOpenPatronController(
     ApplicationDbContextFactory dbContextFactory,
     UIInvoiceController uiInvoiceController,
     IAuthorizationService authorizationService,
-    GitHubRepoService gitHubRepoService,
     SponsorWallService sponsorWallService,
     FundingProgressService fundingProgressService) : Controller
 {
@@ -46,29 +46,16 @@ public class UIOpenPatronController(
     {
         var app = await appService.GetApp(appId, OpenPatronAppType.AppType, includeArchived: true);
         if (app is null)
-        {
             return NotFound();
-        }
 
         if (!await IsAuthorized(app, Policies.CanViewStoreSettings))
-        {
             return Forbid();
-        }
 
         var settings = app.GetSettings<OpenPatronAppSettings>();
         EnsurePageLayout(settings);
 
         var offering = await GetOffering(app, settings);
         var vm = ToUpdateViewModel(app, settings, offering);
-
-        if (!string.IsNullOrWhiteSpace(settings.GitHubUsername))
-        {
-            var repos = await gitHubRepoService.GetPublicReposAsync(settings.GitHubUsername);
-            var existingUrls = new HashSet<string>(
-                settings.Projects.Select(p => p.Url),
-                StringComparer.OrdinalIgnoreCase);
-            vm.AvailableGitHubRepos = repos.Where(r => !existingUrls.Contains(r.HtmlUrl)).ToList();
-        }
 
         return View(UpdateViewPath, vm);
     }
@@ -79,18 +66,13 @@ public class UIOpenPatronController(
     {
         var app = await appService.GetApp(appId, OpenPatronAppType.AppType, includeArchived: true);
         if (app is null)
-        {
             return NotFound();
-        }
 
         if (!await IsAuthorized(app, Policies.CanModifyStoreSettings))
-        {
             return Forbid();
-        }
 
         var existingSettings = app.GetSettings<OpenPatronAppSettings>();
 
-        // Initial setup: choose a starting template and generate default block layout
         if (!existingSettings.PageTypeConfirmed)
         {
             existingSettings.PageType = viewModel.PageType;
@@ -103,8 +85,6 @@ public class UIOpenPatronController(
             return RedirectToAction(nameof(Update), new { appId = app.Id });
         }
 
-        ValidateSuggestedAmounts(viewModel.SuggestedAmounts);
-
         if (!ModelState.IsValid)
         {
             viewModel.AppId = app.Id;
@@ -113,7 +93,6 @@ public class UIOpenPatronController(
             return View(UpdateViewPath, viewModel);
         }
 
-        // Parse block layout from posted JSON
         List<BlockDefinition> pageLayout;
         try
         {
@@ -122,15 +101,13 @@ public class UIOpenPatronController(
         }
         catch
         {
-            pageLayout = existingSettings.PageLayout ?? BlockRegistry.DefaultLayoutFor(existingSettings.PageType);
+            pageLayout = existingSettings.PageLayout ?? [];
         }
 
         var settings = new OpenPatronAppSettings
         {
             PageType = existingSettings.PageType,
             PageTypeConfirmed = true,
-
-            // Block layout
             PageLayout = pageLayout,
             Theme = new PageTheme
             {
@@ -138,57 +115,11 @@ public class UIOpenPatronController(
                 BorderRadius = NormalizeString(viewModel.ThemeBorderRadius) ?? "1.5rem",
                 BlockSpacing = NormalizeString(viewModel.ThemeBlockSpacing) ?? "1rem",
             },
-
-            // Profile
-            DisplayName = viewModel.DisplayName?.Trim(),
-            Bio = viewModel.Bio?.Trim(),
-            GitHubUsername = viewModel.GitHubUsername?.Trim(),
-            GravatarEmail = viewModel.GravatarEmail?.Trim(),
-
-            // Projects
-            Projects = viewModel.Projects
-                .Where(p => !string.IsNullOrWhiteSpace(p.Name) && !string.IsNullOrWhiteSpace(p.Url))
-                .Select(p => new OpenPatronProject
-                {
-                    Name = p.Name.Trim(),
-                    Url = p.Url.Trim(),
-                    Description = p.Description?.Trim() ?? string.Empty,
-                    Language = p.Language?.Trim(),
-                    Stars = p.Stars
-                })
-                .ToList(),
-
-            // Social links
-            SocialLinks = new OpenPatronSocialLinks
-            {
-                X = NormalizeString(viewModel.SocialX),
-                Mastodon = NormalizeUrl(viewModel.SocialMastodon),
-                Nostr = NormalizeString(viewModel.SocialNostr)
-            },
-
-            // Legacy accent color (kept in sync with theme)
-            AccentColor = NormalizeString(viewModel.ThemeAccentColor),
-
-            // Funding goal
-            FundingGoal = viewModel.FundingGoal,
-
-            // Sponsor wall
-            ShowSponsorWall = viewModel.ShowSponsorWall,
-
-            // Core settings
             OfferingId = viewModel.OfferingId,
             SupportMode = viewModel.SupportMode,
-            HeroTitle = string.IsNullOrWhiteSpace(viewModel.HeroTitle)
-                ? viewModel.AppName.Trim()
-                : viewModel.HeroTitle.Trim(),
-            HeroSubtitle = viewModel.HeroSubtitle.Trim(),
-            Description = viewModel.Description.Trim(),
-            PrimaryCallToAction = string.IsNullOrWhiteSpace(viewModel.PrimaryCallToAction)
-                ? "Sponsor this project"
-                : viewModel.PrimaryCallToAction.Trim(),
             DefaultCurrency = viewModel.DefaultCurrency.Trim().ToUpperInvariant(),
-            SuggestedAmounts = ParseSuggestedAmounts(viewModel.SuggestedAmounts),
             Visibility = viewModel.Visibility,
+            AccentColor = NormalizeString(viewModel.ThemeAccentColor),
             PrimaryCallToActionUrl = existingSettings.PrimaryCallToActionUrl,
             Links = existingSettings.Links
         };
@@ -200,7 +131,6 @@ public class UIOpenPatronController(
 
         app.Name = viewModel.AppName.Trim();
         app.SetSettings(settings);
-
         await appService.UpdateOrCreateApp(app);
         TempData[WellKnownTempData.SuccessMessage] = "OpenPatron page updated.";
 
@@ -213,29 +143,33 @@ public class UIOpenPatronController(
     {
         var app = await appService.GetApp(appId, OpenPatronAppType.AppType, includeArchived: true);
         if (app is null)
-        {
             return NotFound();
-        }
 
         var settings = app.GetSettings<OpenPatronAppSettings>();
-        var isPubliclyVisible = IsPublished(settings);
-        if (!isPubliclyVisible && !await IsAuthorized(app, Policies.CanViewStoreSettings))
-        {
+        if (!IsPublished(settings) && !await IsAuthorized(app, Policies.CanViewStoreSettings))
             return NotFound();
-        }
 
         EnsurePageLayout(settings);
 
         var offering = AllowsSubscriptions(settings) ? await GetOffering(app, settings) : null;
         var vm = ToPublicViewModel(app, settings, offering);
 
-        if (settings.FundingGoal is > 0)
+        // Scan blocks for runtime data needs
+        var fundingBlock = settings.PageLayout?.FirstOrDefault(b =>
+            string.Equals(b.Type, BlockRegistry.FundingProgress, StringComparison.OrdinalIgnoreCase));
+        if (fundingBlock != null)
         {
-            vm.AmountRaised = await fundingProgressService.GetTotalRaisedAsync(app.Id, settings.DefaultCurrency);
-            vm.FundingPercentage = (int)Math.Min(100, Math.Round(vm.AmountRaised / settings.FundingGoal.Value * 100));
+            var goal = BlockSettingsHelper.Dec(fundingBlock.Settings, "goal");
+            if (goal is > 0)
+            {
+                vm.AmountRaised = await fundingProgressService.GetTotalRaisedAsync(app.Id, settings.DefaultCurrency);
+                vm.FundingPercentage = (int)Math.Min(100, Math.Round(vm.AmountRaised / goal.Value * 100));
+            }
         }
 
-        if (settings.ShowSponsorWall)
+        var hasSponsorWall = settings.PageLayout?.Any(b =>
+            string.Equals(b.Type, BlockRegistry.SponsorWall, StringComparison.OrdinalIgnoreCase)) ?? false;
+        if (hasSponsorWall)
         {
             var entries = await sponsorWallService.GetRecentContributionsAsync(app.Id);
             vm.SponsorWallEntries = entries.Select(e => new SponsorWallEntryViewModel
@@ -255,20 +189,14 @@ public class UIOpenPatronController(
     {
         var app = await appService.GetApp(appId, OpenPatronAppType.AppType, includeArchived: true);
         if (app is null)
-        {
             return NotFound();
-        }
 
         var settings = app.GetSettings<OpenPatronAppSettings>();
         if (!AllowsOneTime(settings))
-        {
             return NotFound();
-        }
 
         if (!IsPublished(settings) && !await IsAuthorized(app, Policies.CanViewStoreSettings))
-        {
             return NotFound();
-        }
 
         if (!decimal.TryParse(amount, NumberStyles.Number, CultureInfo.InvariantCulture, out var parsedAmount) || parsedAmount <= 0m)
         {
@@ -316,27 +244,19 @@ public class UIOpenPatronController(
     {
         var app = await appService.GetApp(appId, OpenPatronAppType.AppType, includeArchived: true);
         if (app is null)
-        {
             return NotFound();
-        }
 
         var settings = app.GetSettings<OpenPatronAppSettings>();
         if (!AllowsSubscriptions(settings))
-        {
             return NotFound();
-        }
 
         if (!IsPublished(settings) && !await IsAuthorized(app, Policies.CanViewStoreSettings))
-        {
             return NotFound();
-        }
 
         var offering = await GetOffering(app, settings);
         var plan = offering?.Plans.FirstOrDefault(p => p.Id == planId && p.Status == PlanData.PlanStatus.Active);
         if (plan is null)
-        {
             return NotFound();
-        }
 
         await using var ctx = dbContextFactory.CreateContext();
         var checkout = new PlanCheckoutData()
@@ -362,11 +282,6 @@ public class UIOpenPatronController(
         return RedirectToAction("PlanCheckout", "UIPlanCheckout", new { area = SubscriptionsPlugin.Area, checkoutId = checkout.Id });
     }
 
-    /// <summary>
-    /// Ensures <see cref="OpenPatronAppSettings.PageLayout"/> and
-    /// <see cref="OpenPatronAppSettings.Theme"/> are never null.
-    /// Old pages that predate the block builder simply start empty.
-    /// </summary>
     public static void EnsurePageLayout(OpenPatronAppSettings settings)
     {
         settings.PageLayout ??= [];
@@ -378,7 +293,7 @@ public class UIOpenPatronController(
 
     private UpdateOpenPatronViewModel ToUpdateViewModel(AppData app, OpenPatronAppSettings settings, OfferingData? offering)
     {
-        var theme = settings.Theme ?? new PageTheme { AccentColor = settings.AccentColor ?? "#6366f1" };
+        var theme = settings.Theme ?? new PageTheme();
 
         return new UpdateOpenPatronViewModel
         {
@@ -390,117 +305,33 @@ public class UIOpenPatronController(
             AddPlanUrl = offering is null ? null : GetAddPlanUrl(app.StoreDataId, offering.Id),
             ActivePlanCount = offering?.Plans.Count(p => p.Status == PlanData.PlanStatus.Active) ?? 0,
             Archived = app.Archived,
-
-            // Page type
             PageType = settings.PageType,
             PageTypeConfirmed = settings.PageTypeConfirmed,
-
-            // Block layout
             PageLayoutJson = JsonConvert.SerializeObject(settings.PageLayout ?? [], Formatting.None),
-
-            // Theme
             ThemeAccentColor = theme.AccentColor,
             ThemeBorderRadius = theme.BorderRadius,
             ThemeBlockSpacing = theme.BlockSpacing,
-
-            // Profile
-            DisplayName = settings.DisplayName,
-            Bio = settings.Bio,
-            GitHubUsername = settings.GitHubUsername,
-            GravatarEmail = settings.GravatarEmail,
-
-            // Projects
-            Projects = settings.Projects.Select(p => new UpdateOpenPatronProjectViewModel
-            {
-                Name = p.Name,
-                Url = p.Url,
-                Description = p.Description,
-                Language = p.Language,
-                Stars = p.Stars
-            }).ToList(),
-
-            // Social links
-            SocialX = settings.SocialLinks?.X,
-            SocialMastodon = settings.SocialLinks?.Mastodon,
-            SocialNostr = settings.SocialLinks?.Nostr,
-
-            // Appearance (legacy)
-            AccentColor = settings.AccentColor,
-
-            // Funding goal
-            FundingGoal = settings.FundingGoal,
-
-            // Sponsor wall
-            ShowSponsorWall = settings.ShowSponsorWall,
-
-            // Core settings
             SupportMode = settings.SupportMode,
             AppName = app.Name,
-            HeroTitle = settings.HeroTitle,
-            HeroSubtitle = settings.HeroSubtitle,
-            Description = settings.Description,
-            PrimaryCallToAction = settings.PrimaryCallToAction,
             DefaultCurrency = settings.DefaultCurrency,
-            SuggestedAmounts = string.Join(", ", settings.SuggestedAmounts.Select(a => a.ToString("0.##", CultureInfo.InvariantCulture))),
             Visibility = settings.Visibility
         };
     }
 
     private OpenPatronPublicViewModel ToPublicViewModel(AppData app, OpenPatronAppSettings settings, OfferingData? offering)
     {
-        var theme = settings.Theme ?? new PageTheme { AccentColor = settings.AccentColor ?? "#6366f1" };
+        var theme = settings.Theme ?? new PageTheme();
 
         return new OpenPatronPublicViewModel
         {
             AppId = app.Id,
             AppName = app.Name,
-            OfferingId = offering?.Id,
             PublicPageUrl = GetPublicPageUrl(app.Id),
             SupportsOneTime = AllowsOneTime(settings),
             SupportsSubscriptions = AllowsSubscriptions(settings),
-
-            PageType = settings.PageType,
+            DefaultCurrency = settings.DefaultCurrency,
             PageLayout = settings.PageLayout ?? [],
             Theme = theme,
-
-            // Profile
-            DisplayName = settings.DisplayName,
-            Bio = settings.Bio,
-            GravatarUrl = ComputeGravatarUrl(settings.GravatarEmail),
-            GitHubProfileUrl = !string.IsNullOrWhiteSpace(settings.GitHubUsername)
-                ? $"https://github.com/{Uri.EscapeDataString(settings.GitHubUsername)}"
-                : null,
-
-            // Projects
-            Projects = settings.Projects.Select(p => new OpenPatronPublicProjectViewModel
-            {
-                Name = p.Name,
-                Url = p.Url,
-                Description = p.Description,
-                Language = p.Language,
-                Stars = p.Stars
-            }).ToList(),
-
-            // Social links
-            SocialX = settings.SocialLinks?.X,
-            SocialMastodon = settings.SocialLinks?.Mastodon,
-            SocialNostr = settings.SocialLinks?.Nostr,
-
-            // Funding goal
-            FundingGoal = settings.FundingGoal,
-
-            // Sponsor wall
-            ShowSponsorWall = settings.ShowSponsorWall,
-
-            // Core
-            HeroTitle = string.IsNullOrWhiteSpace(settings.HeroTitle) ? app.Name : settings.HeroTitle,
-            HeroSubtitle = settings.HeroSubtitle,
-            Description = settings.Description,
-            PrimaryCallToAction = string.IsNullOrWhiteSpace(settings.PrimaryCallToAction)
-                ? "Sponsor this project"
-                : settings.PrimaryCallToAction,
-            DefaultCurrency = settings.DefaultCurrency,
-            SuggestedAmounts = settings.SuggestedAmounts,
             Plans = offering?.Plans
                 .Where(plan => plan.Status == PlanData.PlanStatus.Active)
                 .OrderBy(plan => plan.Price)
@@ -518,7 +349,8 @@ public class UIOpenPatronController(
                         PlanData.RecurringInterval.Lifetime => "one time",
                         _ => plan.RecurringType.ToString()
                     },
-                    SubscribeUrl = Url.Action(nameof(Subscribe), new { appId = app.Id, planId = plan.Id, area = OpenPatronPlugin.Area }) ?? $"/apps/{app.Id}/openpatron/plans/{plan.Id}/subscribe",
+                    SubscribeUrl = Url.Action(nameof(Subscribe), new { appId = app.Id, planId = plan.Id, area = OpenPatronPlugin.Area })
+                                   ?? $"/apps/{app.Id}/openpatron/plans/{plan.Id}/subscribe",
                     HasTrial = plan.TrialDays > 0,
                     TrialLabel = plan.TrialDays > 0 ? $"{plan.TrialDays} day trial" : null
                 })
@@ -548,14 +380,9 @@ public class UIOpenPatronController(
 
         var existing = OpenPatronOfferingResolver.SelectPreferredOffering(offerings, preferredOfferingId);
         if (existing is not null || !createIfMissing)
-        {
             return existing?.Id;
-        }
 
-        var offering = new OfferingData()
-        {
-            AppId = app.Id
-        };
+        var offering = new OfferingData { AppId = app.Id };
         ctx.Offerings.Add(offering);
         await ctx.SaveChangesAsync();
         return offering.Id;
@@ -581,41 +408,6 @@ public class UIOpenPatronController(
     private static bool IsPublished(OpenPatronAppSettings settings)
         => settings.Visibility == OpenPatronVisibility.Published;
 
-    private void ValidateSuggestedAmounts(string? suggestedAmounts)
-    {
-        if (string.IsNullOrWhiteSpace(suggestedAmounts))
-        {
-            return;
-        }
-
-        foreach (var token in suggestedAmounts.Split(new[] { ',', ';', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-        {
-            if (!decimal.TryParse(token, NumberStyles.Number, CultureInfo.InvariantCulture, out var amount) || amount <= 0)
-            {
-                ModelState.AddModelError(nameof(UpdateOpenPatronViewModel.SuggestedAmounts), $"'{token}' is not a valid positive amount.");
-                break;
-            }
-        }
-    }
-
-    private static List<decimal> ParseSuggestedAmounts(string? suggestedAmounts)
-    {
-        if (string.IsNullOrWhiteSpace(suggestedAmounts))
-        {
-            return [];
-        }
-
-        return suggestedAmounts
-            .Split(new[] { ',', ';', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(value => decimal.Parse(value, NumberStyles.Number, CultureInfo.InvariantCulture))
-            .Distinct()
-            .OrderBy(value => value)
-            .ToList();
-    }
-
-    private static string? NormalizeUrl(string? value)
-        => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
-
     private static string? NormalizeString(string? value)
         => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
@@ -623,7 +415,6 @@ public class UIOpenPatronController(
     {
         if (string.IsNullOrWhiteSpace(email))
             return null;
-
         var hash = ComputeMd5Hash(email.Trim().ToLowerInvariant());
         return $"https://www.gravatar.com/avatar/{hash}?s=200&d=identicon";
     }

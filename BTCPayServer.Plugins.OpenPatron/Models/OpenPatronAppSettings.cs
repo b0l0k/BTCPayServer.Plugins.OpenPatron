@@ -8,47 +8,24 @@ namespace BTCPayServer.Plugins.OpenPatron.Models;
 
 public class OpenPatronAppSettings
 {
-    // Page type (informational after migration -- used to generate default layout)
+    // Template metadata
     public OpenPatronPageType PageType { get; set; } = OpenPatronPageType.Project;
     public bool PageTypeConfirmed { get; set; }
 
-    // Block-based page layout
+    // Block-based page layout (all content lives inside each block's Settings)
     public List<BlockDefinition>? PageLayout { get; set; }
     public PageTheme? Theme { get; set; }
 
-    // Profile
-    public string? DisplayName { get; set; }
-    public string? Bio { get; set; }
-    public string? GitHubUsername { get; set; }
-    public string? GravatarEmail { get; set; }
-
-    // Projects (Personal pages)
-    public List<OpenPatronProject> Projects { get; set; } = [];
-
-    // Social links
-    public OpenPatronSocialLinks? SocialLinks { get; set; }
-
-    // Appearance (legacy -- migrated into Theme)
-    public string? AccentColor { get; set; }
-
-    // Funding goal
-    public decimal? FundingGoal { get; set; }
-
-    // Sponsor wall
-    public bool ShowSponsorWall { get; set; }
-
-    // Core settings
+    // Global settings
     public string? OfferingId { get; set; }
     public OpenPatronSupportMode SupportMode { get; set; } = OpenPatronSupportMode.Both;
-    public string HeroTitle { get; set; } = string.Empty;
-    public string HeroSubtitle { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public string PrimaryCallToAction { get; set; } = string.Empty;
-    public string? PrimaryCallToActionUrl { get; set; }
     public string DefaultCurrency { get; set; } = "USD";
-    public List<decimal> SuggestedAmounts { get; set; } = [];
-    public List<OpenPatronLink> Links { get; set; } = [];
     public OpenPatronVisibility Visibility { get; set; } = OpenPatronVisibility.Unpublished;
+
+    // Legacy (kept for JSON compat on old data, ignored by new code)
+    public string? AccentColor { get; set; }
+    public string? PrimaryCallToActionUrl { get; set; }
+    public List<OpenPatronLink> Links { get; set; } = [];
 }
 
 public class BlockDefinition
@@ -65,22 +42,6 @@ public class PageTheme
     public string AccentColor { get; set; } = "#6366f1";
     public string BorderRadius { get; set; } = "1.5rem";
     public string BlockSpacing { get; set; } = "1rem";
-}
-
-public class OpenPatronProject
-{
-    public string Name { get; set; } = string.Empty;
-    public string Url { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public string? Language { get; set; }
-    public int? Stars { get; set; }
-}
-
-public class OpenPatronSocialLinks
-{
-    public string? X { get; set; }
-    public string? Mastodon { get; set; }
-    public string? Nostr { get; set; }
 }
 
 public class OpenPatronLink

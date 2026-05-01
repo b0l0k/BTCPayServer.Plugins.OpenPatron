@@ -1,21 +1,25 @@
+@using BTCPayServer.Plugins.OpenPatron.Services
 @model BTCPayServer.Plugins.OpenPatron.ViewModels.BlockRenderContext
 @{
-    var m = Model.Page;
+    var s = Model.Block.Settings;
+    var heading = BlockSettingsHelper.Str(s, "heading", "Choose a sponsorship tier");
+    var subtitle = BlockSettingsHelper.Str(s, "subtitle", "Pick the level that fits you best");
+    var plans = Model.Page.Plans;
 }
 
-@if (m.SupportsSubscriptions && m.Plans.Count > 0)
+@if (Model.Page.SupportsSubscriptions && plans.Count > 0)
 {
     <section class="mb-block" data-block-type="subscription-tiers" data-block-id="@Model.Block.Id">
         <div class="d-flex justify-content-between align-items-end gap-3 mb-3">
             <div>
                 <div class="openpatron-kicker mb-2">Sponsor tiers</div>
-                <h2 class="h3 fw-semibold mb-0">Choose a sponsorship tier</h2>
+                <h2 class="h3 fw-semibold mb-0">@heading</h2>
             </div>
-            <div class="text-muted small">Pick the level that fits you best</div>
+            <div class="text-muted small">@subtitle</div>
         </div>
 
         <div class="row g-3">
-            @foreach (var plan in m.Plans)
+            @foreach (var plan in plans)
             {
                 <div class="col-12 col-md-6">
                     <div class="openpatron-plan-card d-flex flex-column">

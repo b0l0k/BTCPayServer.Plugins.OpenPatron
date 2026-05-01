@@ -1,49 +1,58 @@
+@using BTCPayServer.Plugins.OpenPatron.Services
 @model BTCPayServer.Plugins.OpenPatron.ViewModels.BlockRenderContext
 @{
-    var m = Model.Page;
-    var hasProfile = !string.IsNullOrWhiteSpace(m.GravatarUrl) || !string.IsNullOrWhiteSpace(m.DisplayName) || !string.IsNullOrWhiteSpace(m.GitHubProfileUrl);
-    var hasSocialLinks = !string.IsNullOrWhiteSpace(m.SocialX) || !string.IsNullOrWhiteSpace(m.SocialMastodon) || !string.IsNullOrWhiteSpace(m.SocialNostr);
+    var s = Model.Block.Settings;
+    var title = BlockSettingsHelper.Str(s, "title", Model.Page.AppName);
+    var subtitle = BlockSettingsHelper.Str(s, "subtitle");
+    var displayName = BlockSettingsHelper.Str(s, "displayName");
+    var gravatarUrl = BlockSettingsHelper.GravatarUrl(s);
+    var gitHubUrl = BlockSettingsHelper.GitHubProfileUrl(s);
+    var socialX = BlockSettingsHelper.Str(s, "socialX");
+    var socialMastodon = BlockSettingsHelper.Str(s, "socialMastodon");
+    var socialNostr = BlockSettingsHelper.Str(s, "socialNostr");
+    var hasSocial = BlockSettingsHelper.HasSocialLinks(s);
+    var hasProfile = !string.IsNullOrWhiteSpace(gravatarUrl) || !string.IsNullOrWhiteSpace(displayName) || !string.IsNullOrWhiteSpace(gitHubUrl);
 }
 
 <section class="openpatron-hero p-4 p-lg-5 mb-block" data-block-type="project-hero" data-block-id="@Model.Block.Id">
     <div class="row g-4 align-items-center">
         <div class="col-12 @(hasProfile ? "col-xl-8" : "")">
             <div class="openpatron-kicker">Support the work</div>
-            <h1 class="openpatron-title fw-bold mb-3">@m.HeroTitle</h1>
-            @if (!string.IsNullOrWhiteSpace(m.HeroSubtitle))
+            <h1 class="openpatron-title fw-bold mb-3">@title</h1>
+            @if (!string.IsNullOrWhiteSpace(subtitle))
             {
-                <p class="lead text-muted mb-4">@m.HeroSubtitle</p>
+                <p class="lead text-muted mb-4">@subtitle</p>
             }
 
             <div class="d-flex flex-wrap gap-2 mb-4">
-                @if (m.SupportsSubscriptions)
+                @if (Model.Page.SupportsSubscriptions)
                 {
                     <div class="openpatron-stat">↻ Ongoing support</div>
                 }
-                @if (m.SupportsOneTime)
+                @if (Model.Page.SupportsOneTime)
                 {
                     <div class="openpatron-stat">⚡ Quick contribution</div>
                 }
-                @if (m.Plans.Count > 0)
+                @if (Model.Page.Plans.Count > 0)
                 {
-                    <div class="openpatron-stat">★ @m.Plans.Count ways to sponsor</div>
+                    <div class="openpatron-stat">★ @Model.Page.Plans.Count ways to sponsor</div>
                 }
             </div>
 
-            @if (hasSocialLinks)
+            @if (hasSocial)
             {
                 <div class="d-flex flex-wrap gap-2">
-                    @if (!string.IsNullOrWhiteSpace(m.SocialX))
+                    @if (!string.IsNullOrWhiteSpace(socialX))
                     {
-                        <a class="openpatron-social-pill" href="https://x.com/@m.SocialX" target="_blank" rel="noreferrer">𝕏 @@@m.SocialX</a>
+                        <a class="openpatron-social-pill" href="https://x.com/@socialX" target="_blank" rel="noreferrer">𝕏 @@@socialX</a>
                     }
-                    @if (!string.IsNullOrWhiteSpace(m.SocialMastodon))
+                    @if (!string.IsNullOrWhiteSpace(socialMastodon))
                     {
-                        <a class="openpatron-social-pill" href="@m.SocialMastodon" target="_blank" rel="noreferrer">🐘 Mastodon</a>
+                        <a class="openpatron-social-pill" href="@socialMastodon" target="_blank" rel="noreferrer">🐘 Mastodon</a>
                     }
-                    @if (!string.IsNullOrWhiteSpace(m.SocialNostr))
+                    @if (!string.IsNullOrWhiteSpace(socialNostr))
                     {
-                        <span class="openpatron-social-pill" title="@m.SocialNostr">⚡ Nostr</span>
+                        <span class="openpatron-social-pill" title="@socialNostr">⚡ Nostr</span>
                     }
                 </div>
             }
@@ -53,17 +62,17 @@
         {
             <div class="col-12 col-xl-4">
                 <div class="openpatron-panel h-100 text-center">
-                    @if (!string.IsNullOrWhiteSpace(m.GravatarUrl))
+                    @if (!string.IsNullOrWhiteSpace(gravatarUrl))
                     {
-                        <img src="@m.GravatarUrl" alt="@(m.DisplayName ?? "Avatar")" class="rounded-circle mb-3" width="96" height="96" />
+                        <img src="@gravatarUrl" alt="@(displayName ?? "Avatar")" class="rounded-circle mb-3" width="96" height="96" />
                     }
-                    @if (!string.IsNullOrWhiteSpace(m.DisplayName))
+                    @if (!string.IsNullOrWhiteSpace(displayName))
                     {
-                        <div class="fw-semibold mb-1">@m.DisplayName</div>
+                        <div class="fw-semibold mb-1">@displayName</div>
                     }
-                    @if (!string.IsNullOrWhiteSpace(m.GitHubProfileUrl))
+                    @if (!string.IsNullOrWhiteSpace(gitHubUrl))
                     {
-                        <a href="@m.GitHubProfileUrl" target="_blank" rel="noreferrer" class="small text-muted">GitHub ↗</a>
+                        <a href="@gitHubUrl" target="_blank" rel="noreferrer" class="small text-muted">GitHub ↗</a>
                     }
                 </div>
             </div>

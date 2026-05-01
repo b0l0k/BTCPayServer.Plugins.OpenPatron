@@ -1,13 +1,16 @@
+@using BTCPayServer.Plugins.OpenPatron.Services
 @model BTCPayServer.Plugins.OpenPatron.ViewModels.BlockRenderContext
 @{
-    var m = Model.Page;
+    var s = Model.Block.Settings;
+    var heading = BlockSettingsHelper.Str(s, "heading", "About");
+    var content = BlockSettingsHelper.Str(s, "content");
 }
 
-@if (!string.IsNullOrWhiteSpace(m.Description))
+@if (!string.IsNullOrWhiteSpace(content))
 {
     <section class="openpatron-panel mb-block" data-block-type="description" data-block-id="@Model.Block.Id">
         <div class="openpatron-kicker">About</div>
-        <h2 class="h3 fw-semibold mb-3">Why sponsor this work?</h2>
-        <div class="openpatron-description">@m.Description</div>
+        <h2 class="h3 fw-semibold mb-3">@heading</h2>
+        <div class="openpatron-description">@content</div>
     </section>
 }

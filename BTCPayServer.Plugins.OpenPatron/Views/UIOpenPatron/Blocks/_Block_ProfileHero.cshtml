@@ -1,40 +1,49 @@
+@using BTCPayServer.Plugins.OpenPatron.Services
 @model BTCPayServer.Plugins.OpenPatron.ViewModels.BlockRenderContext
 @{
-    var m = Model.Page;
-    var hasSocialLinks = !string.IsNullOrWhiteSpace(m.SocialX) || !string.IsNullOrWhiteSpace(m.SocialMastodon) || !string.IsNullOrWhiteSpace(m.SocialNostr);
+    var s = Model.Block.Settings;
+    var displayName = BlockSettingsHelper.Str(s, "displayName");
+    var bio = BlockSettingsHelper.Str(s, "bio");
+    var subtitle = BlockSettingsHelper.Str(s, "subtitle");
+    var gravatarUrl = BlockSettingsHelper.GravatarUrl(s);
+    var gitHubUrl = BlockSettingsHelper.GitHubProfileUrl(s);
+    var socialX = BlockSettingsHelper.Str(s, "socialX");
+    var socialMastodon = BlockSettingsHelper.Str(s, "socialMastodon");
+    var socialNostr = BlockSettingsHelper.Str(s, "socialNostr");
+    var hasSocial = BlockSettingsHelper.HasSocialLinks(s);
 }
 
 <section class="openpatron-profile-hero mb-block" data-block-type="profile-hero" data-block-id="@Model.Block.Id">
-    @if (!string.IsNullOrWhiteSpace(m.GravatarUrl))
+    @if (!string.IsNullOrWhiteSpace(gravatarUrl))
     {
-        <img src="@m.GravatarUrl" alt="@(m.DisplayName ?? "Avatar")" class="openpatron-avatar mb-3" />
+        <img src="@gravatarUrl" alt="@(displayName ?? "Avatar")" class="openpatron-avatar mb-3" />
     }
-    <h1 class="openpatron-profile-name mb-2">@(m.DisplayName ?? m.AppName)</h1>
-    @if (!string.IsNullOrWhiteSpace(m.HeroSubtitle))
+    <h1 class="openpatron-profile-name mb-2">@(displayName ?? Model.Page.AppName)</h1>
+    @if (!string.IsNullOrWhiteSpace(subtitle))
     {
-        <p class="lead text-muted mb-3">@m.HeroSubtitle</p>
+        <p class="lead text-muted mb-3">@subtitle</p>
     }
-    @if (!string.IsNullOrWhiteSpace(m.Bio))
+    @if (!string.IsNullOrWhiteSpace(bio))
     {
-        <p class="text-muted mx-auto mb-4" style="max-width:600px;">@m.Bio</p>
+        <p class="text-muted mx-auto mb-4" style="max-width:600px;">@bio</p>
     }
 
     <div class="d-flex flex-wrap gap-2 justify-content-center">
-        @if (!string.IsNullOrWhiteSpace(m.GitHubProfileUrl))
+        @if (!string.IsNullOrWhiteSpace(gitHubUrl))
         {
-            <a class="openpatron-social-pill" href="@m.GitHubProfileUrl" target="_blank" rel="noreferrer">GitHub ↗</a>
+            <a class="openpatron-social-pill" href="@gitHubUrl" target="_blank" rel="noreferrer">GitHub ↗</a>
         }
-        @if (!string.IsNullOrWhiteSpace(m.SocialX))
+        @if (!string.IsNullOrWhiteSpace(socialX))
         {
-            <a class="openpatron-social-pill" href="https://x.com/@m.SocialX" target="_blank" rel="noreferrer">𝕏 @@@m.SocialX</a>
+            <a class="openpatron-social-pill" href="https://x.com/@socialX" target="_blank" rel="noreferrer">𝕏 @@@socialX</a>
         }
-        @if (!string.IsNullOrWhiteSpace(m.SocialMastodon))
+        @if (!string.IsNullOrWhiteSpace(socialMastodon))
         {
-            <a class="openpatron-social-pill" href="@m.SocialMastodon" target="_blank" rel="noreferrer">🐘 Mastodon</a>
+            <a class="openpatron-social-pill" href="@socialMastodon" target="_blank" rel="noreferrer">🐘 Mastodon</a>
         }
-        @if (!string.IsNullOrWhiteSpace(m.SocialNostr))
+        @if (!string.IsNullOrWhiteSpace(socialNostr))
         {
-            <span class="openpatron-social-pill" title="@m.SocialNostr">⚡ Nostr</span>
+            <span class="openpatron-social-pill" title="@socialNostr">⚡ Nostr</span>
         }
     </div>
 </section>

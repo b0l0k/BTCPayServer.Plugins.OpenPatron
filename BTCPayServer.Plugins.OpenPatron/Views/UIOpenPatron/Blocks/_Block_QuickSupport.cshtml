@@ -1,26 +1,30 @@
+@using BTCPayServer.Plugins.OpenPatron.Services
 @model BTCPayServer.Plugins.OpenPatron.ViewModels.BlockRenderContext
 @{
-    var m = Model.Page;
+    var s = Model.Block.Settings;
+    var heading = BlockSettingsHelper.Str(s, "heading", "Send quick support");
+    var amounts = BlockSettingsHelper.DecArray(s, "suggestedAmounts");
+    var currency = Model.Page.DefaultCurrency;
 }
 
-@if (m.SupportsOneTime && m.SuggestedAmounts.Count > 0)
+@if (Model.Page.SupportsOneTime && amounts.Count > 0)
 {
     <section class="openpatron-panel mb-block" data-block-type="quick-support" data-block-id="@Model.Block.Id">
         <div class="d-flex justify-content-between align-items-end gap-3 mb-3">
             <div>
                 <div class="openpatron-kicker mb-2">Quick support</div>
-                <h2 class="h3 fw-semibold mb-0">Send quick support</h2>
+                <h2 class="h3 fw-semibold mb-0">@heading</h2>
             </div>
             <div class="text-muted small">A simple way to say thanks</div>
         </div>
 
         <div class="d-flex flex-wrap gap-2">
-            @foreach (var amount in m.SuggestedAmounts)
+            @foreach (var amount in amounts)
             {
-                <form method="post" asp-action="Contribute" asp-route-appId="@m.AppId" asp-route-area="OpenPatron" class="d-inline">
+                <form method="post" asp-action="Contribute" asp-route-appId="@Model.Page.AppId" asp-route-area="OpenPatron" class="d-inline">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="amount" value="@amount.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
-                    <button type="submit" class="openpatron-amount-pill">@m.DefaultCurrency @amount.ToString("0.##")</button>
+                    <button type="submit" class="openpatron-amount-pill">@currency @amount.ToString("0.##")</button>
                 </form>
             }
         </div>
