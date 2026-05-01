@@ -1,13 +1,20 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace BTCPayServer.Plugins.OpenPatron.Models;
 
 public class OpenPatronAppSettings
 {
-    // Page type
+    // Page type (informational after migration -- used to generate default layout)
     public OpenPatronPageType PageType { get; set; } = OpenPatronPageType.Project;
     public bool PageTypeConfirmed { get; set; }
+
+    // Block-based page layout
+    public List<BlockDefinition>? PageLayout { get; set; }
+    public PageTheme? Theme { get; set; }
 
     // Profile
     public string? DisplayName { get; set; }
@@ -21,7 +28,7 @@ public class OpenPatronAppSettings
     // Social links
     public OpenPatronSocialLinks? SocialLinks { get; set; }
 
-    // Appearance
+    // Appearance (legacy -- migrated into Theme)
     public string? AccentColor { get; set; }
 
     // Funding goal
@@ -42,6 +49,22 @@ public class OpenPatronAppSettings
     public List<decimal> SuggestedAmounts { get; set; } = [];
     public List<OpenPatronLink> Links { get; set; } = [];
     public OpenPatronVisibility Visibility { get; set; } = OpenPatronVisibility.Unpublished;
+}
+
+public class BlockDefinition
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N")[..12];
+    public string Type { get; set; } = string.Empty;
+
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+    public JObject? Settings { get; set; }
+}
+
+public class PageTheme
+{
+    public string AccentColor { get; set; } = "#6366f1";
+    public string BorderRadius { get; set; } = "1.5rem";
+    public string BlockSpacing { get; set; } = "1rem";
 }
 
 public class OpenPatronProject

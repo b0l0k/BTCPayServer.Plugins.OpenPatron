@@ -1,0 +1,64 @@
+@model BTCPayServer.Plugins.OpenPatron.ViewModels.BlockRenderContext
+@{
+    var m = Model.Page;
+}
+
+@if (m.SupportsSubscriptions && m.Plans.Count > 0)
+{
+    <section class="mb-block" data-block-type="subscription-tiers" data-block-id="@Model.Block.Id">
+        <div class="d-flex justify-content-between align-items-end gap-3 mb-3">
+            <div>
+                <div class="openpatron-kicker mb-2">Sponsor tiers</div>
+                <h2 class="h3 fw-semibold mb-0">Choose a sponsorship tier</h2>
+            </div>
+            <div class="text-muted small">Pick the level that fits you best</div>
+        </div>
+
+        <div class="row g-3">
+            @foreach (var plan in m.Plans)
+            {
+                <div class="col-12 col-md-6">
+                    <div class="openpatron-plan-card d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                            <div>
+                                <div class="openpatron-kicker mb-2">Support tier</div>
+                                <h3 class="h4 mb-1">@plan.Name</h3>
+                            </div>
+                            @if (plan.HasTrial)
+                            {
+                                <span class="badge rounded-pill text-bg-light border">@plan.TrialLabel</span>
+                            }
+                        </div>
+
+                        <div class="d-flex align-items-end justify-content-between gap-3 mb-3">
+                            <div>
+                                <div class="openpatron-plan-price fw-bold">@plan.Price</div>
+                                <div class="openpatron-plan-meta mt-1">@plan.BillingPeriod</div>
+                            </div>
+                        </div>
+
+                        <div class="openpatron-divider"></div>
+
+                        @if (!string.IsNullOrWhiteSpace(plan.Description))
+                        {
+                            <p class="text-muted flex-grow-1 mb-4">@plan.Description</p>
+                        }
+                        else
+                        {
+                            <p class="text-muted flex-grow-1 mb-4">Support this project on a recurring basis and help fund maintenance over time.</p>
+                        }
+
+                        <form method="post" action="@plan.SubscribeUrl" class="mt-auto d-grid gap-2">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-primary btn-lg" style="background: var(--op-accent); border-color: var(--op-accent);">Become a subscriber</button>
+                            @if (plan.HasTrial)
+                            {
+                                <button type="submit" class="btn btn-outline-primary" name="isTrial" value="true">Start with a trial</button>
+                            }
+                        </form>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+}

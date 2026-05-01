@@ -1,11 +1,14 @@
+@using BTCPayServer.Plugins.OpenPatron.Services
+@using BTCPayServer.Plugins.OpenPatron.ViewModels
 @model BTCPayServer.Plugins.OpenPatron.ViewModels.OpenPatronPublicViewModel
 
 @{
     Layout = "_LayoutSimple";
     ViewData["Title"] = Model.HeroTitle;
-    var accent = Model.AccentColor ?? "#6366f1";
-    var hasSocialLinks = !string.IsNullOrWhiteSpace(Model.SocialX) || !string.IsNullOrWhiteSpace(Model.SocialMastodon) || !string.IsNullOrWhiteSpace(Model.SocialNostr);
-    var hasProfile = !string.IsNullOrWhiteSpace(Model.GravatarUrl) || !string.IsNullOrWhiteSpace(Model.DisplayName) || !string.IsNullOrWhiteSpace(Model.GitHubProfileUrl);
+    var theme = Model.Theme;
+    var accent = theme.AccentColor;
+    var radius = theme.BorderRadius;
+    var spacing = theme.BlockSpacing;
 }
 
 @section PageHeadContent {
@@ -15,6 +18,8 @@
             --op-accent-10: @(accent)1a;
             --op-accent-18: @(accent)2e;
             --op-accent-dark: color-mix(in srgb, @accent 85%, #000);
+            --op-border-radius: @radius;
+            --op-block-spacing: @spacing;
         }
 
         body {
@@ -29,11 +34,15 @@
             margin: 0 auto;
         }
 
+        .mb-block {
+            margin-bottom: var(--op-block-spacing);
+        }
+
         .openpatron-hero,
         .openpatron-panel,
         .openpatron-plan-card {
             border: 1px solid rgba(15, 23, 42, 0.08);
-            border-radius: 1.5rem;
+            border-radius: var(--op-border-radius);
             background: rgba(255, 255, 255, 0.92);
             box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
             backdrop-filter: blur(12px);
@@ -57,6 +66,32 @@
         .openpatron-hero > * {
             position: relative;
             z-index: 1;
+        }
+
+        .openpatron-profile-hero {
+            text-align: center;
+            padding: 3rem 2rem 2rem;
+            border-radius: var(--op-border-radius);
+            background:
+                radial-gradient(circle at top, var(--op-accent-18), transparent 50%),
+                rgba(255, 255, 255, 0.96);
+            border: 1px solid rgba(15, 23, 42, 0.06);
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+        }
+
+        .openpatron-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 4px solid #fff;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+        }
+
+        .openpatron-profile-name {
+            font-size: clamp(1.75rem, 3vw, 2.75rem);
+            font-weight: 800;
+            letter-spacing: -.03em;
+            line-height: 1.1;
         }
 
         .openpatron-badge {
@@ -200,6 +235,44 @@
             flex: 0 0 auto;
         }
 
+        .openpatron-project-card {
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: var(--op-border-radius);
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+            backdrop-filter: blur(12px);
+            padding: 1.5rem;
+            transition: box-shadow .2s;
+        }
+
+        .openpatron-project-card:hover {
+            box-shadow: 0 24px 56px rgba(15, 23, 42, 0.12);
+        }
+
+        .openpatron-lang-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: .3rem;
+            padding: .3rem .65rem;
+            border-radius: 999px;
+            background: var(--op-accent-10);
+            color: var(--op-accent-dark);
+            font-size: .8rem;
+            font-weight: 600;
+        }
+
+        .openpatron-star-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: .3rem;
+            padding: .3rem .65rem;
+            border-radius: 999px;
+            background: rgba(245, 158, 11, 0.10);
+            color: #b45309;
+            font-size: .8rem;
+            font-weight: 600;
+        }
+
         .openpatron-empty-state {
             border: 1px dashed rgba(148, 163, 184, 0.7);
             border-radius: 1rem;
@@ -253,200 +326,21 @@
 <div class="py-5 openpatron-page">
     <div class="row g-4 align-items-start">
         <div class="col-12 col-lg-8">
-            <section class="openpatron-hero p-4 p-lg-5 mb-4">
-                <div class="row g-4 align-items-center">
-                    <div class="col-12 @(hasProfile ? "col-xl-8" : "")">
-                        <div class="openpatron-kicker">Support the work</div>
-                        <h1 class="openpatron-title fw-bold mb-3">@Model.HeroTitle</h1>
-                        @if (!string.IsNullOrWhiteSpace(Model.HeroSubtitle))
-                        {
-                            <p class="lead text-muted mb-4">@Model.HeroSubtitle</p>
-                        }
+            @foreach (var block in Model.PageLayout)
+            {
+                var partialPath = BlockRegistry.GetPartialViewPath(block.Type);
+                if (partialPath != null)
+                {
+                    var ctx = new BlockRenderContext { Block = block, Page = Model };
+                    <partial name="@partialPath" model="ctx" />
+                }
+            }
 
-                        <div class="d-flex flex-wrap gap-2 mb-4">
-                            @if (Model.SupportsSubscriptions)
-                            {
-                                <div class="openpatron-stat">↻ Ongoing support</div>
-                            }
-                            @if (Model.SupportsOneTime)
-                            {
-                                <div class="openpatron-stat">⚡ Quick contribution</div>
-                            }
-                            @if (Model.Plans.Count > 0)
-                            {
-                                <div class="openpatron-stat">★ @Model.Plans.Count ways to sponsor</div>
-                            }
-                        </div>
-
-                        @if (hasSocialLinks)
-                        {
-                            <div class="d-flex flex-wrap gap-2">
-                                @if (!string.IsNullOrWhiteSpace(Model.SocialX))
-                                {
-                                    <a class="openpatron-social-pill" href="https://x.com/@Model.SocialX" target="_blank" rel="noreferrer">𝕏 @@@Model.SocialX</a>
-                                }
-                                @if (!string.IsNullOrWhiteSpace(Model.SocialMastodon))
-                                {
-                                    <a class="openpatron-social-pill" href="@Model.SocialMastodon" target="_blank" rel="noreferrer">🐘 Mastodon</a>
-                                }
-                                @if (!string.IsNullOrWhiteSpace(Model.SocialNostr))
-                                {
-                                    <span class="openpatron-social-pill" title="@Model.SocialNostr">⚡ Nostr</span>
-                                }
-                            </div>
-                        }
-                    </div>
-
-                    @if (hasProfile)
-                    {
-                        <div class="col-12 col-xl-4">
-                            <div class="openpatron-panel h-100 text-center">
-                                @if (!string.IsNullOrWhiteSpace(Model.GravatarUrl))
-                                {
-                                    <img src="@Model.GravatarUrl" alt="@(Model.DisplayName ?? "Avatar")" class="rounded-circle mb-3" width="96" height="96" />
-                                }
-                                @if (!string.IsNullOrWhiteSpace(Model.DisplayName))
-                                {
-                                    <div class="fw-semibold mb-1">@Model.DisplayName</div>
-                                }
-                                @if (!string.IsNullOrWhiteSpace(Model.GitHubProfileUrl))
-                                {
-                                    <a href="@Model.GitHubProfileUrl" target="_blank" rel="noreferrer" class="small text-muted">GitHub ↗</a>
-                                }
-                            </div>
-                        </div>
-                    }
+            @if (Model.PageLayout.Count == 0)
+            {
+                <div class="openpatron-empty-state text-center py-5 px-4">
+                    <p class="text-muted mb-0">This page is being set up.</p>
                 </div>
-            </section>
-
-            @* ── Funding goal progress bar ── *@
-            @if (Model.FundingGoal is > 0)
-            {
-                <section class="openpatron-panel mb-4">
-                    <div class="openpatron-kicker">Funding progress</div>
-                    <div class="d-flex justify-content-between align-items-end mb-2">
-                        <div>
-                            <span class="h4 fw-bold mb-0">@Model.DefaultCurrency @Model.AmountRaised.ToString("N2")</span>
-                            <span class="text-muted"> raised of @Model.DefaultCurrency @Model.FundingGoal.Value.ToString("N2") goal</span>
-                        </div>
-                        <span class="fw-semibold" style="color: var(--op-accent);">@Model.FundingPercentage%</span>
-                    </div>
-                    <div class="openpatron-progress">
-                        <div class="openpatron-progress-bar" style="width: @Model.FundingPercentage%"></div>
-                    </div>
-                </section>
-            }
-
-            @if (!string.IsNullOrWhiteSpace(Model.Description))
-            {
-                <section class="openpatron-panel mb-4">
-                    <div class="openpatron-kicker">About this page</div>
-                    <h2 class="h3 fw-semibold mb-3">Why sponsor this work?</h2>
-                    <div class="openpatron-description">@Model.Description</div>
-                </section>
-            }
-
-            @if (Model.SupportsSubscriptions && Model.Plans.Count > 0)
-            {
-                <section class="mb-4">
-                    <div class="d-flex justify-content-between align-items-end gap-3 mb-3">
-                        <div>
-                            <div class="openpatron-kicker mb-2">Sponsor tiers</div>
-                            <h2 class="h3 fw-semibold mb-0">Choose a sponsorship tier</h2>
-                        </div>
-                        <div class="text-muted small">Pick the level that fits you best</div>
-                    </div>
-
-                    <div class="row g-3">
-                        @foreach (var plan in Model.Plans)
-                        {
-                            <div class="col-12 col-md-6">
-                                <div class="openpatron-plan-card d-flex flex-column">
-                                    <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
-                                        <div>
-                                            <div class="openpatron-kicker mb-2">Support tier</div>
-                                            <h3 class="h4 mb-1">@plan.Name</h3>
-                                        </div>
-                                        @if (plan.HasTrial)
-                                        {
-                                            <span class="badge rounded-pill text-bg-light border">@plan.TrialLabel</span>
-                                        }
-                                    </div>
-
-                                    <div class="d-flex align-items-end justify-content-between gap-3 mb-3">
-                                        <div>
-                                            <div class="openpatron-plan-price fw-bold">@plan.Price</div>
-                                            <div class="openpatron-plan-meta mt-1">@plan.BillingPeriod</div>
-                                        </div>
-                                    </div>
-
-                                    <div class="openpatron-divider"></div>
-
-                                    @if (!string.IsNullOrWhiteSpace(plan.Description))
-                                    {
-                                        <p class="text-muted flex-grow-1 mb-4">@plan.Description</p>
-                                    }
-                                    else
-                                    {
-                                        <p class="text-muted flex-grow-1 mb-4">Support this project on a recurring basis and help fund maintenance over time.</p>
-                                    }
-
-                                    <form method="post" action="@plan.SubscribeUrl" class="mt-auto d-grid gap-2">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-primary btn-lg">Become a subscriber</button>
-                                        @if (plan.HasTrial)
-                                        {
-                                            <button type="submit" class="btn btn-outline-primary" name="isTrial" value="true">Start with a trial</button>
-                                        }
-                                    </form>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                </section>
-            }
-
-            @if (Model.SupportsOneTime && Model.SuggestedAmounts.Count > 0)
-            {
-                <section class="openpatron-panel mb-4">
-                    <div class="d-flex justify-content-between align-items-end gap-3 mb-3">
-                        <div>
-                            <div class="openpatron-kicker mb-2">Quick support</div>
-                            <h2 class="h3 fw-semibold mb-0">Send quick support</h2>
-                        </div>
-                        <div class="text-muted small">A simple way to say thanks</div>
-                    </div>
-
-                    <div class="d-flex flex-wrap gap-2">
-                        @foreach (var amount in Model.SuggestedAmounts)
-                        {
-                            <form method="post" asp-action="Contribute" asp-route-appId="@Model.AppId" asp-route-area="OpenPatron" class="d-inline">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="amount" value="@amount.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
-                                <button type="submit" class="openpatron-amount-pill">@Model.DefaultCurrency @amount.ToString("0.##")</button>
-                            </form>
-                        }
-                    </div>
-                </section>
-            }
-
-            @* ── Sponsor wall ── *@
-            @if (Model.ShowSponsorWall && Model.SponsorWallEntries.Count > 0)
-            {
-                <section class="openpatron-panel mb-4">
-                    <div class="openpatron-kicker">Recent contributions</div>
-                    <h2 class="h4 fw-semibold mb-3">Who's supporting this work</h2>
-                    <div>
-                        @foreach (var entry in Model.SponsorWallEntries)
-                        {
-                            <div class="openpatron-wall-entry">
-                                <span>Anonymous</span>
-                                <span class="fw-semibold">@entry.Currency @entry.Amount.ToString("N2")</span>
-                                <span class="text-muted small">@entry.Timestamp.ToString("MMM d, yyyy")</span>
-                            </div>
-                        }
-                    </div>
-                </section>
             }
         </div>
 

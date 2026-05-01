@@ -1,0 +1,38 @@
+@model BTCPayServer.Plugins.OpenPatron.ViewModels.BlockRenderContext
+@{
+    var m = Model.Page;
+}
+
+@if (m.Projects.Count > 0)
+{
+    <section class="mb-block" data-block-type="projects-grid" data-block-id="@Model.Block.Id">
+        <div class="openpatron-kicker mb-2">Projects</div>
+        <h2 class="h3 fw-semibold mb-3">Open source work</h2>
+        <div class="row g-3">
+            @foreach (var project in m.Projects)
+            {
+                <div class="col-12 col-md-6">
+                    <a href="@project.Url" target="_blank" rel="noreferrer" class="text-decoration-none">
+                        <div class="openpatron-project-card d-flex flex-column h-100">
+                            <h3 class="h5 fw-bold text-dark mb-2">@project.Name</h3>
+                            @if (!string.IsNullOrWhiteSpace(project.Description))
+                            {
+                                <p class="text-muted small flex-grow-1 mb-3">@project.Description</p>
+                            }
+                            <div class="d-flex gap-2 flex-wrap">
+                                @if (!string.IsNullOrWhiteSpace(project.Language))
+                                {
+                                    <span class="openpatron-lang-badge">@project.Language</span>
+                                }
+                                @if (project.Stars is > 0)
+                                {
+                                    <span class="openpatron-star-badge">★ @project.Stars</span>
+                                }
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    </section>
+}

@@ -16,10 +16,24 @@ public class UpdateOpenPatronViewModel
     public int ActivePlanCount { get; set; }
     public bool Archived { get; set; }
 
-    // Page type (locked after first save)
+    // Page type (used for initial template selection)
     [Display(Name = "Page type")]
     public OpenPatronPageType PageType { get; set; } = OpenPatronPageType.Project;
     public bool PageTypeConfirmed { get; set; }
+
+    // Block layout (JSON-serialized list of BlockDefinition)
+    public string PageLayoutJson { get; set; } = "[]";
+
+    // Theme
+    [Display(Name = "Accent color")]
+    [RegularExpression(@"^#[0-9a-fA-F]{6}$", ErrorMessage = "Must be a hex color like #6366f1.")]
+    public string? ThemeAccentColor { get; set; }
+
+    [Display(Name = "Border radius")]
+    public string ThemeBorderRadius { get; set; } = "1.5rem";
+
+    [Display(Name = "Block spacing")]
+    public string ThemeBlockSpacing { get; set; } = "1rem";
 
     // Profile
     [Display(Name = "Display name")]
@@ -57,7 +71,7 @@ public class UpdateOpenPatronViewModel
     [MaxLength(200)]
     public string? SocialNostr { get; set; }
 
-    // Appearance
+    // Appearance (legacy field, kept for compat)
     [Display(Name = "Accent color")]
     [RegularExpression(@"^#[0-9a-fA-F]{6}$", ErrorMessage = "Must be a hex color like #6366f1.")]
     public string? AccentColor { get; set; }

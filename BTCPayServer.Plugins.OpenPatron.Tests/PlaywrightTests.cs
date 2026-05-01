@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using BTCPayServer.Tests;
 using Microsoft.Playwright;
@@ -12,38 +13,14 @@ namespace BTCPayServer.Plugins.OpenPatron.Tests;
 [Collection(nameof(NonParallelizableCollectionDefinition))]
 public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
 {
-    /// <summary>
-    /// After creating an OpenPatron app, the settings page should show the page
-    /// type picker with Personal and Project radio buttons, and a Continue button.
-    /// No other settings should be visible yet.
-    /// </summary>
-    [Fact]
-    public async Task NewAppShowsPageTypePicker()
-    {
-        await using var s = CreatePlaywrightTester();
-        await s.StartAsync();
-        await s.RegisterNewUser(true);
-        await s.CreateNewStore();
-
-        var (_, appId) = await s.CreateApp("OpenPatron");
-
-        // Should show the page type picker
-        await Expect(s.Page.Locator("label[for='pageTypePersonal']")).ToBeVisibleAsync();
-        await Expect(s.Page.Locator("label[for='pageTypeProject']")).ToBeVisibleAsync();
-        await Expect(s.Page.Locator("button[type='submit']:has-text('Continue')")).ToBeVisibleAsync();
-
-        // Full editor fields should NOT be visible
-        await Expect(s.Page.Locator("[name='AppName']")).Not.ToBeVisibleAsync();
-        await Expect(s.Page.Locator("[name='HeroTitle']")).Not.ToBeVisibleAsync();
-        await Expect(s.Page.Locator("[name='DisplayName']")).Not.ToBeVisibleAsync();
-    }
+    // ── Template picker (replaces the old page type picker) ──
 
     /// <summary>
-    /// The default selection should be Project (server‐rendered as checked).
-    /// Clicking Personal should visually highlight that option.
+    /// After creating an OpenPatron app, the settings page should show the
+    /// template picker with Personal and Project radio buttons.
     /// </summary>
     [Fact]
-    public async Task PageTypePickerDefaultsToProject()
+    public async Task NewAppShowsTemplatePicker()
     {
         await using var s = CreatePlaywrightTester();
         await s.StartAsync();
@@ -52,17 +29,37 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
 
         await s.CreateApp("OpenPatron");
 
-        // Project should be checked by default
+        await Expect(s.Page.Locator("label[for='pageTypePersonal']")).ToBeVisibleAsync();
+        await Expect(s.Page.Locator("label[for='pageTypeProject']")).ToBeVisibleAsync();
+        await Expect(s.Page.Locator("button[type='submit']:has-text('Continue')")).ToBeVisibleAsync();
+
+        // Block editor should NOT be visible yet
+        await Expect(s.Page.Locator("#blockList")).Not.ToBeVisibleAsync();
+        await Expect(s.Page.Locator("[name='AppName']")).Not.ToBeVisibleAsync();
+    }
+
+    /// <summary>
+    /// The default selection should be Project.
+    /// </summary>
+    [Fact]
+    public async Task TemplatePickerDefaultsToProject()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+
+        await s.CreateApp("OpenPatron");
+
         await Expect(s.Page.Locator("#pageTypeProject")).ToBeCheckedAsync();
         await Expect(s.Page.Locator("#pageTypePersonal")).Not.ToBeCheckedAsync();
     }
 
     /// <summary>
-    /// Clicking a radio option should update the visual highlight:
-    /// the selected option gets border-primary, the other loses it.
+    /// Clicking a radio option should update the visual highlight.
     /// </summary>
     [Fact]
-    public async Task PageTypePickerHighlightFollowsSelection()
+    public async Task TemplatePickerHighlightFollowsSelection()
     {
         await using var s = CreatePlaywrightTester();
         await s.StartAsync();
@@ -71,13 +68,11 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
 
         await s.CreateApp("OpenPatron");
 
-        // Initially Project is selected and highlighted
         var projectLabel = s.Page.Locator("label[for='pageTypeProject']");
         var personalLabel = s.Page.Locator("label[for='pageTypePersonal']");
         var projectClasses = await projectLabel.GetAttributeAsync("class") ?? "";
         Assert.Contains("border-primary", projectClasses);
 
-        // Click Personal
         await personalLabel.ClickAsync();
         await Expect(s.Page.Locator("#pageTypePersonal")).ToBeCheckedAsync();
         var personalClasses = await personalLabel.GetAttributeAsync("class") ?? "";
@@ -85,11 +80,10 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
     }
 
     /// <summary>
-    /// Clicking Continue with Project selected should confirm the type,
-    /// redirect to the full editor, and show a Project badge in the header.
+    /// Choosing Project template should redirect to block editor with default blocks.
     /// </summary>
     [Fact]
-    public async Task ContinueWithProjectShowsFullEditor()
+    public async Task ContinueWithProjectShowsBlockEditor()
     {
         await using var s = CreatePlaywrightTester();
         await s.StartAsync();
@@ -98,29 +92,28 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
 
         await s.CreateApp("OpenPatron");
 
-        // Project is default — click Continue
         await s.Page.Locator("button[type='submit']:has-text('Continue')").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template selected");
 
-        // Should show success message
-        await s.FindAlertMessage(partialText: "Page type saved");
-
-        // Should now be on the full editor
+        // Block editor should now be visible
+        await Expect(s.Page.Locator("#blockList")).ToBeVisibleAsync();
         await Expect(s.Page.Locator("[name='AppName']")).ToBeVisibleAsync();
-        await Expect(s.Page.Locator("[name='HeroTitle']")).ToBeVisibleAsync();
 
-        // Badge in header should say "Project"
+        // Badge should say "Project"
         await Expect(s.Page.Locator(".sticky-header .badge")).ToContainTextAsync("Project");
 
-        // The page type picker should no longer be visible
+        // Template picker should be gone
         await Expect(s.Page.Locator("#pageTypePersonal")).Not.ToBeVisibleAsync();
+
+        // Default project blocks should be loaded (6 blocks)
+        await Expect(s.Page.Locator("#blockList .block-row")).ToHaveCountAsync(6);
     }
 
     /// <summary>
-    /// Selecting Personal and clicking Continue should confirm Personal type,
-    /// show badge "Personal", and display the projects section.
+    /// Choosing Personal template should load personal default blocks.
     /// </summary>
     [Fact]
-    public async Task ContinueWithPersonalShowsPersonalEditor()
+    public async Task ContinueWithPersonalShowsBlockEditor()
     {
         await using var s = CreatePlaywrightTester();
         await s.StartAsync();
@@ -129,46 +122,117 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
 
         await s.CreateApp("OpenPatron");
 
-        // Select Personal
         await s.Page.Locator("label[for='pageTypePersonal']").ClickAsync();
         await s.Page.Locator("button[type='submit']:has-text('Continue')").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template selected");
 
-        await s.FindAlertMessage(partialText: "Page type saved");
-
-        // Badge should say "Personal"
         await Expect(s.Page.Locator(".sticky-header .badge")).ToContainTextAsync("Personal");
 
-        // Projects section should be visible for Personal pages
-        await Expect(s.Page.Locator("#projectsSection")).ToBeVisibleAsync();
-
-        // Funding goal section should be hidden for Personal pages
-        await Expect(s.Page.Locator("#fundingGoalSection")).Not.ToBeVisibleAsync();
+        // Default personal blocks should be loaded (7 blocks)
+        await Expect(s.Page.Locator("#blockList .block-row")).ToHaveCountAsync(7);
     }
 
+    // ── Block editor: add, remove, reorder ──
+
     /// <summary>
-    /// On a Project page, the funding goal section should be visible;
-    /// on a Personal page, it should be hidden.
+    /// Clicking an item in the block picker should add a new block to the list.
     /// </summary>
     [Fact]
-    public async Task FundingGoalOnlyVisibleForProjectPages()
+    public async Task CanAddBlockFromPicker()
     {
         await using var s = CreatePlaywrightTester();
         await s.StartAsync();
         await s.RegisterNewUser(true);
         await s.CreateNewStore();
 
-        // Create a Project page
-        var (_, appId) = await s.CreateApp("OpenPatron");
+        await s.CreateApp("OpenPatron");
         await s.Page.Locator("button[type='submit']:has-text('Continue')").ClickAsync();
-        await s.FindAlertMessage(partialText: "Page type saved");
+        await s.FindAlertMessage(partialText: "Template selected");
 
-        // Funding goal should be visible
-        await Expect(s.Page.Locator("#fundingGoalSection")).ToBeVisibleAsync();
+        var initialCount = await s.Page.Locator("#blockList .block-row").CountAsync();
+
+        // Add a "Sponsor Wall" block from the picker
+        await s.Page.Locator(".block-picker-item[data-block-type='sponsor-wall']").ClickAsync();
+
+        await Expect(s.Page.Locator("#blockList .block-row")).ToHaveCountAsync(initialCount + 1);
     }
 
     /// <summary>
-    /// After confirming page type, filling in settings and saving should persist
-    /// the values and show them again on reload.
+    /// Clicking remove on a block should remove it, and saving should persist the removal.
+    /// </summary>
+    [Fact]
+    public async Task CanRemoveBlockAndSave()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+
+        await s.CreateApp("OpenPatron");
+        await s.Page.Locator("button[type='submit']:has-text('Continue')").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template selected");
+
+        var initialCount = await s.Page.Locator("#blockList .block-row").CountAsync();
+        Assert.True(initialCount > 0);
+
+        // Remove the first block
+        await s.Page.Locator("#blockList .block-row").First.Locator(".block-remove-btn").ClickAsync();
+        await Expect(s.Page.Locator("#blockList .block-row")).ToHaveCountAsync(initialCount - 1);
+
+        // Save
+        await s.Page.Locator("#saveBtn").ClickAsync();
+        await s.FindAlertMessage(partialText: "updated");
+
+        // After reload, count should still be reduced
+        await Expect(s.Page.Locator("#blockList .block-row")).ToHaveCountAsync(initialCount - 1);
+    }
+
+    /// <summary>
+    /// Reordering blocks via JS simulation should persist after save.
+    /// </summary>
+    [Fact]
+    public async Task BlockReorderPersistsAfterSave()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+
+        await s.CreateApp("OpenPatron");
+        await s.Page.Locator("button[type='submit']:has-text('Continue')").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template selected");
+
+        // Read the current first block's text
+        var firstBlockText = await s.Page.Locator("#blockList .block-row").First.Locator(".fw-semibold").TextContentAsync();
+
+        // Use JS to simulate moving the first block to the end via the data model
+        await s.Page.EvaluateAsync(@"() => {
+            var input = document.getElementById('pageLayoutJson');
+            var blocks = JSON.parse(input.value);
+            var first = blocks.shift();
+            blocks.push(first);
+            input.value = JSON.stringify(blocks);
+            // Trigger a re-render by dispatching change
+            input.dispatchEvent(new Event('change'));
+        }");
+
+        // Save
+        await s.Page.Locator("#saveBtn").ClickAsync();
+        await s.FindAlertMessage(partialText: "updated");
+
+        // After reload, the first block should now be different
+        var newFirstBlockText = await s.Page.Locator("#blockList .block-row").First.Locator(".fw-semibold").TextContentAsync();
+        Assert.NotEqual(firstBlockText, newFirstBlockText);
+
+        // The old first block should now be last
+        var lastBlockText = await s.Page.Locator("#blockList .block-row").Last.Locator(".fw-semibold").TextContentAsync();
+        Assert.Equal(firstBlockText!.Trim(), lastBlockText!.Trim());
+    }
+
+    // ── Settings persistence ──
+
+    /// <summary>
+    /// Core page content fields should save and persist after reload.
     /// </summary>
     [Fact]
     public async Task CanSaveAndReloadSettings()
@@ -179,30 +243,22 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
         await s.CreateNewStore();
 
         await s.CreateApp("OpenPatron");
-
-        // Confirm Project type
         await s.Page.Locator("button[type='submit']:has-text('Continue')").ClickAsync();
-        await s.FindAlertMessage(partialText: "Page type saved");
+        await s.FindAlertMessage(partialText: "Template selected");
 
-        // Fill in some settings
         await s.Page.Locator("[name='AppName']").ClearAsync();
         await s.Page.Locator("[name='AppName']").FillAsync("My Test Project");
         await s.Page.Locator("[name='HeroTitle']").ClearAsync();
         await s.Page.Locator("[name='HeroTitle']").FillAsync("Support My Work");
         await s.Page.Locator("[name='DisplayName']").FillAsync("Jane Dev");
-        await s.Page.Locator("[name='AccentColor']").ClearAsync();
-        await s.Page.Locator("[name='AccentColor']").FillAsync("#ff5500");
         await s.Page.Locator("[name='FundingGoal']").FillAsync("1000");
 
-        // Save
-        await s.Page.Locator("button[type='submit']:has-text('Save changes')").ClickAsync();
+        await s.Page.Locator("#saveBtn").ClickAsync();
         await s.FindAlertMessage(partialText: "updated");
 
-        // Values should be persisted
         await Expect(s.Page.Locator("[name='AppName']")).ToHaveValueAsync("My Test Project");
         await Expect(s.Page.Locator("[name='HeroTitle']")).ToHaveValueAsync("Support My Work");
         await Expect(s.Page.Locator("[name='DisplayName']")).ToHaveValueAsync("Jane Dev");
-        await Expect(s.Page.Locator("[name='AccentColor']")).ToHaveValueAsync("#ff5500");
         await Expect(s.Page.Locator("[name='FundingGoal']")).ToHaveValueAsync("1000");
     }
 
@@ -219,27 +275,25 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
 
         await s.CreateApp("OpenPatron");
         await s.Page.Locator("button[type='submit']:has-text('Continue')").ClickAsync();
-        await s.FindAlertMessage(partialText: "Page type saved");
+        await s.FindAlertMessage(partialText: "Template selected");
 
-        // Fill social links
         await s.Page.Locator("[name='SocialX']").FillAsync("janedev");
         await s.Page.Locator("[name='SocialNostr']").FillAsync("npub1abc123");
 
-        // Save
-        await s.Page.Locator("button[type='submit']:has-text('Save changes')").ClickAsync();
+        await s.Page.Locator("#saveBtn").ClickAsync();
         await s.FindAlertMessage(partialText: "updated");
 
-        // Verify persisted
         await Expect(s.Page.Locator("[name='SocialX']")).ToHaveValueAsync("janedev");
         await Expect(s.Page.Locator("[name='SocialNostr']")).ToHaveValueAsync("npub1abc123");
     }
 
+    // ── Theme settings ──
+
     /// <summary>
-    /// The page type should be locked after the first save: reloading the page
-    /// should not show radio buttons but should show the badge.
+    /// Theme accent color, border radius, and block spacing should persist.
     /// </summary>
     [Fact]
-    public async Task PageTypeIsLockedAfterFirstSave()
+    public async Task ThemeSettingsPersist()
     {
         await using var s = CreatePlaywrightTester();
         await s.StartAsync();
@@ -247,29 +301,97 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
         await s.CreateNewStore();
 
         await s.CreateApp("OpenPatron");
-
-        // Select Personal and confirm
-        await s.Page.Locator("label[for='pageTypePersonal']").ClickAsync();
         await s.Page.Locator("button[type='submit']:has-text('Continue')").ClickAsync();
-        await s.FindAlertMessage(partialText: "Page type saved");
+        await s.FindAlertMessage(partialText: "Template selected");
 
-        // Reload
-        await s.Page.ReloadAsync();
+        await s.Page.Locator("[name='ThemeAccentColor']").ClearAsync();
+        await s.Page.Locator("[name='ThemeAccentColor']").FillAsync("#ff5500");
+        await s.Page.Locator("[name='ThemeBorderRadius']").SelectOptionAsync("2rem");
+        await s.Page.Locator("[name='ThemeBlockSpacing']").SelectOptionAsync("2rem");
 
-        // Radio buttons should not exist
-        await Expect(s.Page.Locator("#pageTypePersonal")).Not.ToBeVisibleAsync();
-        await Expect(s.Page.Locator("#pageTypeProject")).Not.ToBeVisibleAsync();
+        await s.Page.Locator("#saveBtn").ClickAsync();
+        await s.FindAlertMessage(partialText: "updated");
 
-        // Badge should say Personal
-        await Expect(s.Page.Locator(".sticky-header .badge")).ToContainTextAsync("Personal");
+        await Expect(s.Page.Locator("[name='ThemeAccentColor']")).ToHaveValueAsync("#ff5500");
+        await Expect(s.Page.Locator("[name='ThemeBorderRadius']")).ToHaveValueAsync("2rem");
+        await Expect(s.Page.Locator("[name='ThemeBlockSpacing']")).ToHaveValueAsync("2rem");
+    }
 
-        // Full editor should be visible
-        await Expect(s.Page.Locator("[name='AppName']")).ToBeVisibleAsync();
+    // ── Public page rendering ──
+
+    /// <summary>
+    /// The public page should render blocks in layout order with data-block-type attributes.
+    /// </summary>
+    [Fact]
+    public async Task PublicPageRendersBlocksInOrder()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+
+        var (_, appId) = await s.CreateApp("OpenPatron");
+
+        // Set up as Project
+        await s.Page.Locator("button[type='submit']:has-text('Continue')").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template selected");
+
+        // Fill required fields and publish
+        await s.Page.Locator("[name='HeroTitle']").ClearAsync();
+        await s.Page.Locator("[name='HeroTitle']").FillAsync("Test Project");
+        await s.Page.Locator("[name='Description']").FillAsync("A great project");
+        await s.Page.Locator("[name='Visibility']").SelectOptionAsync("1");
+        await s.Page.Locator("#saveBtn").ClickAsync();
+        await s.FindAlertMessage(partialText: "updated");
+
+        // Visit public page
+        await s.GoToUrl($"/apps/{appId}/openpatron");
+
+        // Verify blocks are rendered
+        var blocks = s.Page.Locator("[data-block-type]");
+        var count = await blocks.CountAsync();
+        Assert.True(count > 0, "Expected at least one block on the public page");
+
+        // First block should be project-hero
+        var firstType = await blocks.First.GetAttributeAsync("data-block-type");
+        Assert.Equal("project-hero", firstType);
     }
 
     /// <summary>
-    /// Adding a project to the project list (via "+ Add project manually")
-    /// should persist after save and be visible after reload.
+    /// The public page should apply theme CSS variables.
+    /// </summary>
+    [Fact]
+    public async Task PublicPageAppliesTheme()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+
+        var (_, appId) = await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[type='submit']:has-text('Continue')").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template selected");
+
+        // Set custom accent color
+        await s.Page.Locator("[name='ThemeAccentColor']").ClearAsync();
+        await s.Page.Locator("[name='ThemeAccentColor']").FillAsync("#ff5500");
+        await s.Page.Locator("[name='Visibility']").SelectOptionAsync("1");
+        await s.Page.Locator("#saveBtn").ClickAsync();
+        await s.FindAlertMessage(partialText: "updated");
+
+        // Visit public page
+        await s.GoToUrl($"/apps/{appId}/openpatron");
+
+        // Check that the accent CSS variable is applied
+        var pageSource = await s.Page.ContentAsync();
+        Assert.Contains("--op-accent: #ff5500", pageSource);
+    }
+
+    // ── Projects ──
+
+    /// <summary>
+    /// Adding and saving a project should persist after reload.
     /// </summary>
     [Fact]
     public async Task CanAddAndSaveProject()
@@ -281,30 +403,25 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
 
         await s.CreateApp("OpenPatron");
 
-        // Choose Personal so the projects section is visible
         await s.Page.Locator("label[for='pageTypePersonal']").ClickAsync();
         await s.Page.Locator("button[type='submit']:has-text('Continue')").ClickAsync();
-        await s.FindAlertMessage(partialText: "Page type saved");
+        await s.FindAlertMessage(partialText: "Template selected");
 
-        // Add a project row
         await s.Page.Locator("#addProjectBtn").ClickAsync();
         await s.Page.Locator("[name='Projects[0].Name']").FillAsync("My Project");
         await s.Page.Locator("[name='Projects[0].Url']").FillAsync("https://example.com/myproject");
         await s.Page.Locator("[name='Projects[0].Description']").FillAsync("Cool project");
 
-        // Save
-        await s.Page.Locator("button[type='submit']:has-text('Save changes')").ClickAsync();
+        await s.Page.Locator("#saveBtn").ClickAsync();
         await s.FindAlertMessage(partialText: "updated");
 
-        // Project should still be there after reload
         await Expect(s.Page.Locator("[name='Projects[0].Name']")).ToHaveValueAsync("My Project");
         await Expect(s.Page.Locator("[name='Projects[0].Url']")).ToHaveValueAsync("https://example.com/myproject");
         await Expect(s.Page.Locator("[name='Projects[0].Description']")).ToHaveValueAsync("Cool project");
     }
 
     /// <summary>
-    /// Removing a project from the middle of the list should renumber the
-    /// remaining rows so they keep contiguous indices and survive a save.
+    /// Removing the middle project should renumber correctly and survive a save.
     /// </summary>
     [Fact]
     public async Task RemovingMiddleProjectKeepsOthersAfterSave()
@@ -318,9 +435,8 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
 
         await s.Page.Locator("label[for='pageTypePersonal']").ClickAsync();
         await s.Page.Locator("button[type='submit']:has-text('Continue')").ClickAsync();
-        await s.FindAlertMessage(partialText: "Page type saved");
+        await s.FindAlertMessage(partialText: "Template selected");
 
-        // Add three projects
         for (var i = 0; i < 3; i++)
         {
             await s.Page.Locator("#addProjectBtn").ClickAsync();
@@ -332,25 +448,21 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
         await s.Page.Locator("[name='Projects[2].Name']").FillAsync("C");
         await s.Page.Locator("[name='Projects[2].Url']").FillAsync("https://example.com/c");
 
-        // Remove the middle one (B)
         await s.Page.Locator(".project-row").Nth(1).Locator(".project-remove-btn").ClickAsync();
 
-        // After renumbering, A is [0] and C is [1]
         await Expect(s.Page.Locator("[name='Projects[0].Name']")).ToHaveValueAsync("A");
         await Expect(s.Page.Locator("[name='Projects[1].Name']")).ToHaveValueAsync("C");
 
-        await s.Page.Locator("button[type='submit']:has-text('Save changes')").ClickAsync();
+        await s.Page.Locator("#saveBtn").ClickAsync();
         await s.FindAlertMessage(partialText: "updated");
 
-        // Both A and C should survive the save
         await Expect(s.Page.Locator("[name='Projects[0].Name']")).ToHaveValueAsync("A");
         await Expect(s.Page.Locator("[name='Projects[1].Name']")).ToHaveValueAsync("C");
         await Expect(s.Page.Locator(".project-row")).ToHaveCountAsync(2);
     }
 
-    /// <summary>
-    /// The sponsor wall toggle should be off by default and togglable.
-    /// </summary>
+    // ── Sponsor wall toggle ──
+
     [Fact]
     public async Task SponsorWallToggleWorks()
     {
@@ -361,19 +473,51 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
 
         await s.CreateApp("OpenPatron");
         await s.Page.Locator("button[type='submit']:has-text('Continue')").ClickAsync();
-        await s.FindAlertMessage(partialText: "Page type saved");
+        await s.FindAlertMessage(partialText: "Template selected");
 
-        // Should be unchecked by default
         await Expect(s.Page.Locator("[name='ShowSponsorWall']")).Not.ToBeCheckedAsync();
 
-        // Toggle it on
         await s.Page.Locator("[name='ShowSponsorWall']").CheckAsync();
 
-        // Save
-        await s.Page.Locator("button[type='submit']:has-text('Save changes')").ClickAsync();
+        await s.Page.Locator("#saveBtn").ClickAsync();
         await s.FindAlertMessage(partialText: "updated");
 
-        // Should be checked after save
         await Expect(s.Page.Locator("[name='ShowSponsorWall']")).ToBeCheckedAsync();
+    }
+
+    // ── Empty block list ──
+
+    /// <summary>
+    /// If all blocks are removed, the public page should render gracefully.
+    /// </summary>
+    [Fact]
+    public async Task EmptyBlockListRendersGracefully()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+
+        var (_, appId) = await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[type='submit']:has-text('Continue')").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template selected");
+
+        // Remove all blocks via JS
+        await s.Page.EvaluateAsync(@"() => {
+            document.getElementById('pageLayoutJson').value = '[]';
+        }");
+
+        await s.Page.Locator("[name='Visibility']").SelectOptionAsync("1");
+        await s.Page.Locator("#saveBtn").ClickAsync();
+        await s.FindAlertMessage(partialText: "updated");
+
+        // Visit public page -- should not error
+        await s.GoToUrl($"/apps/{appId}/openpatron");
+        await s.Page.AssertNoError();
+
+        // Should show empty state or at least the sidebar
+        var content = await s.Page.ContentAsync();
+        Assert.Contains("openpatron-page", content);
     }
 }

@@ -1,0 +1,40 @@
+@model BTCPayServer.Plugins.OpenPatron.ViewModels.BlockRenderContext
+@{
+    var m = Model.Page;
+    var hasSocialLinks = !string.IsNullOrWhiteSpace(m.SocialX) || !string.IsNullOrWhiteSpace(m.SocialMastodon) || !string.IsNullOrWhiteSpace(m.SocialNostr);
+}
+
+<section class="openpatron-profile-hero mb-block" data-block-type="profile-hero" data-block-id="@Model.Block.Id">
+    @if (!string.IsNullOrWhiteSpace(m.GravatarUrl))
+    {
+        <img src="@m.GravatarUrl" alt="@(m.DisplayName ?? "Avatar")" class="openpatron-avatar mb-3" />
+    }
+    <h1 class="openpatron-profile-name mb-2">@(m.DisplayName ?? m.AppName)</h1>
+    @if (!string.IsNullOrWhiteSpace(m.HeroSubtitle))
+    {
+        <p class="lead text-muted mb-3">@m.HeroSubtitle</p>
+    }
+    @if (!string.IsNullOrWhiteSpace(m.Bio))
+    {
+        <p class="text-muted mx-auto mb-4" style="max-width:600px;">@m.Bio</p>
+    }
+
+    <div class="d-flex flex-wrap gap-2 justify-content-center">
+        @if (!string.IsNullOrWhiteSpace(m.GitHubProfileUrl))
+        {
+            <a class="openpatron-social-pill" href="@m.GitHubProfileUrl" target="_blank" rel="noreferrer">GitHub ↗</a>
+        }
+        @if (!string.IsNullOrWhiteSpace(m.SocialX))
+        {
+            <a class="openpatron-social-pill" href="https://x.com/@m.SocialX" target="_blank" rel="noreferrer">𝕏 @@@m.SocialX</a>
+        }
+        @if (!string.IsNullOrWhiteSpace(m.SocialMastodon))
+        {
+            <a class="openpatron-social-pill" href="@m.SocialMastodon" target="_blank" rel="noreferrer">🐘 Mastodon</a>
+        }
+        @if (!string.IsNullOrWhiteSpace(m.SocialNostr))
+        {
+            <span class="openpatron-social-pill" title="@m.SocialNostr">⚡ Nostr</span>
+        }
+    </div>
+</section>

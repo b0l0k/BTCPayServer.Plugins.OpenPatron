@@ -13,8 +13,12 @@ public class OpenPatronPublicViewModel
     public bool SupportsOneTime { get; set; }
     public bool SupportsSubscriptions { get; set; }
 
-    // Page type
+    // Page type (informational)
     public OpenPatronPageType PageType { get; set; } = OpenPatronPageType.Project;
+
+    // Block layout
+    public List<BlockDefinition> PageLayout { get; set; } = [];
+    public PageTheme Theme { get; set; } = new();
 
     // Profile
     public string? DisplayName { get; set; }
@@ -29,9 +33,6 @@ public class OpenPatronPublicViewModel
     public string? SocialX { get; set; }
     public string? SocialMastodon { get; set; }
     public string? SocialNostr { get; set; }
-
-    // Appearance
-    public string? AccentColor { get; set; }
 
     // Funding goal
     public decimal? FundingGoal { get; set; }

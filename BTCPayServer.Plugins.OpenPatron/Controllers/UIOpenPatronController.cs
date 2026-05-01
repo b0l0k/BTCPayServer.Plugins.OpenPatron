@@ -22,6 +22,7 @@ using BTCPayServer.Services.Invoices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace BTCPayServer.Plugins.OpenPatron.Controllers;
 
@@ -38,7 +39,6 @@ public class UIOpenPatronController(
 {
     private const string UpdateViewPath = "/Views/UIOpenPatron/Update.cshtml";
     private const string PublicPageViewPath = "/Views/UIOpenPatron/PublicPage.cshtml";
-    private const string PublicPagePersonalViewPath = "/Views/UIOpenPatron/PublicPagePersonal.cshtml";
 
     [Authorize(Policy = Policies.CanViewStoreSettings, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
     [HttpGet("{appId}/settings/openpatron")]
@@ -56,11 +56,12 @@ public class UIOpenPatronController(
         }
 
         var settings = app.GetSettings<OpenPatronAppSettings>();
+        EnsurePageLayout(settings);
+
         var offering = await GetOffering(app, settings);
         var vm = ToUpdateViewModel(app, settings, offering);
 
-        // Fetch GitHub repo suggestions for Personal pages
-        if (settings.PageType == OpenPatronPageType.Personal && !string.IsNullOrWhiteSpace(settings.GitHubUsername))
+        if (!string.IsNullOrWhiteSpace(settings.GitHubUsername))
         {
             var repos = await gitHubRepoService.GetPublicReposAsync(settings.GitHubUsername);
             var existingUrls = new HashSet<string>(
@@ -89,14 +90,16 @@ public class UIOpenPatronController(
 
         var existingSettings = app.GetSettings<OpenPatronAppSettings>();
 
-        // Initial setup: just confirm the page type and redirect to full editor
+        // Initial setup: choose a starting template and generate default block layout
         if (!existingSettings.PageTypeConfirmed)
         {
             existingSettings.PageType = viewModel.PageType;
             existingSettings.PageTypeConfirmed = true;
+            existingSettings.PageLayout = BlockRegistry.DefaultLayoutFor(viewModel.PageType);
+            existingSettings.Theme = new PageTheme();
             app.SetSettings(existingSettings);
             await appService.UpdateOrCreateApp(app);
-            TempData[WellKnownTempData.SuccessMessage] = "Page type saved. You can now configure your page.";
+            TempData[WellKnownTempData.SuccessMessage] = "Template selected. You can now configure your page.";
             return RedirectToAction(nameof(Update), new { appId = app.Id });
         }
 
@@ -110,14 +113,31 @@ public class UIOpenPatronController(
             return View(UpdateViewPath, viewModel);
         }
 
-        // Lock page type after first save
-        var pageType = existingSettings.PageType;
+        // Parse block layout from posted JSON
+        List<BlockDefinition> pageLayout;
+        try
+        {
+            pageLayout = JsonConvert.DeserializeObject<List<BlockDefinition>>(viewModel.PageLayoutJson ?? "[]") ?? [];
+            pageLayout = pageLayout.Where(b => BlockRegistry.IsKnownType(b.Type)).ToList();
+        }
+        catch
+        {
+            pageLayout = existingSettings.PageLayout ?? BlockRegistry.DefaultLayoutFor(existingSettings.PageType);
+        }
 
         var settings = new OpenPatronAppSettings
         {
-            // Page type
-            PageType = pageType,
+            PageType = existingSettings.PageType,
             PageTypeConfirmed = true,
+
+            // Block layout
+            PageLayout = pageLayout,
+            Theme = new PageTheme
+            {
+                AccentColor = NormalizeString(viewModel.ThemeAccentColor) ?? "#6366f1",
+                BorderRadius = NormalizeString(viewModel.ThemeBorderRadius) ?? "1.5rem",
+                BlockSpacing = NormalizeString(viewModel.ThemeBlockSpacing) ?? "1rem",
+            },
 
             // Profile
             DisplayName = viewModel.DisplayName?.Trim(),
@@ -125,7 +145,7 @@ public class UIOpenPatronController(
             GitHubUsername = viewModel.GitHubUsername?.Trim(),
             GravatarEmail = viewModel.GravatarEmail?.Trim(),
 
-            // Projects (Personal page)
+            // Projects
             Projects = viewModel.Projects
                 .Where(p => !string.IsNullOrWhiteSpace(p.Name) && !string.IsNullOrWhiteSpace(p.Url))
                 .Select(p => new OpenPatronProject
@@ -146,8 +166,8 @@ public class UIOpenPatronController(
                 Nostr = NormalizeString(viewModel.SocialNostr)
             },
 
-            // Appearance
-            AccentColor = NormalizeString(viewModel.AccentColor),
+            // Legacy accent color (kept in sync with theme)
+            AccentColor = NormalizeString(viewModel.ThemeAccentColor),
 
             // Funding goal
             FundingGoal = viewModel.FundingGoal,
@@ -169,7 +189,6 @@ public class UIOpenPatronController(
             DefaultCurrency = viewModel.DefaultCurrency.Trim().ToUpperInvariant(),
             SuggestedAmounts = ParseSuggestedAmounts(viewModel.SuggestedAmounts),
             Visibility = viewModel.Visibility,
-            // Preserve inert settings fields that no longer have admin UI
             PrimaryCallToActionUrl = existingSettings.PrimaryCallToActionUrl,
             Links = existingSettings.Links
         };
@@ -205,17 +224,17 @@ public class UIOpenPatronController(
             return NotFound();
         }
 
+        EnsurePageLayout(settings);
+
         var offering = AllowsSubscriptions(settings) ? await GetOffering(app, settings) : null;
         var vm = ToPublicViewModel(app, settings, offering);
 
-        // Funding goal progress
         if (settings.FundingGoal is > 0)
         {
             vm.AmountRaised = await fundingProgressService.GetTotalRaisedAsync(app.Id, settings.DefaultCurrency);
             vm.FundingPercentage = (int)Math.Min(100, Math.Round(vm.AmountRaised / settings.FundingGoal.Value * 100));
         }
 
-        // Sponsor wall
         if (settings.ShowSponsorWall)
         {
             var entries = await sponsorWallService.GetRecentContributionsAsync(app.Id);
@@ -227,11 +246,7 @@ public class UIOpenPatronController(
             }).ToList();
         }
 
-        var viewPath = settings.PageType == OpenPatronPageType.Personal
-            ? PublicPagePersonalViewPath
-            : PublicPageViewPath;
-
-        return View(viewPath, vm);
+        return View(PublicPageViewPath, vm);
     }
 
     [AllowAnonymous]
@@ -347,11 +362,33 @@ public class UIOpenPatronController(
         return RedirectToAction("PlanCheckout", "UIPlanCheckout", new { area = SubscriptionsPlugin.Area, checkoutId = checkout.Id });
     }
 
+    /// <summary>
+    /// Ensures <see cref="OpenPatronAppSettings.PageLayout"/> is populated.
+    /// For pages created before the block-based builder, generates a default layout
+    /// matching the original page type.
+    /// </summary>
+    public static void EnsurePageLayout(OpenPatronAppSettings settings)
+    {
+        if (settings.PageLayout is { Count: > 0 })
+            return;
+
+        settings.PageLayout = settings.PageTypeConfirmed
+            ? BlockRegistry.DefaultLayoutFor(settings.PageType)
+            : [];
+
+        settings.Theme ??= new PageTheme
+        {
+            AccentColor = settings.AccentColor ?? "#6366f1"
+        };
+    }
+
     private async Task<bool> IsAuthorized(AppData app, string policy)
         => (await authorizationService.AuthorizeAsync(User, app.StoreDataId, policy)).Succeeded;
 
     private UpdateOpenPatronViewModel ToUpdateViewModel(AppData app, OpenPatronAppSettings settings, OfferingData? offering)
     {
+        var theme = settings.Theme ?? new PageTheme { AccentColor = settings.AccentColor ?? "#6366f1" };
+
         return new UpdateOpenPatronViewModel
         {
             AppId = app.Id,
@@ -366,6 +403,14 @@ public class UIOpenPatronController(
             // Page type
             PageType = settings.PageType,
             PageTypeConfirmed = settings.PageTypeConfirmed,
+
+            // Block layout
+            PageLayoutJson = JsonConvert.SerializeObject(settings.PageLayout ?? [], Formatting.None),
+
+            // Theme
+            ThemeAccentColor = theme.AccentColor,
+            ThemeBorderRadius = theme.BorderRadius,
+            ThemeBlockSpacing = theme.BlockSpacing,
 
             // Profile
             DisplayName = settings.DisplayName,
@@ -388,7 +433,7 @@ public class UIOpenPatronController(
             SocialMastodon = settings.SocialLinks?.Mastodon,
             SocialNostr = settings.SocialLinks?.Nostr,
 
-            // Appearance
+            // Appearance (legacy)
             AccentColor = settings.AccentColor,
 
             // Funding goal
@@ -412,6 +457,8 @@ public class UIOpenPatronController(
 
     private OpenPatronPublicViewModel ToPublicViewModel(AppData app, OpenPatronAppSettings settings, OfferingData? offering)
     {
+        var theme = settings.Theme ?? new PageTheme { AccentColor = settings.AccentColor ?? "#6366f1" };
+
         return new OpenPatronPublicViewModel
         {
             AppId = app.Id,
@@ -421,8 +468,9 @@ public class UIOpenPatronController(
             SupportsOneTime = AllowsOneTime(settings),
             SupportsSubscriptions = AllowsSubscriptions(settings),
 
-            // Page type
             PageType = settings.PageType,
+            PageLayout = settings.PageLayout ?? [],
+            Theme = theme,
 
             // Profile
             DisplayName = settings.DisplayName,
@@ -446,9 +494,6 @@ public class UIOpenPatronController(
             SocialX = settings.SocialLinks?.X,
             SocialMastodon = settings.SocialLinks?.Mastodon,
             SocialNostr = settings.SocialLinks?.Nostr,
-
-            // Appearance
-            AccentColor = settings.AccentColor,
 
             // Funding goal
             FundingGoal = settings.FundingGoal,
