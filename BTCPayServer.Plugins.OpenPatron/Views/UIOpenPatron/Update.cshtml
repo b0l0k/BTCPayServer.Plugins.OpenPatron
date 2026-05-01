@@ -86,18 +86,29 @@
                 <span asp-validation-for="AppName" class="text-danger"></span>
             </div>
 
-            @* ── Block list (sortable) ── *@
+            @* ── Block list with Visual / JSON toggle ── *@
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="h5 mb-0">Page blocks</h3>
-                    <span class="text-muted small" id="blockCount"></span>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="text-muted small" id="blockCount"></span>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-secondary active" id="modeVisualBtn">Visual</button>
+                            <button type="button" class="btn btn-outline-secondary" id="modeJsonBtn">JSON</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body p-0">
+                <div class="card-body p-0" id="visualEditor">
                     <div id="blockList" class="list-group list-group-flush">
                     </div>
                     <div id="emptyBlockState" class="text-center text-muted py-4 d-none">
                         No blocks yet. Add blocks from the panel on the right.
                     </div>
+                </div>
+                <div class="card-body d-none" id="jsonEditor">
+                    <div class="form-text mb-2">Edit the raw block layout JSON. Switch back to Visual to see changes.</div>
+                    <textarea id="jsonEditorTextarea" class="form-control font-monospace" rows="16" spellcheck="false" style="font-size:.85rem;tab-size:2;"></textarea>
+                    <div id="jsonEditorError" class="text-danger small mt-1 d-none"></div>
                 </div>
             </div>
 
@@ -454,40 +465,66 @@
 
 @if (Model.PageTypeConfirmed)
 {
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
 <script>
 (function () {
+    // ── Block type catalog ──
     var BLOCK_TYPES = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(
         blockTypes.ToDictionary(kv => kv.Key, kv => new { name = kv.Value.DisplayName, description = kv.Value.Description })));
 
-    var layoutInput = document.getElementById('pageLayoutJson');
-    var blockListEl = document.getElementById('blockList');
-    var emptyState = document.getElementById('emptyBlockState');
-    var blockCountEl = document.getElementById('blockCount');
+    // ── DOM refs ──
+    var layoutInput     = document.getElementById('pageLayoutJson');
+    var blockListEl     = document.getElementById('blockList');
+    var emptyState      = document.getElementById('emptyBlockState');
+    var blockCountEl    = document.getElementById('blockCount');
+    var visualEditor    = document.getElementById('visualEditor');
+    var jsonEditor      = document.getElementById('jsonEditor');
+    var jsonTextarea     = document.getElementById('jsonEditorTextarea');
+    var jsonError        = document.getElementById('jsonEditorError');
+    var modeVisualBtn   = document.getElementById('modeVisualBtn');
+    var modeJsonBtn     = document.getElementById('modeJsonBtn');
 
+    // ── Block data ──
     var blocks = [];
     try { blocks = JSON.parse(layoutInput.value); } catch (_) { blocks = []; }
+    if (!Array.isArray(blocks)) blocks = [];
 
     function generateId() {
         return Math.random().toString(36).substring(2, 14);
     }
 
+    function esc(s) {
+        var d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+    }
+
+    // ── Render visual block list ──
     function renderBlockList() {
         blockListEl.innerHTML = '';
         blocks.forEach(function (block, idx) {
             var info = BLOCK_TYPES[block.Type] || { name: block.Type, description: '' };
             var item = document.createElement('div');
-            item.className = 'list-group-item d-flex justify-content-between align-items-center block-row';
-            item.dataset.blockId = block.Id;
+            item.className = 'list-group-item block-row';
+            item.dataset.idx = idx;
+
+            var isFirst = idx === 0;
+            var isLast = idx === blocks.length - 1;
+
             item.innerHTML =
-                '<div class="d-flex align-items-center gap-2">' +
-                    '<span class="drag-handle" style="cursor:grab;color:#94a3b8;">☰</span>' +
-                    '<div>' +
-                        '<div class="fw-semibold">' + info.name + '</div>' +
-                        '<div class="text-muted small">' + info.description + '</div>' +
+                '<div class="d-flex justify-content-between align-items-center">' +
+                    '<div class="d-flex align-items-center gap-2">' +
+                        '<div class="d-flex flex-column">' +
+                            '<button type="button" class="btn btn-sm btn-link p-0 lh-1 block-move-btn" data-dir="up" data-idx="' + idx + '"' + (isFirst ? ' disabled' : '') + ' title="Move up">&#9650;</button>' +
+                            '<button type="button" class="btn btn-sm btn-link p-0 lh-1 block-move-btn" data-dir="down" data-idx="' + idx + '"' + (isLast ? ' disabled' : '') + ' title="Move down">&#9660;</button>' +
+                        '</div>' +
+                        '<div>' +
+                            '<div class="fw-semibold">' + esc(info.name) + '</div>' +
+                            '<div class="text-muted small">' + esc(info.description) + '</div>' +
+                        '</div>' +
                     '</div>' +
-                '</div>' +
-                '<button type="button" class="btn btn-sm btn-outline-danger block-remove-btn" data-idx="' + idx + '">Remove</button>';
+                    '<button type="button" class="btn btn-sm btn-outline-danger block-remove-btn" data-idx="' + idx + '">&times; Remove</button>' +
+                '</div>';
+
             blockListEl.appendChild(item);
         });
 
@@ -500,53 +537,129 @@
         layoutInput.value = JSON.stringify(blocks);
     }
 
-    new Sortable(blockListEl, {
-        animation: 150,
-        handle: '.drag-handle',
-        onEnd: function (evt) {
-            var moved = blocks.splice(evt.oldIndex, 1)[0];
-            blocks.splice(evt.newIndex, 0, moved);
-            syncToInput();
+    // ── Block list: remove ──
+    blockListEl.addEventListener('click', function (e) {
+        var removeBtn = e.target.closest('.block-remove-btn');
+        if (removeBtn) {
+            e.preventDefault();
+            var idx = parseInt(removeBtn.dataset.idx, 10);
+            blocks.splice(idx, 1);
+            renderBlockList();
+            return;
+        }
+
+        var moveBtn = e.target.closest('.block-move-btn');
+        if (moveBtn) {
+            e.preventDefault();
+            var idx = parseInt(moveBtn.dataset.idx, 10);
+            var dir = moveBtn.dataset.dir;
+            if (dir === 'up' && idx > 0) {
+                var tmp = blocks[idx - 1];
+                blocks[idx - 1] = blocks[idx];
+                blocks[idx] = tmp;
+            } else if (dir === 'down' && idx < blocks.length - 1) {
+                var tmp = blocks[idx + 1];
+                blocks[idx + 1] = blocks[idx];
+                blocks[idx] = tmp;
+            }
+            renderBlockList();
         }
     });
 
-    blockListEl.addEventListener('click', function (e) {
-        var btn = e.target.closest('.block-remove-btn');
-        if (!btn) return;
-        var idx = parseInt(btn.dataset.idx, 10);
-        blocks.splice(idx, 1);
-        renderBlockList();
-    });
-
+    // ── Block picker: add ──
     document.getElementById('blockPicker').addEventListener('click', function (e) {
+        e.preventDefault();
         var item = e.target.closest('.block-picker-item');
         if (!item) return;
         var type = item.dataset.blockType;
         blocks.push({ Id: generateId(), Type: type, Settings: null });
         renderBlockList();
+        blockListEl.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
 
+    // ── Visual / JSON mode toggle ──
+    var currentMode = 'visual';
+
+    function switchToVisual() {
+        if (currentMode === 'json') {
+            var raw = jsonTextarea.value.trim();
+            try {
+                var parsed = JSON.parse(raw);
+                if (!Array.isArray(parsed)) throw new Error('Must be an array');
+                blocks = parsed;
+                jsonError.classList.add('d-none');
+            } catch (err) {
+                jsonError.textContent = 'Invalid JSON: ' + err.message;
+                jsonError.classList.remove('d-none');
+                return;
+            }
+        }
+        currentMode = 'visual';
+        visualEditor.classList.remove('d-none');
+        jsonEditor.classList.add('d-none');
+        modeVisualBtn.classList.add('active');
+        modeJsonBtn.classList.remove('active');
+        renderBlockList();
+    }
+
+    function switchToJson() {
+        currentMode = 'json';
+        jsonTextarea.value = JSON.stringify(blocks, null, 2);
+        jsonError.classList.add('d-none');
+        visualEditor.classList.add('d-none');
+        jsonEditor.classList.remove('d-none');
+        modeVisualBtn.classList.remove('active');
+        modeJsonBtn.classList.add('active');
+    }
+
+    modeVisualBtn.addEventListener('click', function (e) { e.preventDefault(); switchToVisual(); });
+    modeJsonBtn.addEventListener('click', function (e) { e.preventDefault(); switchToJson(); });
+
+    // Keep hidden input in sync when JSON textarea changes
+    jsonTextarea.addEventListener('input', function () {
+        try {
+            var parsed = JSON.parse(jsonTextarea.value);
+            if (Array.isArray(parsed)) {
+                blocks = parsed;
+                syncToInput();
+                jsonError.classList.add('d-none');
+            }
+        } catch (_) { /* will validate on mode switch */ }
+    });
+
+    // Sync before form submit
+    document.getElementById('openpatronForm').addEventListener('submit', function () {
+        if (currentMode === 'json') {
+            try {
+                var parsed = JSON.parse(jsonTextarea.value);
+                if (Array.isArray(parsed)) blocks = parsed;
+            } catch (_) {}
+        }
+        syncToInput();
+    });
+
+    // ── Initial render ──
     renderBlockList();
 
-    // Accent color picker sync
+    // ── Accent color picker sync ──
     var picker = document.getElementById('accentColorPicker');
-    var input = document.getElementById('ThemeAccentColor');
-    if (picker && input) {
-        picker.addEventListener('input', function () { input.value = picker.value; });
-        input.addEventListener('input', function () {
-            if (/^#[0-9a-fA-F]{6}$/.test(input.value)) picker.value = input.value;
+    var colorInput = document.getElementById('ThemeAccentColor');
+    if (picker && colorInput) {
+        picker.addEventListener('input', function () { colorInput.value = picker.value; });
+        colorInput.addEventListener('input', function () {
+            if (/^#[0-9a-fA-F]{6}$/.test(colorInput.value)) picker.value = colorInput.value;
         });
     }
 
-    // Project row management
-    var list = document.getElementById('projectsList');
-    if (list) {
+    // ── Project row management ──
+    var projectList = document.getElementById('projectsList');
+    if (projectList) {
         function renumberProjects() {
-            list.querySelectorAll('.project-row').forEach(function (row, idx) {
+            projectList.querySelectorAll('.project-row').forEach(function (row, idx) {
                 var title = row.querySelector('.project-row-title');
                 if (title && !row.dataset.ghName) title.textContent = 'Project ' + (idx + 1);
-                row.querySelectorAll('input[data-field]').forEach(function (input) {
-                    input.name = 'Projects[' + idx + '].' + input.dataset.field;
+                row.querySelectorAll('input[data-field]').forEach(function (inp) {
+                    inp.name = 'Projects[' + idx + '].' + inp.dataset.field;
                 });
             });
         }
@@ -577,7 +690,7 @@
             return row;
         }
 
-        list.addEventListener('click', function (e) {
+        projectList.addEventListener('click', function (e) {
             if (!e.target.classList.contains('project-remove-btn')) return;
             var row = e.target.closest('.project-row');
             if (!row) return;
@@ -592,7 +705,7 @@
         var addBtn = document.getElementById('addProjectBtn');
         if (addBtn) {
             addBtn.addEventListener('click', function () {
-                list.appendChild(buildProjectRow());
+                projectList.appendChild(buildProjectRow());
                 renumberProjects();
             });
         }
@@ -600,7 +713,7 @@
         document.querySelectorAll('.gh-repo-check').forEach(function (cb) {
             cb.addEventListener('change', function () {
                 if (this.checked) {
-                    list.appendChild(buildProjectRow({
+                    projectList.appendChild(buildProjectRow({
                         ghName: this.dataset.name,
                         name: this.dataset.name,
                         url: this.dataset.url,
@@ -609,7 +722,7 @@
                         stars: this.dataset.stars
                     }));
                 } else {
-                    var existing = list.querySelector('.project-row[data-gh-name="' + CSS.escape(this.dataset.name) + '"]');
+                    var existing = projectList.querySelector('.project-row[data-gh-name="' + CSS.escape(this.dataset.name) + '"]');
                     if (existing) existing.remove();
                 }
                 renumberProjects();
