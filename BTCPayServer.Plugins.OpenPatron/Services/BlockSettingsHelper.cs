@@ -3,12 +3,27 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using Markdig;
+using Microsoft.AspNetCore.Html;
 using Newtonsoft.Json.Linq;
 
 namespace BTCPayServer.Plugins.OpenPatron.Services;
 
 public static class BlockSettingsHelper
 {
+    private static readonly MarkdownPipeline MarkdownPipeline = new MarkdownPipelineBuilder()
+        .DisableHtml()
+        .UseAutoLinks()
+        .Build();
+
+    public static HtmlString RenderMarkdown(string? markdown)
+    {
+        if (string.IsNullOrWhiteSpace(markdown))
+            return HtmlString.Empty;
+        var html = Markdown.ToHtml(markdown, MarkdownPipeline);
+        return new HtmlString(html);
+    }
+
     public static string? Str(JObject? s, string key)
         => s?[key]?.Type == JTokenType.String ? s[key]!.Value<string>() : null;
 

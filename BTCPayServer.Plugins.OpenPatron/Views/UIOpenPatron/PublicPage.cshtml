@@ -138,8 +138,17 @@
             font-size: 1.02rem;
             line-height: 1.8;
             color: #475569;
-            white-space: pre-line;
         }
+
+        .openpatron-description p { margin-bottom: 1rem; }
+        .openpatron-description p:last-child { margin-bottom: 0; }
+        .openpatron-description a { color: var(--op-accent); text-decoration: underline; }
+        .openpatron-description ul, .openpatron-description ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+        .openpatron-description h1, .openpatron-description h2, .openpatron-description h3 { margin-top: 1.5rem; margin-bottom: .75rem; }
+        .openpatron-description blockquote { border-left: 3px solid var(--op-accent-18); padding-left: 1rem; color: #64748b; margin: 1rem 0; }
+        .openpatron-description code { background: rgba(15, 23, 42, 0.06); padding: .15rem .35rem; border-radius: .25rem; font-size: .9em; }
+        .openpatron-description pre { background: rgba(15, 23, 42, 0.06); padding: 1rem; border-radius: .5rem; overflow-x: auto; margin-bottom: 1rem; }
+        .openpatron-description pre code { background: none; padding: 0; }
 
         .openpatron-link-pill,
         .openpatron-amount-pill {

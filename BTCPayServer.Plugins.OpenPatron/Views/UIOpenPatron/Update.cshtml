@@ -36,18 +36,18 @@
                         <h3 class="h5 mb-2">Choose a starting template</h3>
                         <div class="form-text mb-4">You can customize the blocks freely afterward.</div>
                         <div class="d-flex flex-column gap-3">
-                            <label class="d-flex align-items-start gap-3 border rounded-3 p-3 cursor-pointer page-type-option @(Model.PageType == OpenPatronPageType.Personal ? "border-primary bg-primary bg-opacity-10" : "")" for="pageTypePersonal">
+                            <label class="d-flex align-items-start gap-3 border rounded-3 p-3 cursor-pointer page-type-option @(Model.PageType == OpenPatronPageType.Personal ? "border-primary border-2 bg-body-secondary" : "")" for="pageTypePersonal">
                                 <input type="radio" asp-for="PageType" value="@((int)OpenPatronPageType.Personal)" id="pageTypePersonal" onchange="highlightPageType()" style="margin-top:4px;flex-shrink:0" />
                                 <div>
-                                    <span class="fw-semibold">Personal</span>
-                                    <div class="text-muted small mt-1">Your profile, avatar, and a list of projects you maintain.</div>
+                                    <span class="fw-semibold text-body">Personal</span>
+                                    <div class="text-secondary small mt-1">Your profile, avatar, and a list of projects you maintain.</div>
                                 </div>
                             </label>
-                            <label class="d-flex align-items-start gap-3 border rounded-3 p-3 cursor-pointer page-type-option @(Model.PageType == OpenPatronPageType.Project ? "border-primary bg-primary bg-opacity-10" : "")" for="pageTypeProject">
+                            <label class="d-flex align-items-start gap-3 border rounded-3 p-3 cursor-pointer page-type-option @(Model.PageType == OpenPatronPageType.Project ? "border-primary border-2 bg-body-secondary" : "")" for="pageTypeProject">
                                 <input type="radio" asp-for="PageType" value="@((int)OpenPatronPageType.Project)" id="pageTypeProject" onchange="highlightPageType()" style="margin-top:4px;flex-shrink:0" />
                                 <div>
-                                    <span class="fw-semibold">Project</span>
-                                    <div class="text-muted small mt-1">A single project — description, hero copy, and sponsorship tiers.</div>
+                                    <span class="fw-semibold text-body">Project</span>
+                                    <div class="text-secondary small mt-1">A single project — description, hero copy, and sponsorship tiers.</div>
                                 </div>
                             </label>
                         </div>
@@ -62,10 +62,10 @@
         <script>
             function highlightPageType() {
                 document.querySelectorAll('.page-type-option').forEach(function (el) {
-                    el.classList.remove('border-primary', 'bg-primary', 'bg-opacity-10');
+                    el.classList.remove('border-primary', 'border-2', 'bg-body-secondary');
                 });
                 var sel = document.querySelector('input[name="PageType"]:checked');
-                if (sel) sel.closest('.page-type-option').classList.add('border-primary', 'bg-primary', 'bg-opacity-10');
+                if (sel) sel.closest('.page-type-option').classList.add('border-primary', 'border-2', 'bg-body-secondary');
             }
         </script>
     }
