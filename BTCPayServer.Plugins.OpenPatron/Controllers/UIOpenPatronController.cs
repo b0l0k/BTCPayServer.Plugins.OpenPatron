@@ -290,48 +290,175 @@ public class UIOpenPatronController(
     [ResponseCache(Duration = 86400)]
     public IActionResult Schema()
     {
-        var schema = new
+        var themeSchema = new Dictionary<string, object>
         {
-            Schema = "https://json-schema.org/draft/2020-12/schema",
-            Title = "OpenPatron Page Layout",
-            Type = "object",
-            Properties = new Dictionary<string, object>
+            ["type"] = "object",
+            ["description"] = "Global page theme",
+            ["properties"] = new Dictionary<string, object>
             {
-                ["theme"] = new
+                ["AccentColor"] = new { type = "string", description = "Primary accent color (hex)", pattern = "^#[0-9a-fA-F]{6}$", @default = "#6366f1" },
+                ["BorderRadius"] = new { type = "string", description = "Global border radius (CSS value)", @default = "1.5rem" },
+                ["BlockSpacing"] = new { type = "string", description = "Vertical spacing between blocks (CSS value)", @default = "1rem" }
+            }
+        };
+
+        var blockThemeSchema = new Dictionary<string, object>
+        {
+            ["type"] = "object",
+            ["description"] = "Per-block theme overrides (inherits from global Theme when omitted)",
+            ["properties"] = new Dictionary<string, object>
+            {
+                ["AccentColor"] = new { type = "string", description = "Override accent color for this block" },
+                ["BorderRadius"] = new { type = "string", description = "Override border radius for this block" }
+            }
+        };
+
+        var blockSettingsSchemas = new Dictionary<string, object>
+        {
+            ["profile-hero"] = new Dictionary<string, object>
+            {
+                ["type"] = "object",
+                ["description"] = "Personal profile hero: avatar, name, bio, and social links",
+                ["properties"] = new Dictionary<string, object>
                 {
-                    Type = "object",
-                    Properties = new Dictionary<string, object>
-                    {
-                        ["AccentColor"] = new { Type = "string", Description = "CSS color value (e.g. #6366f1)", Pattern = "^#[0-9a-fA-F]{6}$" },
-                        ["BorderRadius"] = new { Type = "string", Description = "CSS border-radius (e.g. 1.5rem)" },
-                        ["BlockSpacing"] = new { Type = "string", Description = "CSS spacing between blocks (e.g. 1rem)" }
-                    }
-                },
-                ["blocks"] = new
+                    ["displayName"] = new { type = "string", description = "Display name shown on the page" },
+                    ["subtitle"] = new { type = "string", description = "Short subtitle below the name" },
+                    ["bio"] = new { type = "string", description = "Brief biography / description" },
+                    ["gravatarEmail"] = new { type = "string", format = "email", description = "Email for Gravatar avatar" },
+                    ["gitHubUsername"] = new { type = "string", description = "GitHub username (also used as avatar fallback)" },
+                    ["socialX"] = new { type = "string", description = "X (Twitter) handle" },
+                    ["socialMastodon"] = new { type = "string", format = "uri", description = "Mastodon profile URL" },
+                    ["socialNostr"] = new { type = "string", description = "Nostr npub identifier" }
+                }
+            },
+            ["project-hero"] = new Dictionary<string, object>
+            {
+                ["type"] = "object",
+                ["description"] = "Project hero: title, subtitle, maintainer card, and social links",
+                ["properties"] = new Dictionary<string, object>
                 {
-                    Type = "array",
-                    Items = new
+                    ["title"] = new { type = "string", description = "Main headline" },
+                    ["subtitle"] = new { type = "string", description = "Subtitle below the headline" },
+                    ["displayName"] = new { type = "string", description = "Maintainer name shown in the profile card" },
+                    ["gravatarEmail"] = new { type = "string", format = "email", description = "Email for Gravatar avatar" },
+                    ["gitHubUsername"] = new { type = "string", description = "GitHub username (also used as avatar fallback)" },
+                    ["socialX"] = new { type = "string", description = "X (Twitter) handle" },
+                    ["socialMastodon"] = new { type = "string", format = "uri", description = "Mastodon profile URL" },
+                    ["socialNostr"] = new { type = "string", description = "Nostr npub identifier" }
+                }
+            },
+            ["funding-progress"] = new Dictionary<string, object>
+            {
+                ["type"] = "object",
+                ["description"] = "Progress bar toward a funding goal",
+                ["properties"] = new Dictionary<string, object>
+                {
+                    ["goal"] = new { type = "number", description = "Funding goal amount (in default currency)", minimum = 0 }
+                }
+            },
+            ["description"] = new Dictionary<string, object>
+            {
+                ["type"] = "object",
+                ["description"] = "Rich text section with heading and markdown content",
+                ["properties"] = new Dictionary<string, object>
+                {
+                    ["heading"] = new { type = "string", description = "Section heading" },
+                    ["content"] = new { type = "string", description = "Markdown-formatted body content" }
+                }
+            },
+            ["projects-grid"] = new Dictionary<string, object>
+            {
+                ["type"] = "object",
+                ["description"] = "Grid of open source project cards",
+                ["properties"] = new Dictionary<string, object>
+                {
+                    ["projects"] = new Dictionary<string, object>
                     {
-                        Type = "object",
-                        Required = new[] { "Id", "Type" },
-                        Properties = new Dictionary<string, object>
+                        ["type"] = "array",
+                        ["description"] = "List of projects to display",
+                        ["items"] = new Dictionary<string, object>
                         {
-                            ["Id"] = new { Type = "string", Description = "Unique block identifier" },
-                            ["Type"] = new { Type = "string", Enum = BlockRegistry.AllTypes.Keys.ToArray(), Description = "Block type" },
-                            ["Settings"] = new { Type = "object", Description = "Block-specific content settings" },
-                            ["Theme"] = new
+                            ["type"] = "object",
+                            ["properties"] = new Dictionary<string, object>
                             {
-                                Type = "object",
-                                Description = "Per-block theme overrides (inherits from global theme if omitted)",
-                                Properties = new Dictionary<string, object>
-                                {
-                                    ["AccentColor"] = new { Type = "string", Description = "Override accent color for this block" },
-                                    ["BorderRadius"] = new { Type = "string", Description = "Override border radius for this block" }
-                                }
+                                ["name"] = new { type = "string", description = "Project name" },
+                                ["url"] = new { type = "string", format = "uri", description = "Project URL (GitHub URLs get dynamic stars/language)" },
+                                ["description"] = new { type = "string", description = "Short project description" },
+                                ["language"] = new { type = "string", description = "Primary programming language (auto-filled for GitHub repos)" },
+                                ["stars"] = new { type = "integer", description = "Star count (auto-filled for GitHub repos)", minimum = 0 }
                             }
                         }
                     }
                 }
+            },
+            ["subscription-tiers"] = new Dictionary<string, object>
+            {
+                ["type"] = "object",
+                ["description"] = "Subscription plan cards with subscribe actions",
+                ["properties"] = new Dictionary<string, object>
+                {
+                    ["heading"] = new { type = "string", description = "Section heading" },
+                    ["subtitle"] = new { type = "string", description = "Subtitle below the heading" }
+                }
+            },
+            ["quick-support"] = new Dictionary<string, object>
+            {
+                ["type"] = "object",
+                ["description"] = "Suggested one-time contribution amount buttons",
+                ["properties"] = new Dictionary<string, object>
+                {
+                    ["heading"] = new { type = "string", description = "Section heading" },
+                    ["suggestedAmounts"] = new { type = "array", description = "List of suggested amounts", items = new { type = "number", minimum = 0 } }
+                }
+            },
+            ["sponsor-wall"] = new Dictionary<string, object>
+            {
+                ["type"] = "object",
+                ["description"] = "Wall showing recent anonymous contributions",
+                ["properties"] = new Dictionary<string, object>
+                {
+                    ["heading"] = new { type = "string", description = "Section heading" }
+                }
+            }
+        };
+
+        var schema = new Dictionary<string, object>
+        {
+            ["$schema"] = "https://json-schema.org/draft/2020-12/schema",
+            ["title"] = "OpenPatron Page Layout",
+            ["type"] = "object",
+            ["properties"] = new Dictionary<string, object>
+            {
+                ["Theme"] = themeSchema,
+                ["Blocks"] = new Dictionary<string, object>
+                {
+                    ["type"] = "array",
+                    ["description"] = "Ordered list of page blocks",
+                    ["items"] = new Dictionary<string, object>
+                    {
+                        ["type"] = "object",
+                        ["required"] = new[] { "Id", "Type" },
+                        ["properties"] = new Dictionary<string, object>
+                        {
+                            ["Id"] = new { type = "string", description = "Unique block identifier (12-char hex)" },
+                            ["Type"] = new { type = "string", description = "Block type identifier", @enum = BlockRegistry.AllTypes.Keys.ToArray() },
+                            ["Settings"] = new Dictionary<string, object>
+                            {
+                                ["description"] = "Block content settings (schema depends on Type)",
+                                ["oneOf"] = blockSettingsSchemas.Select(kv => new Dictionary<string, object>
+                                {
+                                    ["if"] = new { properties = new { Type = new { @const = kv.Key } } },
+                                    ["then"] = kv.Value
+                                }).ToArray()
+                            },
+                            ["Theme"] = blockThemeSchema
+                        }
+                    }
+                }
+            },
+            ["$defs"] = new Dictionary<string, object>
+            {
+                ["BlockSettings"] = blockSettingsSchemas
             }
         };
 
