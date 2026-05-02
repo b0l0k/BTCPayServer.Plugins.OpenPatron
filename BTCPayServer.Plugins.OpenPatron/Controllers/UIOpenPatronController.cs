@@ -381,11 +381,9 @@ public class UIOpenPatronController(
                             ["type"] = "object",
                             ["properties"] = new Dictionary<string, object>
                             {
-                                ["name"] = new { type = "string", description = "Project name" },
-                                ["url"] = new { type = "string", format = "uri", description = "Project URL (GitHub URLs get dynamic stars/language)" },
-                                ["description"] = new { type = "string", description = "Short project description" },
-                                ["language"] = new { type = "string", description = "Primary programming language (auto-filled for GitHub repos)" },
-                                ["stars"] = new { type = "integer", description = "Star count (auto-filled for GitHub repos)", minimum = 0 }
+                                ["name"] = new { type = "string", description = "Project name (auto-filled from GitHub if URL is a GitHub repo)" },
+                                ["url"] = new { type = "string", format = "uri", description = "Project URL. GitHub repo URLs get dynamic stars and language at render time." },
+                                ["description"] = new { type = "string", description = "Short project description (auto-filled from GitHub if URL is a GitHub repo)" }
                             }
                         }
                     }
