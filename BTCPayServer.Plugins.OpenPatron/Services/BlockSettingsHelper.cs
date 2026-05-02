@@ -4,7 +4,6 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using Markdig;
-using Microsoft.AspNetCore.Html;
 using Newtonsoft.Json.Linq;
 
 namespace BTCPayServer.Plugins.OpenPatron.Services;
@@ -16,12 +15,11 @@ public static class BlockSettingsHelper
         .UseAutoLinks()
         .Build();
 
-    public static HtmlString RenderMarkdown(string? markdown)
+    public static string RenderMarkdownToHtml(string? markdown)
     {
         if (string.IsNullOrWhiteSpace(markdown))
-            return HtmlString.Empty;
-        var html = Markdown.ToHtml(markdown, MarkdownPipeline);
-        return new HtmlString(html);
+            return string.Empty;
+        return Markdown.ToHtml(markdown, MarkdownPipeline);
     }
 
     public static string? Str(JObject? s, string key)

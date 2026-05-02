@@ -163,6 +163,29 @@ public class FastTests
     }
 
     [Fact]
+    public void HelperRenderMarkdownProducesHtml()
+    {
+        var html = BlockSettingsHelper.RenderMarkdownToHtml("# Hello\n\nWorld **bold**");
+        Assert.Contains("<h1>Hello</h1>", html);
+        Assert.Contains("<strong>bold</strong>", html);
+    }
+
+    [Fact]
+    public void HelperRenderMarkdownStripsRawHtml()
+    {
+        var html = BlockSettingsHelper.RenderMarkdownToHtml("<script>alert('xss')</script>Hello");
+        Assert.DoesNotContain("<script>", html);
+        Assert.Contains("Hello", html);
+    }
+
+    [Fact]
+    public void HelperRenderMarkdownReturnsEmptyForNull()
+    {
+        Assert.Equal("", BlockSettingsHelper.RenderMarkdownToHtml(null));
+        Assert.Equal("", BlockSettingsHelper.RenderMarkdownToHtml(""));
+    }
+
+    [Fact]
     public void HelperStrFallback()
     {
         var obj = new JObject();

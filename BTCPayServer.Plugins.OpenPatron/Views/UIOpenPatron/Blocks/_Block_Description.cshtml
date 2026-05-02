@@ -11,6 +11,6 @@
     <section class="openpatron-panel mb-block" data-block-type="description" data-block-id="@Model.Block.Id">
         <div class="openpatron-kicker">About</div>
         <h2 class="h3 fw-semibold mb-3">@heading</h2>
-        <div class="openpatron-description">@BlockSettingsHelper.RenderMarkdown(content)</div>
+        <div class="openpatron-description">@Html.Raw(BlockSettingsHelper.RenderMarkdownToHtml(content))</div>
     </section>
 }
