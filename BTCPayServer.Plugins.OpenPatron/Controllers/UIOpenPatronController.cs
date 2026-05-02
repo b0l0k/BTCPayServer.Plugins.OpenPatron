@@ -285,6 +285,59 @@ public class UIOpenPatronController(
         return RedirectToAction("PlanCheckout", "UIPlanCheckout", new { area = SubscriptionsPlugin.Area, checkoutId = checkout.Id });
     }
 
+    [AllowAnonymous]
+    [HttpGet("openpatron/schema.json")]
+    [ResponseCache(Duration = 86400)]
+    public IActionResult Schema()
+    {
+        var schema = new
+        {
+            Schema = "https://json-schema.org/draft/2020-12/schema",
+            Title = "OpenPatron Page Layout",
+            Type = "object",
+            Properties = new Dictionary<string, object>
+            {
+                ["theme"] = new
+                {
+                    Type = "object",
+                    Properties = new Dictionary<string, object>
+                    {
+                        ["AccentColor"] = new { Type = "string", Description = "CSS color value (e.g. #6366f1)", Pattern = "^#[0-9a-fA-F]{6}$" },
+                        ["BorderRadius"] = new { Type = "string", Description = "CSS border-radius (e.g. 1.5rem)" },
+                        ["BlockSpacing"] = new { Type = "string", Description = "CSS spacing between blocks (e.g. 1rem)" }
+                    }
+                },
+                ["blocks"] = new
+                {
+                    Type = "array",
+                    Items = new
+                    {
+                        Type = "object",
+                        Required = new[] { "Id", "Type" },
+                        Properties = new Dictionary<string, object>
+                        {
+                            ["Id"] = new { Type = "string", Description = "Unique block identifier" },
+                            ["Type"] = new { Type = "string", Enum = BlockRegistry.AllTypes.Keys.ToArray(), Description = "Block type" },
+                            ["Settings"] = new { Type = "object", Description = "Block-specific content settings" },
+                            ["Theme"] = new
+                            {
+                                Type = "object",
+                                Description = "Per-block theme overrides (inherits from global theme if omitted)",
+                                Properties = new Dictionary<string, object>
+                                {
+                                    ["AccentColor"] = new { Type = "string", Description = "Override accent color for this block" },
+                                    ["BorderRadius"] = new { Type = "string", Description = "Override border radius for this block" }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        return Json(schema);
+    }
+
     public static void EnsurePageLayout(OpenPatronAppSettings settings)
     {
         settings.PageLayout ??= [];

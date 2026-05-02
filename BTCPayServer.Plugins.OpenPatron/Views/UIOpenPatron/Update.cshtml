@@ -102,7 +102,7 @@
                     </div>
                 </div>
                 <div class="card-body d-none" id="jsonEditor">
-                    <div class="form-text mb-2">Edit the raw block layout JSON. Switch back to Visual to see changes.</div>
+                    <div class="form-text mb-2">Edit the raw block layout JSON. Switch back to Visual to see changes. <a href="@Url.Action("Schema", "UIOpenPatron", new { area = OpenPatronPlugin.Area })" target="_blank" rel="noreferrer">View JSON Schema</a></div>
                     <textarea id="jsonEditorTextarea" class="form-control font-monospace" rows="20" spellcheck="false" style="font-size:.85rem;tab-size:2;"></textarea>
                     <div id="jsonEditorError" class="text-danger small mt-1 d-none"></div>
                 </div>
@@ -745,13 +745,13 @@
         if (currentMode === 'json') {
             try {
                 var parsed = JSON.parse(jsonTextarea.value.trim());
-                if (parsed && !Array.isArray(parsed) && parsed.blocks) {
-                    blocks = parsed.blocks;
-                    setThemeToForm(parsed.theme);
+                if (parsed && !Array.isArray(parsed) && parsed.Blocks) {
+                    blocks = parsed.Blocks;
+                    setThemeToForm(parsed.Theme);
                 } else if (Array.isArray(parsed)) {
                     blocks = parsed;
                 } else {
-                    throw new Error('Must be an object with "blocks" array or a plain array');
+                    throw new Error('Must be an object with "Blocks" array or a plain array');
                 }
                 jsonError.classList.add('d-none');
             } catch (err) {
@@ -774,7 +774,7 @@
         collectAllOpenForms();
         collectLayoutForm();
         currentMode = 'json';
-        var payload = { theme: getThemeFromForm(), blocks: blocks };
+        var payload = { Theme: getThemeFromForm(), Blocks: blocks };
         jsonTextarea.value = JSON.stringify(payload, null, 2);
         jsonError.classList.add('d-none');
         visualEditor.classList.add('d-none');
@@ -789,8 +789,8 @@
     jsonTextarea.addEventListener('input', function () {
         try {
             var parsed = JSON.parse(jsonTextarea.value);
-            if (parsed && !Array.isArray(parsed) && parsed.blocks) {
-                blocks = parsed.blocks;
+            if (parsed && !Array.isArray(parsed) && parsed.Blocks) {
+                blocks = parsed.Blocks;
                 syncToInput();
                 jsonError.classList.add('d-none');
             } else if (Array.isArray(parsed)) {
@@ -807,7 +807,7 @@
         if (currentMode === 'json') {
             try {
                 var p = JSON.parse(jsonTextarea.value);
-                if (p && !Array.isArray(p) && p.blocks) { blocks = p.blocks; setThemeToForm(p.theme); }
+                if (p && !Array.isArray(p) && p.Blocks) { blocks = p.Blocks; setThemeToForm(p.Theme); }
                 else if (Array.isArray(p)) { blocks = p; }
             } catch (_) {}
         }
