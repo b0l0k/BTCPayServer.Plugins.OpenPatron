@@ -79,15 +79,15 @@ public static class BlockSettingsHelper
         || !string.IsNullOrWhiteSpace(Str(s, "socialMastodon"))
         || !string.IsNullOrWhiteSpace(Str(s, "socialNostr"));
 
-    public static string? LayoutStyle(BlockLayout? layout)
+    public static string? BlockThemeStyle(BlockTheme? theme)
     {
-        if (layout is null) return null;
+        if (theme is null) return null;
 
         var sb = new StringBuilder();
-        if (!string.IsNullOrWhiteSpace(layout.AccentColor))
-            sb.Append($"--op-accent:{layout.AccentColor};--op-accent-10:{layout.AccentColor}1a;--op-accent-18:{layout.AccentColor}2e;--op-accent-dark:color-mix(in srgb,{layout.AccentColor} 85%,#000);");
-        if (!string.IsNullOrWhiteSpace(layout.BorderRadius))
-            sb.Append($"--op-border-radius:{layout.BorderRadius};");
+        if (!string.IsNullOrWhiteSpace(theme.AccentColor))
+            sb.Append($"--op-accent:{theme.AccentColor};--op-accent-10:{theme.AccentColor}1a;--op-accent-18:{theme.AccentColor}2e;--op-accent-dark:color-mix(in srgb,{theme.AccentColor} 85%,#000);");
+        if (!string.IsNullOrWhiteSpace(theme.BorderRadius))
+            sb.Append($"--op-border-radius:{theme.BorderRadius};");
 
         return sb.Length > 0 ? sb.ToString() : null;
     }

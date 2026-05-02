@@ -341,10 +341,10 @@
                 if (partialPath != null)
                 {
                     var ctx = new BlockRenderContext { Block = block, Page = Model };
-                    var layoutStyle = BlockSettingsHelper.LayoutStyle(block.Layout);
-                    if (layoutStyle != null)
+                    var themeStyle = BlockSettingsHelper.BlockThemeStyle(block.Theme);
+                    if (themeStyle != null)
                     {
-                        <div style="@layoutStyle">
+                        <div style="@themeStyle">
                             <partial name="@partialPath" model="ctx" />
                         </div>
                     }

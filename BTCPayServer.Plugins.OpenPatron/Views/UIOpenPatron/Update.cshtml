@@ -473,7 +473,7 @@
             item.dataset.idx = idx;
             item.dataset.blockId = block.Id;
 
-            var hasLayoutOverride = block.Layout && (block.Layout.AccentColor || block.Layout.BorderRadius);
+            var hasLayoutOverride = block.Theme && (block.Theme.AccentColor || block.Theme.BorderRadius);
 
             var headerHtml =
                 '<div class="d-flex justify-content-between align-items-center p-2 block-header" style="cursor:pointer;" data-block-id="' + block.Id + '">' +
@@ -494,7 +494,7 @@
 
             var layoutHtml = '';
             if (layoutExpandedBlockId === block.Id) {
-                var lo = block.Layout || {};
+                var lo = block.Theme || {};
                 layoutHtml = '<div class="p-2 bg-body-tertiary border-top border-bottom">' +
                     '<div class="row g-2 align-items-end">' +
                         '<div class="col-auto">' +
@@ -550,7 +550,7 @@
             var v = f.value.trim();
             if (v) lo[f.dataset.lkey] = v;
         });
-        block.Layout = (lo.AccentColor || lo.BorderRadius) ? lo : null;
+        block.Theme = (lo.AccentColor || lo.BorderRadius) ? lo : null;
     }
 
     function syncToInput() {
@@ -596,7 +596,7 @@
             var row = layoutClearBtn.closest('.block-row');
             if (row) {
                 var block = blocks.find(function (b) { return b.Id === row.dataset.blockId; });
-                if (block) block.Layout = null;
+                if (block) block.Theme = null;
             }
             renderBlockList();
             return;

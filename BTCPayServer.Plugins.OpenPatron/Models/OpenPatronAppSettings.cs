@@ -37,10 +37,10 @@ public class BlockDefinition
     public JObject? Settings { get; set; }
 
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public BlockLayout? Layout { get; set; }
+    public BlockTheme? Theme { get; set; }
 }
 
-public class BlockLayout
+public class BlockTheme
 {
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
     public string? AccentColor { get; set; }
