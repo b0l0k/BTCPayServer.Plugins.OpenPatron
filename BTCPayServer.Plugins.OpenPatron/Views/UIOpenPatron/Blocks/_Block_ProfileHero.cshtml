@@ -5,7 +5,7 @@
     var displayName = BlockSettingsHelper.Str(s, "displayName");
     var bio = BlockSettingsHelper.Str(s, "bio");
     var subtitle = BlockSettingsHelper.Str(s, "subtitle");
-    var gravatarUrl = BlockSettingsHelper.GravatarUrl(s);
+    var avatarUrl = BlockSettingsHelper.AvatarUrl(s);
     var gitHubUrl = BlockSettingsHelper.GitHubProfileUrl(s);
     var socialX = BlockSettingsHelper.Str(s, "socialX");
     var socialMastodon = BlockSettingsHelper.Str(s, "socialMastodon");
@@ -14,9 +14,9 @@
 }
 
 <section class="openpatron-profile-hero mb-block" data-block-type="profile-hero" data-block-id="@Model.Block.Id">
-    @if (!string.IsNullOrWhiteSpace(gravatarUrl))
+    @if (!string.IsNullOrWhiteSpace(avatarUrl))
     {
-        <img src="@gravatarUrl" alt="@(displayName ?? "Avatar")" class="openpatron-avatar mb-3" />
+        <img src="@avatarUrl" alt="@(displayName ?? "Avatar")" class="openpatron-avatar mb-3" />
     }
     <h1 class="openpatron-profile-name mb-2">@(displayName ?? Model.Page.AppName)</h1>
     @if (!string.IsNullOrWhiteSpace(subtitle))

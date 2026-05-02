@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using BTCPayServer.Plugins.OpenPatron.Models;
 using Markdig;
 using Newtonsoft.Json.Linq;
 
@@ -54,6 +55,17 @@ public static class BlockSettingsHelper
         return $"https://www.gravatar.com/avatar/{hash}?s=200&d=identicon";
     }
 
+    public static string? AvatarUrl(JObject? s)
+        => GravatarUrl(s) ?? GitHubAvatarUrl(s);
+
+    public static string? GitHubAvatarUrl(JObject? s)
+    {
+        var username = Str(s, "gitHubUsername");
+        return string.IsNullOrWhiteSpace(username)
+            ? null
+            : $"https://github.com/{Uri.EscapeDataString(username.Trim())}.png?size=200";
+    }
+
     public static string? GitHubProfileUrl(JObject? s)
     {
         var username = Str(s, "gitHubUsername");
@@ -66,6 +78,19 @@ public static class BlockSettingsHelper
         => !string.IsNullOrWhiteSpace(Str(s, "socialX"))
         || !string.IsNullOrWhiteSpace(Str(s, "socialMastodon"))
         || !string.IsNullOrWhiteSpace(Str(s, "socialNostr"));
+
+    public static string? LayoutStyle(BlockLayout? layout)
+    {
+        if (layout is null) return null;
+
+        var sb = new StringBuilder();
+        if (!string.IsNullOrWhiteSpace(layout.AccentColor))
+            sb.Append($"--op-accent:{layout.AccentColor};--op-accent-10:{layout.AccentColor}1a;--op-accent-18:{layout.AccentColor}2e;--op-accent-dark:color-mix(in srgb,{layout.AccentColor} 85%,#000);");
+        if (!string.IsNullOrWhiteSpace(layout.BorderRadius))
+            sb.Append($"--op-border-radius:{layout.BorderRadius};");
+
+        return sb.Length > 0 ? sb.ToString() : null;
+    }
 
     private static string ComputeMd5Hash(string input)
     {

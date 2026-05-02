@@ -35,7 +35,8 @@ public class UIOpenPatronController(
     UIInvoiceController uiInvoiceController,
     IAuthorizationService authorizationService,
     SponsorWallService sponsorWallService,
-    FundingProgressService fundingProgressService) : Controller
+    FundingProgressService fundingProgressService,
+    GitHubRepoService gitHubRepoService) : Controller
 {
     private const string UpdateViewPath = "/Views/UIOpenPatron/Update.cshtml";
     private const string PublicPageViewPath = "/Views/UIOpenPatron/PublicPage.cshtml";
@@ -179,6 +180,8 @@ public class UIOpenPatronController(
                 Currency = e.Currency
             }).ToList();
         }
+
+        await EnrichGitHubProjectsAsync(settings);
 
         return View(PublicPageViewPath, vm);
     }
@@ -398,6 +401,38 @@ public class UIOpenPatronController(
     private string GetAddPlanUrl(string storeId, string offeringId)
         => Url.Action("AddPlan", "UIOffering", new { area = SubscriptionsPlugin.Area, storeId, offeringId })
            ?? $"/stores/{storeId}/offerings/{offeringId}/add-plan";
+
+    private async Task EnrichGitHubProjectsAsync(OpenPatronAppSettings settings)
+    {
+        var projectsBlocks = settings.PageLayout?
+            .Where(b => string.Equals(b.Type, BlockRegistry.ProjectsGrid, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        if (projectsBlocks is not { Count: > 0 })
+            return;
+
+        foreach (var block in projectsBlocks)
+        {
+            var projects = BlockSettingsHelper.Arr(block.Settings, "projects");
+            if (projects is null)
+                continue;
+
+            foreach (var token in projects.OfType<JObject>())
+            {
+                var url = BlockSettingsHelper.Str(token, "url");
+                if (!GitHubRepoService.TryParseGitHubUrl(url, out var owner, out var repo))
+                    continue;
+
+                var ghRepo = await gitHubRepoService.GetRepoAsync(owner, repo);
+                if (ghRepo is null)
+                    continue;
+
+                token["stars"] = ghRepo.StargazersCount;
+                if (!string.IsNullOrWhiteSpace(ghRepo.Language))
+                    token["language"] = ghRepo.Language;
+            }
+        }
+    }
 
     private static bool AllowsOneTime(OpenPatronAppSettings settings)
         => settings.SupportMode is OpenPatronSupportMode.OneTimeOnly or OpenPatronSupportMode.Both;

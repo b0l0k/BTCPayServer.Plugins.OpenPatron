@@ -5,13 +5,13 @@
     var title = BlockSettingsHelper.Str(s, "title", Model.Page.AppName);
     var subtitle = BlockSettingsHelper.Str(s, "subtitle");
     var displayName = BlockSettingsHelper.Str(s, "displayName");
-    var gravatarUrl = BlockSettingsHelper.GravatarUrl(s);
+    var avatarUrl = BlockSettingsHelper.AvatarUrl(s);
     var gitHubUrl = BlockSettingsHelper.GitHubProfileUrl(s);
     var socialX = BlockSettingsHelper.Str(s, "socialX");
     var socialMastodon = BlockSettingsHelper.Str(s, "socialMastodon");
     var socialNostr = BlockSettingsHelper.Str(s, "socialNostr");
     var hasSocial = BlockSettingsHelper.HasSocialLinks(s);
-    var hasProfile = !string.IsNullOrWhiteSpace(gravatarUrl) || !string.IsNullOrWhiteSpace(displayName) || !string.IsNullOrWhiteSpace(gitHubUrl);
+    var hasProfile = !string.IsNullOrWhiteSpace(avatarUrl) || !string.IsNullOrWhiteSpace(displayName) || !string.IsNullOrWhiteSpace(gitHubUrl);
 }
 
 <section class="openpatron-hero p-4 p-lg-5 mb-block" data-block-type="project-hero" data-block-id="@Model.Block.Id">
@@ -62,9 +62,9 @@
         {
             <div class="col-12 col-xl-4">
                 <div class="openpatron-panel h-100 text-center">
-                    @if (!string.IsNullOrWhiteSpace(gravatarUrl))
+                    @if (!string.IsNullOrWhiteSpace(avatarUrl))
                     {
-                        <img src="@gravatarUrl" alt="@(displayName ?? "Avatar")" class="rounded-circle mb-3" width="96" height="96" />
+                        <img src="@avatarUrl" alt="@(displayName ?? "Avatar")" class="rounded-circle mb-3" width="96" height="96" />
                     }
                     @if (!string.IsNullOrWhiteSpace(displayName))
                     {

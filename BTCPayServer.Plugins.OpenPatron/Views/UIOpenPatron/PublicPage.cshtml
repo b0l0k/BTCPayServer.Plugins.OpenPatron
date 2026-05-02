@@ -341,7 +341,17 @@
                 if (partialPath != null)
                 {
                     var ctx = new BlockRenderContext { Block = block, Page = Model };
-                    <partial name="@partialPath" model="ctx" />
+                    var layoutStyle = BlockSettingsHelper.LayoutStyle(block.Layout);
+                    if (layoutStyle != null)
+                    {
+                        <div style="@layoutStyle">
+                            <partial name="@partialPath" model="ctx" />
+                        </div>
+                    }
+                    else
+                    {
+                        <partial name="@partialPath" model="ctx" />
+                    }
                 }
             }
 

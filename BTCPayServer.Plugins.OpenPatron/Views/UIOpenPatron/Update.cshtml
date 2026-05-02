@@ -328,6 +328,7 @@
     if (!Array.isArray(blocks)) blocks = [];
 
     var expandedBlockId = null;
+    var layoutExpandedBlockId = null;
 
     function generateId() { return Math.random().toString(36).substring(2, 14); }
 
@@ -472,6 +473,8 @@
             item.dataset.idx = idx;
             item.dataset.blockId = block.Id;
 
+            var hasLayoutOverride = block.Layout && (block.Layout.AccentColor || block.Layout.BorderRadius);
+
             var headerHtml =
                 '<div class="d-flex justify-content-between align-items-center p-2 block-header" style="cursor:pointer;" data-block-id="' + block.Id + '">' +
                     '<div class="d-flex align-items-center gap-2">' +
@@ -482,14 +485,45 @@
                         '</div>' +
                     '</div>' +
                     '<div class="d-flex align-items-center gap-1">' +
+                        '<button type="button" class="btn btn-sm btn-link p-0 lh-1 block-layout-btn' + (hasLayoutOverride ? ' text-primary' : '') + '" data-block-id="' + block.Id + '" title="Style overrides">&#9998;</button>' +
                         '<button type="button" class="btn btn-sm btn-link p-0 lh-1 block-move-btn" data-dir="up" data-idx="' + idx + '"' + (isFirst ? ' disabled' : '') + ' title="Move up">&#9650;</button>' +
                         '<button type="button" class="btn btn-sm btn-link p-0 lh-1 block-move-btn" data-dir="down" data-idx="' + idx + '"' + (isLast ? ' disabled' : '') + ' title="Move down">&#9660;</button>' +
                         '<button type="button" class="btn btn-sm btn-outline-danger block-remove-btn" data-idx="' + idx + '">&times;</button>' +
                     '</div>' +
                 '</div>';
 
+            var layoutHtml = '';
+            if (layoutExpandedBlockId === block.Id) {
+                var lo = block.Layout || {};
+                layoutHtml = '<div class="p-2 bg-body-tertiary border-top border-bottom">' +
+                    '<div class="row g-2 align-items-end">' +
+                        '<div class="col-auto">' +
+                            '<label class="form-label small mb-0">Accent color</label>' +
+                            '<div class="d-flex gap-1 align-items-center">' +
+                                '<input type="color" class="form-control form-control-color form-control-sm layout-accent-picker" value="' + esc(lo.AccentColor || '#6366f1') + '" />' +
+                                '<input type="text" class="form-control form-control-sm layout-field" data-lkey="AccentColor" value="' + esc(lo.AccentColor || '') + '" placeholder="inherit" style="max-width:100px" />' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="col-auto">' +
+                            '<label class="form-label small mb-0">Border radius</label>' +
+                            '<select class="form-select form-select-sm layout-field" data-lkey="BorderRadius">' +
+                                '<option value=""' + (!lo.BorderRadius ? ' selected' : '') + '>Inherit</option>' +
+                                '<option value="0"' + (lo.BorderRadius === '0' ? ' selected' : '') + '>Sharp (0)</option>' +
+                                '<option value="0.5rem"' + (lo.BorderRadius === '0.5rem' ? ' selected' : '') + '>Subtle (0.5rem)</option>' +
+                                '<option value="1rem"' + (lo.BorderRadius === '1rem' ? ' selected' : '') + '>Medium (1rem)</option>' +
+                                '<option value="1.5rem"' + (lo.BorderRadius === '1.5rem' ? ' selected' : '') + '>Rounded (1.5rem)</option>' +
+                                '<option value="2rem"' + (lo.BorderRadius === '2rem' ? ' selected' : '') + '>Very Rounded (2rem)</option>' +
+                            '</select>' +
+                        '</div>' +
+                        '<div class="col-auto">' +
+                            '<button type="button" class="btn btn-sm btn-outline-secondary layout-clear-btn">Clear</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+            }
+
             var formHtml = isExpanded ? renderBlockForm(block) : '';
-            item.innerHTML = headerHtml + formHtml;
+            item.innerHTML = headerHtml + layoutHtml + formHtml;
             blockListEl.appendChild(item);
         });
 
@@ -504,6 +538,19 @@
         var openEl = blockListEl.querySelector('[data-block-id="' + expandedBlockId + '"]');
         var openBlock = blocks.find(function (b) { return b.Id === expandedBlockId; });
         if (openEl && openBlock) collectBlockSettings(openEl, openBlock);
+    }
+
+    function collectLayoutForm() {
+        if (!layoutExpandedBlockId) return;
+        var row = blockListEl.querySelector('[data-block-id="' + layoutExpandedBlockId + '"]');
+        var block = blocks.find(function (b) { return b.Id === layoutExpandedBlockId; });
+        if (!row || !block) return;
+        var lo = {};
+        row.querySelectorAll('.layout-field').forEach(function (f) {
+            var v = f.value.trim();
+            if (v) lo[f.dataset.lkey] = v;
+        });
+        block.Layout = (lo.AccentColor || lo.BorderRadius) ? lo : null;
     }
 
     function syncToInput() {
@@ -529,6 +576,28 @@
             var dir = moveBtn.dataset.dir;
             if (dir === 'up' && idx > 0) { var t = blocks[idx-1]; blocks[idx-1] = blocks[idx]; blocks[idx] = t; if (expandedBlockId) {} }
             else if (dir === 'down' && idx < blocks.length - 1) { var t = blocks[idx+1]; blocks[idx+1] = blocks[idx]; blocks[idx] = t; }
+            renderBlockList();
+            return;
+        }
+
+        var layoutBtn = e.target.closest('.block-layout-btn');
+        if (layoutBtn) {
+            e.preventDefault(); e.stopPropagation();
+            var bid = layoutBtn.dataset.blockId;
+            collectLayoutForm();
+            layoutExpandedBlockId = (layoutExpandedBlockId === bid) ? null : bid;
+            renderBlockList();
+            return;
+        }
+
+        var layoutClearBtn = e.target.closest('.layout-clear-btn');
+        if (layoutClearBtn) {
+            e.preventDefault(); e.stopPropagation();
+            var row = layoutClearBtn.closest('.block-row');
+            if (row) {
+                var block = blocks.find(function (b) { return b.Id === row.dataset.blockId; });
+                if (block) block.Layout = null;
+            }
             renderBlockList();
             return;
         }
@@ -574,6 +643,55 @@
         }
     });
 
+    // ── Layout accent color picker sync ──
+    blockListEl.addEventListener('input', function (e) {
+        var picker = e.target.closest('.layout-accent-picker');
+        if (picker) {
+            var textInput = picker.parentElement.querySelector('.layout-field[data-lkey="AccentColor"]');
+            if (textInput) textInput.value = picker.value;
+        }
+        var textInput = e.target.closest('.layout-field[data-lkey="AccentColor"]');
+        if (textInput && /^#[0-9a-fA-F]{6}$/.test(textInput.value)) {
+            var picker2 = textInput.parentElement.querySelector('.layout-accent-picker');
+            if (picker2) picker2.value = textInput.value;
+        }
+    });
+
+    // ── GitHub auto-fill for project URL fields ──
+    var ghUrlPattern = /^https?:\/\/github\.com\/([^\/]+)\/([^\/?#]+)\/?$/i;
+
+    blockListEl.addEventListener('blur', function (e) {
+        var input = e.target;
+        if (!input.matches || !input.matches('.proj-field[data-pkey="url"]')) return;
+
+        var url = input.value.trim();
+        var match = ghUrlPattern.exec(url);
+        if (!match) return;
+
+        var owner = match[1];
+        var repo = match[2].replace(/\.git$/i, '');
+        var entry = input.closest('.project-entry');
+        if (!entry) return;
+
+        var nameField = entry.querySelector('.proj-field[data-pkey="name"]');
+        var descField = entry.querySelector('.proj-field[data-pkey="description"]');
+
+        if (nameField && nameField.value && descField && descField.value) return;
+
+        input.classList.add('opacity-50');
+        fetch('https://api.github.com/repos/' + encodeURIComponent(owner) + '/' + encodeURIComponent(repo), {
+            headers: { 'Accept': 'application/vnd.github+json' }
+        })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+            if (!data) return;
+            if (nameField && !nameField.value) nameField.value = data.name || '';
+            if (descField && !descField.value) descField.value = data.description || '';
+        })
+        .catch(function () {})
+        .finally(function () { input.classList.remove('opacity-50'); });
+    }, true);
+
     // ── Block picker ──
     document.getElementById('blockPicker').addEventListener('click', function (e) {
         e.preventDefault();
@@ -601,12 +719,40 @@
     // ── Visual / JSON toggle ──
     var currentMode = 'visual';
 
+    function getThemeFromForm() {
+        return {
+            AccentColor: document.getElementById('ThemeAccentColor').value || '#6366f1',
+            BorderRadius: document.getElementById('ThemeBorderRadius').value || '1.5rem',
+            BlockSpacing: document.getElementById('ThemeBlockSpacing').value || '1rem'
+        };
+    }
+
+    function setThemeToForm(theme) {
+        if (!theme) return;
+        var accentInput = document.getElementById('ThemeAccentColor');
+        var radiusInput = document.getElementById('ThemeBorderRadius');
+        var spacingInput = document.getElementById('ThemeBlockSpacing');
+        if (theme.AccentColor && accentInput) { accentInput.value = theme.AccentColor; }
+        if (theme.BorderRadius && radiusInput) { radiusInput.value = theme.BorderRadius; }
+        if (theme.BlockSpacing && spacingInput) { spacingInput.value = theme.BlockSpacing; }
+        var pickerEl = document.getElementById('accentColorPicker');
+        if (pickerEl && theme.AccentColor && /^#[0-9a-fA-F]{6}$/.test(theme.AccentColor)) {
+            pickerEl.value = theme.AccentColor;
+        }
+    }
+
     function switchToVisual() {
         if (currentMode === 'json') {
             try {
                 var parsed = JSON.parse(jsonTextarea.value.trim());
-                if (!Array.isArray(parsed)) throw new Error('Must be an array');
-                blocks = parsed;
+                if (parsed && !Array.isArray(parsed) && parsed.blocks) {
+                    blocks = parsed.blocks;
+                    setThemeToForm(parsed.theme);
+                } else if (Array.isArray(parsed)) {
+                    blocks = parsed;
+                } else {
+                    throw new Error('Must be an object with "blocks" array or a plain array');
+                }
                 jsonError.classList.add('d-none');
             } catch (err) {
                 jsonError.textContent = 'Invalid JSON: ' + err.message;
@@ -616,6 +762,7 @@
         }
         currentMode = 'visual';
         expandedBlockId = null;
+        layoutExpandedBlockId = null;
         visualEditor.classList.remove('d-none');
         jsonEditor.classList.add('d-none');
         modeVisualBtn.classList.add('active');
@@ -625,8 +772,10 @@
 
     function switchToJson() {
         collectAllOpenForms();
+        collectLayoutForm();
         currentMode = 'json';
-        jsonTextarea.value = JSON.stringify(blocks, null, 2);
+        var payload = { theme: getThemeFromForm(), blocks: blocks };
+        jsonTextarea.value = JSON.stringify(payload, null, 2);
         jsonError.classList.add('d-none');
         visualEditor.classList.add('d-none');
         jsonEditor.classList.remove('d-none');
@@ -640,14 +789,27 @@
     jsonTextarea.addEventListener('input', function () {
         try {
             var parsed = JSON.parse(jsonTextarea.value);
-            if (Array.isArray(parsed)) { blocks = parsed; syncToInput(); jsonError.classList.add('d-none'); }
+            if (parsed && !Array.isArray(parsed) && parsed.blocks) {
+                blocks = parsed.blocks;
+                syncToInput();
+                jsonError.classList.add('d-none');
+            } else if (Array.isArray(parsed)) {
+                blocks = parsed;
+                syncToInput();
+                jsonError.classList.add('d-none');
+            }
         } catch (_) {}
     });
 
     document.getElementById('openpatronForm').addEventListener('submit', function () {
         collectAllOpenForms();
+        collectLayoutForm();
         if (currentMode === 'json') {
-            try { var p = JSON.parse(jsonTextarea.value); if (Array.isArray(p)) blocks = p; } catch (_) {}
+            try {
+                var p = JSON.parse(jsonTextarea.value);
+                if (p && !Array.isArray(p) && p.blocks) { blocks = p.blocks; setThemeToForm(p.theme); }
+                else if (Array.isArray(p)) { blocks = p; }
+            } catch (_) {}
         }
         syncToInput();
     });

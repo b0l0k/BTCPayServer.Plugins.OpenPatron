@@ -35,6 +35,18 @@ public class BlockDefinition
 
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
     public JObject? Settings { get; set; }
+
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+    public BlockLayout? Layout { get; set; }
+}
+
+public class BlockLayout
+{
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+    public string? AccentColor { get; set; }
+
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+    public string? BorderRadius { get; set; }
 }
 
 public class PageTheme
