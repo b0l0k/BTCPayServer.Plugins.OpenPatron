@@ -246,6 +246,7 @@
 
 @if (Model.PageTypeConfirmed)
 {
+<script src="~/vendor/vue-sortable/sortable.min.js"></script>
 <script>
 (function () {
     var BLOCK_TYPES = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(
@@ -428,6 +429,32 @@
         block.Settings.projects = projects;
     }
 
+    var sortableInstance = null;
+
+    function initSortable() {
+        if (sortableInstance) {
+            sortableInstance.destroy();
+            sortableInstance = null;
+        }
+        if (typeof Sortable !== 'undefined' && blocks.length > 1) {
+            sortableInstance = Sortable.create(blockListEl, {
+                handle: '.block-drag-handle',
+                animation: 150,
+                ghostClass: 'bg-primary-subtle',
+                dragClass: 'shadow',
+                onEnd: function (evt) {
+                    var oldIndex = evt.oldIndex;
+                    var newIndex = evt.newIndex;
+                    if (oldIndex === newIndex) return;
+                    collectAllOpenForms();
+                    var moved = blocks.splice(oldIndex, 1)[0];
+                    blocks.splice(newIndex, 0, moved);
+                    renderBlockList();
+                }
+            });
+        }
+    }
+
     // ── Render the full visual block list ──
     function renderBlockList() {
         // Collect settings from any open forms first
@@ -448,16 +475,17 @@
             var headerHtml =
                 '<div class="d-flex justify-content-between align-items-center p-2 block-header" style="cursor:pointer;" data-block-id="' + block.Id + '">' +
                     '<div class="d-flex align-items-center gap-2">' +
-                        '<div class="d-flex flex-column">' +
-                            '<button type="button" class="btn btn-sm btn-link p-0 lh-1 block-move-btn" data-dir="up" data-idx="' + idx + '"' + (isFirst ? ' disabled' : '') + ' title="Move up">&#9650;</button>' +
-                            '<button type="button" class="btn btn-sm btn-link p-0 lh-1 block-move-btn" data-dir="down" data-idx="' + idx + '"' + (isLast ? ' disabled' : '') + ' title="Move down">&#9660;</button>' +
-                        '</div>' +
+                        '<span class="block-drag-handle d-flex align-items-center text-muted px-1" style="cursor:grab;" title="Drag to reorder">&#9776;</span>' +
                         '<div>' +
                             '<div class="fw-semibold">' + esc(info.name) + ' <span class="text-muted fw-normal">' + (isExpanded ? '&#9660;' : '&#9654;') + '</span></div>' +
                             '<div class="text-muted small">' + esc(info.description) + '</div>' +
                         '</div>' +
                     '</div>' +
-                    '<button type="button" class="btn btn-sm btn-outline-danger block-remove-btn" data-idx="' + idx + '">&times;</button>' +
+                    '<div class="d-flex align-items-center gap-1">' +
+                        '<button type="button" class="btn btn-sm btn-link p-0 lh-1 block-move-btn" data-dir="up" data-idx="' + idx + '"' + (isFirst ? ' disabled' : '') + ' title="Move up">&#9650;</button>' +
+                        '<button type="button" class="btn btn-sm btn-link p-0 lh-1 block-move-btn" data-dir="down" data-idx="' + idx + '"' + (isLast ? ' disabled' : '') + ' title="Move down">&#9660;</button>' +
+                        '<button type="button" class="btn btn-sm btn-outline-danger block-remove-btn" data-idx="' + idx + '">&times;</button>' +
+                    '</div>' +
                 '</div>';
 
             var formHtml = isExpanded ? renderBlockForm(block) : '';
@@ -468,6 +496,7 @@
         emptyState.classList.toggle('d-none', blocks.length > 0);
         blockCountEl.textContent = blocks.length + ' block' + (blocks.length !== 1 ? 's' : '');
         syncToInput();
+        initSortable();
     }
 
     function collectAllOpenForms() {
@@ -505,7 +534,7 @@
         }
 
         var header = e.target.closest('.block-header');
-        if (header) {
+        if (header && !e.target.closest('.block-drag-handle')) {
             e.preventDefault();
             var bid = header.dataset.blockId;
             collectAllOpenForms();
