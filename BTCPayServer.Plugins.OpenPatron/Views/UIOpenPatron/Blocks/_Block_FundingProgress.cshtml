@@ -2,7 +2,7 @@
 @model BTCPayServer.Plugins.OpenPatron.ViewModels.BlockRenderContext
 @{
     var s = Model.Block.Settings;
-    var goal = BlockSettingsHelper.Dec(s, "goal");
+    var goal = BlockSettingsHelper.Dec(s, "Goal");
     var currency = Model.Page.DefaultCurrency;
     var raised = Model.Page.AmountRaised;
     var pct = Model.Page.FundingPercentage;

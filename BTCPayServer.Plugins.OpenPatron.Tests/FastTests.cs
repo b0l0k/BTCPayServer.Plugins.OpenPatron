@@ -135,7 +135,7 @@ public class FastTests
     public void DefaultDescriptionBlockHasHeading()
     {
         var block = BlockRegistry.DefaultLayoutForProject().First(b => b.Type == "description");
-        Assert.Equal("Why sponsor this work?", block.Settings!["heading"]!.ToString());
+        Assert.Equal("Why sponsor this work?", block.Settings!["Heading"]!.ToString());
     }
 
     [Fact]
@@ -151,8 +151,8 @@ public class FastTests
     [Fact]
     public void HelperStrReadsString()
     {
-        var obj = JObject.FromObject(new { name = "Jane" });
-        Assert.Equal("Jane", BlockSettingsHelper.Str(obj, "name"));
+        var obj = JObject.FromObject(new { Name = "Jane" });
+        Assert.Equal("Jane", BlockSettingsHelper.Str(obj, "Name"));
     }
 
     [Fact]
@@ -195,8 +195,8 @@ public class FastTests
     [Fact]
     public void HelperDecReadsNumber()
     {
-        var obj = JObject.FromObject(new { goal = 1000m });
-        Assert.Equal(1000m, BlockSettingsHelper.Dec(obj, "goal"));
+        var obj = JObject.FromObject(new { Goal = 1000m });
+        Assert.Equal(1000m, BlockSettingsHelper.Dec(obj, "Goal"));
     }
 
     [Fact]
@@ -208,8 +208,8 @@ public class FastTests
     [Fact]
     public void HelperDecArrayReadsAmounts()
     {
-        var obj = JObject.FromObject(new { suggestedAmounts = new[] { 5m, 15m, 50m } });
-        Assert.Equal(new[] { 5m, 15m, 50m }, BlockSettingsHelper.DecArray(obj, "suggestedAmounts"));
+        var obj = JObject.FromObject(new { SuggestedAmounts = new[] { 5m, 15m, 50m } });
+        Assert.Equal(new[] { 5m, 15m, 50m }, BlockSettingsHelper.DecArray(obj, "SuggestedAmounts"));
     }
 
     [Fact]
@@ -221,7 +221,7 @@ public class FastTests
     [Fact]
     public void HelperGravatarUrlWorks()
     {
-        var obj = JObject.FromObject(new { gravatarEmail = "test@example.com" });
+        var obj = JObject.FromObject(new { GravatarEmail = "test@example.com" });
         var url = BlockSettingsHelper.GravatarUrl(obj);
         Assert.NotNull(url);
         Assert.StartsWith("https://www.gravatar.com/avatar/", url);
@@ -237,7 +237,7 @@ public class FastTests
     [Fact]
     public void HelperGitHubProfileUrlWorks()
     {
-        var obj = JObject.FromObject(new { gitHubUsername = "octocat" });
+        var obj = JObject.FromObject(new { GitHubUsername = "octocat" });
         Assert.Equal("https://github.com/octocat", BlockSettingsHelper.GitHubProfileUrl(obj));
     }
 
@@ -251,7 +251,7 @@ public class FastTests
     public void HelperHasSocialLinks()
     {
         Assert.False(BlockSettingsHelper.HasSocialLinks(new JObject()));
-        Assert.True(BlockSettingsHelper.HasSocialLinks(JObject.FromObject(new { socialX = "handle" })));
+        Assert.True(BlockSettingsHelper.HasSocialLinks(JObject.FromObject(new { SocialX = "handle" })));
     }
 
     // ── EnsurePageLayout ──
@@ -301,14 +301,14 @@ public class FastTests
         {
             Id = "test1",
             Type = "profile-hero",
-            Settings = JObject.FromObject(new { displayName = "Jane", bio = "Hello world", socialX = "janedev" })
+            Settings = JObject.FromObject(new { DisplayName = "Jane", Bio = "Hello world", SocialX = "janedev" })
         };
         var json = JsonConvert.SerializeObject(block);
         var deserialized = JsonConvert.DeserializeObject<BlockDefinition>(json)!;
         Assert.Equal("test1", deserialized.Id);
         Assert.Equal("profile-hero", deserialized.Type);
-        Assert.Equal("Jane", deserialized.Settings!["displayName"]!.ToString());
-        Assert.Equal("janedev", deserialized.Settings["socialX"]!.ToString());
+        Assert.Equal("Jane", deserialized.Settings!["DisplayName"]!.ToString());
+        Assert.Equal("janedev", deserialized.Settings["SocialX"]!.ToString());
     }
 
     [Fact]
@@ -320,8 +320,8 @@ public class FastTests
             PageTypeConfirmed = true,
             PageLayout =
             [
-                new() { Id = "b1", Type = "profile-hero", Settings = JObject.FromObject(new { displayName = "Jane" }) },
-                new() { Id = "b2", Type = "quick-support", Settings = JObject.FromObject(new { suggestedAmounts = new[] { 5, 15 } }) }
+                new() { Id = "b1", Type = "profile-hero", Settings = JObject.FromObject(new { DisplayName = "Jane" }) },
+                new() { Id = "b2", Type = "quick-support", Settings = JObject.FromObject(new { SuggestedAmounts = new[] { 5, 15 } }) }
             ],
             Theme = new PageTheme { AccentColor = "#00ff00" },
             DefaultCurrency = "EUR",
@@ -332,7 +332,7 @@ public class FastTests
         var d = JsonConvert.DeserializeObject<OpenPatronAppSettings>(json)!;
 
         Assert.Equal(2, d.PageLayout!.Count);
-        Assert.Equal("Jane", d.PageLayout[0].Settings!["displayName"]!.ToString());
+        Assert.Equal("Jane", d.PageLayout[0].Settings!["DisplayName"]!.ToString());
         Assert.Equal("#00ff00", d.Theme!.AccentColor);
         Assert.Equal("EUR", d.DefaultCurrency);
     }

@@ -72,20 +72,19 @@ public static class BlockRegistry
         {
             Id = "col-1", Width = 8, Blocks =
             [
-                new() { Type = ProfileHero, Settings = JObject.FromObject(new { displayName = "", bio = "", subtitle = "", gravatarEmail = "", gitHubUsername = "", socialX = "", socialMastodon = "", socialNostr = "" }) },
-                new() { Type = FundingProgress, Settings = JObject.FromObject(new { goal = 0 }) },
-                new() { Type = Description, Settings = JObject.FromObject(new { heading = "What I work on", content = "" }) },
-                new() { Type = ProjectsGrid, Settings = JObject.FromObject(new { projects = new object[0] }) },
-                new() { Type = SubscriptionTiers, Settings = JObject.FromObject(new { heading = "Choose a sponsorship tier", subtitle = "Pick the level that fits you best" }) },
-                new() { Type = QuickSupport, Settings = JObject.FromObject(new { heading = "Send quick support", suggestedAmounts = new object[0] }) },
-                new() { Type = SponsorWall, Settings = JObject.FromObject(new { heading = "Supporters" }) },
+                new() { Type = ProfileHero, Settings = JObject.FromObject(new { DisplayName = "", Bio = "", Subtitle = "", GravatarEmail = "", GitHubUsername = "", SocialX = "", SocialMastodon = "", SocialNostr = "" }) },
+                new() { Type = Description, Settings = JObject.FromObject(new { Heading = "What I work on", Content = "" }) },
+                new() { Type = ProjectsGrid, Settings = JObject.FromObject(new { Projects = new object[0] }) },
+                new() { Type = SubscriptionTiers, Settings = JObject.FromObject(new { Heading = "Choose a sponsorship tier", Subtitle = "Pick the level that fits you best" }) },
+                new() { Type = QuickSupport, Settings = JObject.FromObject(new { Heading = "Send quick support", SuggestedAmounts = new object[0] }) },
+                new() { Type = SponsorWall, Settings = JObject.FromObject(new { Heading = "Supporters" }) },
             ]
         },
         new()
         {
             Id = "col-2", Width = 4, Blocks =
             [
-                new() { Type = SidebarSupport, Settings = JObject.FromObject(new { heading = "Sponsor now" }) },
+                new() { Type = SidebarSupport, Settings = JObject.FromObject(new { Heading = "Sponsor now" }) },
             ]
         }
     ];
@@ -96,19 +95,19 @@ public static class BlockRegistry
         {
             Id = "col-1", Width = 8, Blocks =
             [
-                new() { Type = ProjectHero, Settings = JObject.FromObject(new { title = "", subtitle = "", displayName = "", gravatarEmail = "", gitHubUsername = "", socialX = "", socialMastodon = "", socialNostr = "" }) },
-                new() { Type = FundingProgress, Settings = JObject.FromObject(new { goal = 0 }) },
-                new() { Type = Description, Settings = JObject.FromObject(new { heading = "Why sponsor this work?", content = "" }) },
-                new() { Type = SubscriptionTiers, Settings = JObject.FromObject(new { heading = "Choose a sponsorship tier", subtitle = "Pick the level that fits you best" }) },
-                new() { Type = QuickSupport, Settings = JObject.FromObject(new { heading = "Send quick support", suggestedAmounts = new object[0] }) },
-                new() { Type = SponsorWall, Settings = JObject.FromObject(new { heading = "Who's supporting this work" }) },
+                new() { Type = ProjectHero, Settings = JObject.FromObject(new { Title = "", Subtitle = "", DisplayName = "", GravatarEmail = "", GitHubUsername = "", SocialX = "", SocialMastodon = "", SocialNostr = "" }) },
+                new() { Type = FundingProgress, Settings = JObject.FromObject(new { Goal = 0 }) },
+                new() { Type = Description, Settings = JObject.FromObject(new { Heading = "Why sponsor this work?", Content = "" }) },
+                new() { Type = SubscriptionTiers, Settings = JObject.FromObject(new { Heading = "Choose a sponsorship tier", Subtitle = "Pick the level that fits you best" }) },
+                new() { Type = QuickSupport, Settings = JObject.FromObject(new { Heading = "Send quick support", SuggestedAmounts = new object[0] }) },
+                new() { Type = SponsorWall, Settings = JObject.FromObject(new { Heading = "Who's supporting this work" }) },
             ]
         },
         new()
         {
             Id = "col-2", Width = 4, Blocks =
             [
-                new() { Type = SidebarSupport, Settings = JObject.FromObject(new { heading = "Sponsor now" }) },
+                new() { Type = SidebarSupport, Settings = JObject.FromObject(new { Heading = "Sponsor now" }) },
             ]
         }
     ];

@@ -19,7 +19,7 @@
 
     <li class="nav-item" permission="@Policies.CanModifyStoreSettings">
         <a layout-menu-item="@nameof(OpenPatronPlugin)" asp-area="" asp-controller="UIApps" asp-action="CreateApp" asp-route-storeId="@store.Id" asp-route-appType="@appType.Type">
-            <vc:icon symbol="donate" />
+            <svg role="img" class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M11.6096 19.7794L11.6119 19.7805C11.7319 19.8425 11.865 19.8748 12 19.8748C12.135 19.8748 12.2681 19.8425 12.3881 19.7805L12 19.0312L12.3881 19.7794H12.3904L12.3971 19.776L12.4174 19.7648C13.9177 18.9434 15.3292 17.9692 16.6294 16.8577C18.6994 15.0724 21 12.3938 21 9.1875C21 6.1905 18.6532 4.125 16.2188 4.125C14.4784 4.125 12.9529 5.02725 12 6.3975C11.0471 5.02725 9.52163 4.125 7.78125 4.125C5.34675 4.125 3 6.1905 3 9.1875C3 12.3938 5.30062 15.0724 7.37063 16.8577C8.56919 17.8837 9.86279 18.793 11.2339 19.5735C11.3486 19.6399 11.4649 19.7037 11.5826 19.7648L11.6029 19.776L11.6096 19.7794Z" fill="currentColor"/></svg>
             <span text-translate="true">OpenPatron</span>
         </a>
     </li>
@@ -27,7 +27,7 @@
     {
         <li class="nav-item" not-permission="@Policies.CanModifyStoreSettings" permission="@Policies.CanViewStoreSettings">
             <span layout-menu-item="@nameof(OpenPatronPlugin)">
-                <vc:icon symbol="donate" />
+                <svg role="img" class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M11.6096 19.7794L11.6119 19.7805C11.7319 19.8425 11.865 19.8748 12 19.8748C12.135 19.8748 12.2681 19.8425 12.3881 19.7805L12 19.0312L12.3881 19.7794H12.3904L12.3971 19.776L12.4174 19.7648C13.9177 18.9434 15.3292 17.9692 16.6294 16.8577C18.6994 15.0724 21 12.3938 21 9.1875C21 6.1905 18.6532 4.125 16.2188 4.125C14.4784 4.125 12.9529 5.02725 12 6.3975C11.0471 5.02725 9.52163 4.125 7.78125 4.125C5.34675 4.125 3 6.1905 3 9.1875C3 12.3938 5.30062 15.0724 7.37063 16.8577C8.56919 17.8837 9.86279 18.793 11.2339 19.5735C11.3486 19.6399 11.4649 19.7037 11.5826 19.7648L11.6029 19.776L11.6096 19.7794Z" fill="currentColor"/></svg>
                 <span text-translate="true">OpenPatron</span>
             </span>
         </li>

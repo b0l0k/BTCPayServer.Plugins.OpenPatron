@@ -48,7 +48,7 @@ public static class BlockSettingsHelper
 
     public static string? GravatarUrl(JObject? s)
     {
-        var email = Str(s, "gravatarEmail");
+        var email = Str(s, "GravatarEmail");
         if (string.IsNullOrWhiteSpace(email))
             return null;
         var hash = ComputeMd5Hash(email.Trim().ToLowerInvariant());
@@ -60,7 +60,7 @@ public static class BlockSettingsHelper
 
     public static string? GitHubAvatarUrl(JObject? s)
     {
-        var username = Str(s, "gitHubUsername");
+        var username = Str(s, "GitHubUsername");
         return string.IsNullOrWhiteSpace(username)
             ? null
             : $"https://github.com/{Uri.EscapeDataString(username.Trim())}.png?size=200";
@@ -68,16 +68,16 @@ public static class BlockSettingsHelper
 
     public static string? GitHubProfileUrl(JObject? s)
     {
-        var username = Str(s, "gitHubUsername");
+        var username = Str(s, "GitHubUsername");
         return string.IsNullOrWhiteSpace(username)
             ? null
             : $"https://github.com/{Uri.EscapeDataString(username)}";
     }
 
     public static bool HasSocialLinks(JObject? s)
-        => !string.IsNullOrWhiteSpace(Str(s, "socialX"))
-        || !string.IsNullOrWhiteSpace(Str(s, "socialMastodon"))
-        || !string.IsNullOrWhiteSpace(Str(s, "socialNostr"));
+        => !string.IsNullOrWhiteSpace(Str(s, "SocialX"))
+        || !string.IsNullOrWhiteSpace(Str(s, "SocialMastodon"))
+        || !string.IsNullOrWhiteSpace(Str(s, "SocialNostr"));
 
     public static string? BlockThemeStyle(BlockTheme? theme)
     {

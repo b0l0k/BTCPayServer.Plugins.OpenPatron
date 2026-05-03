@@ -8,6 +8,7 @@ public class UpdateOpenPatronViewModel
     public string AppId { get; set; } = string.Empty;
     public string StoreId { get; set; } = string.Empty;
     public string PublicPageUrl { get; set; } = string.Empty;
+    public string BadgeUrl { get; set; } = string.Empty;
     public string? OfferingId { get; set; }
     public string? ManageOfferingUrl { get; set; }
     public string? AddPlanUrl { get; set; }

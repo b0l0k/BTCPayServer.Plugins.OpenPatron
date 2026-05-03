@@ -2,7 +2,7 @@
 @model BTCPayServer.Plugins.OpenPatron.ViewModels.BlockRenderContext
 @{
     var s = Model.Block.Settings;
-    var heading = BlockSettingsHelper.Str(s, "heading", "Who's supporting this work");
+    var heading = BlockSettingsHelper.Str(s, "Heading", "Who's supporting this work");
     var entries = Model.Page.SponsorWallEntries;
 }
 

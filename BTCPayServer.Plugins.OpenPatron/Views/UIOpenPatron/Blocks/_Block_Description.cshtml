@@ -2,8 +2,8 @@
 @model BTCPayServer.Plugins.OpenPatron.ViewModels.BlockRenderContext
 @{
     var s = Model.Block.Settings;
-    var heading = BlockSettingsHelper.Str(s, "heading", "About");
-    var content = BlockSettingsHelper.Str(s, "content");
+    var heading = BlockSettingsHelper.Str(s, "Heading", "About");
+    var content = BlockSettingsHelper.Str(s, "Content");
 }
 
 @if (!string.IsNullOrWhiteSpace(content))

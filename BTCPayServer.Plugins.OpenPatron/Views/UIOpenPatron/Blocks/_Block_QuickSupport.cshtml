@@ -2,8 +2,8 @@
 @model BTCPayServer.Plugins.OpenPatron.ViewModels.BlockRenderContext
 @{
     var s = Model.Block.Settings;
-    var heading = BlockSettingsHelper.Str(s, "heading", "Send quick support");
-    var amounts = BlockSettingsHelper.DecArray(s, "suggestedAmounts");
+    var heading = BlockSettingsHelper.Str(s, "Heading", "Send quick support");
+    var amounts = BlockSettingsHelper.DecArray(s, "SuggestedAmounts");
     var currency = Model.Page.DefaultCurrency;
 }
 

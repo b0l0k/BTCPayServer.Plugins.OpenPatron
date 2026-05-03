@@ -114,7 +114,7 @@
                     </div>
                 </div>
                 <div class="card-body d-none" id="jsonEditor">
-                    <div class="form-text mb-2">Edit the raw layout JSON. Switch back to Visual to see changes. <a href="@Url.Action("Schema", "UIOpenPatron", new { area = OpenPatronPlugin.Area })" target="_blank" rel="noreferrer">View JSON Schema</a></div>
+                    <div class="form-text mb-2">Advanced: edit your page layout directly as JSON. Changes here are applied when you switch back to <strong>Visual</strong>. Tip: paste the <a href="@Url.Action("Schema", "UIOpenPatron", new { area = OpenPatronPlugin.Area })" target="_blank" rel="noreferrer">JSON Schema</a> into an LLM to generate or tweak your layout.</div>
                     <textarea id="jsonEditorTextarea" class="form-control font-monospace" rows="20" spellcheck="false" style="font-size:.85rem;tab-size:2;"></textarea>
                     <div id="jsonEditorError" class="text-danger small mt-1 d-none"></div>
                 </div>
@@ -194,6 +194,37 @@
                             <option value="2rem">Spacious (2rem)</option>
                         </select>
                     </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h3 class="h5 mb-3">Embed badge</h3>
+                    <div class="mb-3">
+                        <div class="text-muted small mb-2">Preview</div>
+                        <a href="@Model.PublicPageUrl" target="_blank" rel="noreferrer">
+                            <img src="@Model.BadgeUrl" alt="Sponsor" height="20" />
+                        </a>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold mb-1">Markdown (GitHub README)</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control font-monospace" readonly
+                                   id="badgeMarkdown"
+                                   value="[![Sponsor](@Model.BadgeUrl)](@Model.PublicPageUrl)" />
+                            <button type="button" class="btn btn-outline-secondary" onclick="copySnippet('badgeMarkdown', this)">Copy</button>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold mb-1">HTML</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control font-monospace" readonly
+                                   id="badgeHtml"
+                                   value="&lt;a href=&quot;@Model.PublicPageUrl&quot;&gt;&lt;img src=&quot;@Model.BadgeUrl&quot; alt=&quot;Sponsor&quot; height=&quot;20&quot;&gt;&lt;/a&gt;" />
+                            <button type="button" class="btn btn-outline-secondary" onclick="copySnippet('badgeHtml', this)">Copy</button>
+                        </div>
+                    </div>
+                    <div class="form-text">Badge is only visible when the page is published.</div>
                 </div>
             </div>
 
@@ -277,6 +308,17 @@
 {
 <script src="~/vendor/vue-sortable/sortable.min.js"></script>
 <script>
+function copySnippet(inputId, btn) {
+    var input = document.getElementById(inputId);
+    if (!input) return;
+    navigator.clipboard.writeText(input.value).then(function () {
+        var orig = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(function () { btn.textContent = orig; }, 1500);
+    });
+}
+</script>
+<script>
 (function () {
     var BLOCK_TYPES = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(
         blockTypes.ToDictionary(kv => kv.Key, kv => new { name = kv.Value.DisplayName, description = kv.Value.Description })));
@@ -284,66 +326,66 @@
     var BLOCK_FORMS = {
         'profile-hero': {
             fields: [
-                { key: 'displayName', label: 'Display name', type: 'text', placeholder: 'Jane Doe' },
-                { key: 'subtitle', label: 'Subtitle', type: 'text', placeholder: 'Open source maintainer' },
-                { key: 'bio', label: 'Bio', type: 'textarea', placeholder: 'A few words about yourself\u2026' },
-                { key: 'gravatarEmail', label: 'Gravatar email', type: 'email', placeholder: 'you@example.com' },
-                { key: 'gitHubUsername', label: 'GitHub username', type: 'text', placeholder: 'octocat' },
-                { key: 'socialX', label: 'X (Twitter)', type: 'text', placeholder: 'handle' },
-                { key: 'socialMastodon', label: 'Mastodon URL', type: 'url', placeholder: 'https://mastodon.social/@@user' },
-                { key: 'socialNostr', label: 'Nostr (npub)', type: 'text', placeholder: 'npub1\u2026' }
+                { key: 'DisplayName', label: 'Display name', type: 'text', placeholder: 'Jane Doe' },
+                { key: 'Subtitle', label: 'Subtitle', type: 'text', placeholder: 'Open source maintainer' },
+                { key: 'Bio', label: 'Bio', type: 'textarea', placeholder: 'A few words about yourself\u2026' },
+                { key: 'GravatarEmail', label: 'Gravatar email', type: 'email', placeholder: 'you@example.com' },
+                { key: 'GitHubUsername', label: 'GitHub username', type: 'text', placeholder: 'octocat' },
+                { key: 'SocialX', label: 'X (Twitter)', type: 'text', placeholder: 'handle' },
+                { key: 'SocialMastodon', label: 'Mastodon URL', type: 'url', placeholder: 'https://mastodon.social/@@user' },
+                { key: 'SocialNostr', label: 'Nostr (npub)', type: 'text', placeholder: 'npub1\u2026' }
             ]
         },
         'project-hero': {
             fields: [
-                { key: 'title', label: 'Headline', type: 'text', placeholder: 'Support My Work' },
-                { key: 'subtitle', label: 'Subtitle', type: 'text', placeholder: 'Help fund open source development' },
-                { key: 'displayName', label: 'Maintainer name', type: 'text', placeholder: 'Jane Doe' },
-                { key: 'gravatarEmail', label: 'Gravatar email', type: 'email', placeholder: 'you@example.com' },
-                { key: 'gitHubUsername', label: 'GitHub username', type: 'text', placeholder: 'octocat' },
-                { key: 'socialX', label: 'X (Twitter)', type: 'text', placeholder: 'handle' },
-                { key: 'socialMastodon', label: 'Mastodon URL', type: 'url', placeholder: 'https://mastodon.social/@@user' },
-                { key: 'socialNostr', label: 'Nostr (npub)', type: 'text', placeholder: 'npub1\u2026' }
+                { key: 'Title', label: 'Headline', type: 'text', placeholder: 'Support My Work' },
+                { key: 'Subtitle', label: 'Subtitle', type: 'text', placeholder: 'Help fund open source development' },
+                { key: 'DisplayName', label: 'Maintainer name', type: 'text', placeholder: 'Jane Doe' },
+                { key: 'GravatarEmail', label: 'Gravatar email', type: 'email', placeholder: 'you@example.com' },
+                { key: 'GitHubUsername', label: 'GitHub username', type: 'text', placeholder: 'octocat' },
+                { key: 'SocialX', label: 'X (Twitter)', type: 'text', placeholder: 'handle' },
+                { key: 'SocialMastodon', label: 'Mastodon URL', type: 'url', placeholder: 'https://mastodon.social/@@user' },
+                { key: 'SocialNostr', label: 'Nostr (npub)', type: 'text', placeholder: 'npub1\u2026' }
             ]
         },
         'funding-progress': {
             fields: [
-                { key: 'goal', label: 'Funding goal amount', type: 'number', placeholder: '1000' }
+                { key: 'Goal', label: 'Funding goal amount', type: 'number', placeholder: '1000' }
             ]
         },
         'description': {
             fields: [
-                { key: 'heading', label: 'Section heading', type: 'text', placeholder: 'Why sponsor this work?' },
-                { key: 'content', label: 'Content', type: 'textarea', placeholder: 'Tell visitors why they should sponsor\u2026', rows: 8 }
+                { key: 'Heading', label: 'Section heading', type: 'text', placeholder: 'Why sponsor this work?' },
+                { key: 'Content', label: 'Content', type: 'textarea', placeholder: 'Tell visitors why they should sponsor\u2026', rows: 8 }
             ]
         },
         'projects-grid': {
             custom: true,
             extraFields: [
-                { key: 'columnsPerRow', label: 'Items per row', type: 'select', options: [{v:'1',l:'1'},{v:'2',l:'2'},{v:'3',l:'3'},{v:'4',l:'4'}], default: '2' }
+                { key: 'ColumnsPerRow', label: 'Items per row', type: 'select', options: [{v:'1',l:'1'},{v:'2',l:'2'},{v:'3',l:'3'},{v:'4',l:'4'}], default: '2' }
             ]
         },
         'subscription-tiers': {
             fields: [
-                { key: 'heading', label: 'Section heading', type: 'text', placeholder: 'Choose a sponsorship tier' },
-                { key: 'subtitle', label: 'Subtitle', type: 'text', placeholder: 'Pick the level that fits you best' },
-                { key: 'columnsPerRow', label: 'Items per row', type: 'select', options: [{v:'1',l:'1'},{v:'2',l:'2'},{v:'3',l:'3'},{v:'4',l:'4'}], default: '2' }
+                { key: 'Heading', label: 'Section heading', type: 'text', placeholder: 'Choose a sponsorship tier' },
+                { key: 'Subtitle', label: 'Subtitle', type: 'text', placeholder: 'Pick the level that fits you best' },
+                { key: 'ColumnsPerRow', label: 'Items per row', type: 'select', options: [{v:'1',l:'1'},{v:'2',l:'2'},{v:'3',l:'3'},{v:'4',l:'4'}], default: '2' }
             ]
         },
         'quick-support': {
             fields: [
-                { key: 'heading', label: 'Section heading', type: 'text', placeholder: 'Send quick support' },
-                { key: 'suggestedAmounts', label: 'Suggested amounts (comma-separated)', type: 'text', placeholder: '5, 15, 50' }
+                { key: 'Heading', label: 'Section heading', type: 'text', placeholder: 'Send quick support' },
+                { key: 'SuggestedAmounts', label: 'Suggested amounts (comma-separated)', type: 'text', placeholder: '5, 15, 50' }
             ]
         },
         'sponsor-wall': {
             fields: [
-                { key: 'heading', label: 'Section heading', type: 'text', placeholder: "Who's supporting this work" }
+                { key: 'Heading', label: 'Section heading', type: 'text', placeholder: "Who's supporting this work" }
             ]
         },
         'sidebar-support': {
             fields: [
-                { key: 'heading', label: 'Section heading', type: 'text', placeholder: 'Sponsor now' }
+                { key: 'Heading', label: 'Section heading', type: 'text', placeholder: 'Sponsor now' }
             ]
         }
     };
@@ -624,7 +666,7 @@
 
     function renderFieldHtml(f, block, s) {
         var v = val(s, f.key);
-        if (f.key === 'suggestedAmounts' && Array.isArray(v)) v = v.join(', ');
+        if (f.key === 'SuggestedAmounts' && Array.isArray(v)) v = v.join(', ');
         if (!v && v !== 0 && f.default) v = f.default;
         var id = 'bf_' + block.Id + '_' + f.key;
         var html = '<div class="form-group mb-3">';
@@ -665,7 +707,7 @@
     }
 
     function renderProjectsForm(s) {
-        var projects = (s && s.projects) || [];
+        var projects = (s && s.Projects) || [];
         var html = '<div data-projects-form>';
         projects.forEach(function (p, i) {
             html +=
@@ -675,9 +717,9 @@
                 '<button type="button" class="btn btn-sm btn-outline-danger py-0 px-1 project-entry-remove">&times;</button>' +
                 '</div>' +
                 '<div class="row g-1">' +
-                '<div class="col-4"><input class="form-control form-control-sm proj-field" data-pkey="name" placeholder="Name" value="' + esc(p.name || '') + '" /></div>' +
-                '<div class="col-4"><input class="form-control form-control-sm proj-field" data-pkey="url" placeholder="URL" value="' + esc(p.url || '') + '" /></div>' +
-                '<div class="col-4"><input class="form-control form-control-sm proj-field" data-pkey="description" placeholder="Description" value="' + esc(p.description || '') + '" /></div>' +
+                '<div class="col-4"><input class="form-control form-control-sm proj-field" data-pkey="Name" placeholder="Name" value="' + esc(p.Name || '') + '" /></div>' +
+                '<div class="col-4"><input class="form-control form-control-sm proj-field" data-pkey="Url" placeholder="URL" value="' + esc(p.Url || '') + '" /></div>' +
+                '<div class="col-4"><input class="form-control form-control-sm proj-field" data-pkey="Description" placeholder="Description" value="' + esc(p.Description || '') + '" /></div>' +
                 '</div></div>';
         });
         html += '<button type="button" class="btn btn-sm btn-outline-secondary project-add-btn">+ Add project</button>';
@@ -746,16 +788,16 @@
                 modalBody.querySelectorAll('.project-entry').forEach(function (entry) {
                     var p = {};
                     entry.querySelectorAll('.proj-field').forEach(function (f) { p[f.dataset.pkey] = f.value; });
-                    if (p.name || p.url) projects.push(p);
+                    if (p.Name || p.Url) projects.push(p);
                 });
-                block.Settings.projects = projects;
+                block.Settings.Projects = projects;
             } else if (def.fields) {
                 modalBody.querySelectorAll('.block-field').forEach(function (input) {
                     var key = input.dataset.key;
                     var value = input.value;
-                    if (key === 'suggestedAmounts') {
+                    if (key === 'SuggestedAmounts') {
                         block.Settings[key] = value.split(/[,;]/).map(function (s) { return parseFloat(s.trim()); }).filter(function (n) { return !isNaN(n) && n > 0; });
-                    } else if (key === 'goal' || key === 'columnsPerRow') {
+                    } else if (key === 'Goal' || key === 'ColumnsPerRow') {
                         block.Settings[key] = parseFloat(value) || 0;
                     } else {
                         block.Settings[key] = value;
@@ -800,9 +842,9 @@
                     '<button type="button" class="btn btn-sm btn-outline-danger py-0 px-1 project-entry-remove">&times;</button>' +
                     '</div>' +
                     '<div class="row g-1">' +
-                    '<div class="col-4"><input class="form-control form-control-sm proj-field" data-pkey="name" placeholder="Name" /></div>' +
-                    '<div class="col-4"><input class="form-control form-control-sm proj-field" data-pkey="url" placeholder="URL" /></div>' +
-                    '<div class="col-4"><input class="form-control form-control-sm proj-field" data-pkey="description" placeholder="Description" /></div>' +
+                    '<div class="col-4"><input class="form-control form-control-sm proj-field" data-pkey="Name" placeholder="Name" /></div>' +
+                    '<div class="col-4"><input class="form-control form-control-sm proj-field" data-pkey="Url" placeholder="URL" /></div>' +
+                    '<div class="col-4"><input class="form-control form-control-sm proj-field" data-pkey="Description" placeholder="Description" /></div>' +
                     '</div>';
                 form.insertBefore(newEntry, addBtn);
                 newEntry.querySelector('.project-entry-remove').addEventListener('click', function () {
@@ -817,7 +859,7 @@
 
     modalBody.addEventListener('blur', function (e) {
         var input = e.target;
-        if (!input.matches || !input.matches('.proj-field[data-pkey="url"]')) return;
+        if (!input.matches || !input.matches('.proj-field[data-pkey="Url"]')) return;
 
         var url = input.value.trim();
         var match = ghUrlPattern.exec(url);
@@ -828,8 +870,8 @@
         var entry = input.closest('.project-entry');
         if (!entry) return;
 
-        var nameField = entry.querySelector('.proj-field[data-pkey="name"]');
-        var descField = entry.querySelector('.proj-field[data-pkey="description"]');
+        var nameField = entry.querySelector('.proj-field[data-pkey="Name"]');
+        var descField = entry.querySelector('.proj-field[data-pkey="Description"]');
 
         if (nameField && nameField.value && descField && descField.value) return;
 
@@ -857,12 +899,12 @@
         var def = BLOCK_FORMS[type];
         if (def && def.fields) {
             def.fields.forEach(function (f) {
-                if (f.key === 'suggestedAmounts') defaults[f.key] = [];
-                else if (f.key === 'goal') defaults[f.key] = 0;
+                if (f.key === 'SuggestedAmounts') defaults[f.key] = [];
+                else if (f.key === 'Goal') defaults[f.key] = 0;
                 else defaults[f.key] = '';
             });
         }
-        if (type === 'projects-grid') defaults = { projects: [] };
+        if (type === 'projects-grid') defaults = { Projects: [] };
         var newBlock = { Id: generateId(), Type: type, Settings: defaults };
         var targetIdx = activeColumnIdx;
         if (targetIdx < 0 || targetIdx >= sections.length) targetIdx = 0;

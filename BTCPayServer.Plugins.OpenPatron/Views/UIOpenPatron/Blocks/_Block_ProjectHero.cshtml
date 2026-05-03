@@ -2,14 +2,14 @@
 @model BTCPayServer.Plugins.OpenPatron.ViewModels.BlockRenderContext
 @{
     var s = Model.Block.Settings;
-    var title = BlockSettingsHelper.Str(s, "title", Model.Page.AppName);
-    var subtitle = BlockSettingsHelper.Str(s, "subtitle");
-    var displayName = BlockSettingsHelper.Str(s, "displayName");
+    var title = BlockSettingsHelper.Str(s, "Title", Model.Page.AppName);
+    var subtitle = BlockSettingsHelper.Str(s, "Subtitle");
+    var displayName = BlockSettingsHelper.Str(s, "DisplayName");
     var avatarUrl = BlockSettingsHelper.AvatarUrl(s);
     var gitHubUrl = BlockSettingsHelper.GitHubProfileUrl(s);
-    var socialX = BlockSettingsHelper.Str(s, "socialX");
-    var socialMastodon = BlockSettingsHelper.Str(s, "socialMastodon");
-    var socialNostr = BlockSettingsHelper.Str(s, "socialNostr");
+    var socialX = BlockSettingsHelper.Str(s, "SocialX");
+    var socialMastodon = BlockSettingsHelper.Str(s, "SocialMastodon");
+    var socialNostr = BlockSettingsHelper.Str(s, "SocialNostr");
     var hasSocial = BlockSettingsHelper.HasSocialLinks(s);
     var hasProfile = !string.IsNullOrWhiteSpace(avatarUrl) || !string.IsNullOrWhiteSpace(displayName) || !string.IsNullOrWhiteSpace(gitHubUrl);
 }

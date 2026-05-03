@@ -165,7 +165,7 @@ public class UIOpenPatronController(
             string.Equals(b.Type, BlockRegistry.FundingProgress, StringComparison.OrdinalIgnoreCase));
         if (fundingBlock != null)
         {
-            var goal = BlockSettingsHelper.Dec(fundingBlock.Settings, "goal");
+            var goal = BlockSettingsHelper.Dec(fundingBlock.Settings, "Goal");
             if (goal is > 0)
             {
                 vm.AmountRaised = await fundingProgressService.GetTotalRaisedAsync(app.Id, settings.DefaultCurrency);
@@ -326,14 +326,14 @@ public class UIOpenPatronController(
                 ["description"] = "Personal profile hero: avatar, name, bio, and social links",
                 ["properties"] = new Dictionary<string, object>
                 {
-                    ["displayName"] = new { type = "string", description = "Display name shown on the page" },
-                    ["subtitle"] = new { type = "string", description = "Short subtitle below the name" },
-                    ["bio"] = new { type = "string", description = "Brief biography / description" },
-                    ["gravatarEmail"] = new { type = "string", format = "email", description = "Email for Gravatar avatar" },
-                    ["gitHubUsername"] = new { type = "string", description = "GitHub username (also used as avatar fallback)" },
-                    ["socialX"] = new { type = "string", description = "X (Twitter) handle" },
-                    ["socialMastodon"] = new { type = "string", format = "uri", description = "Mastodon profile URL" },
-                    ["socialNostr"] = new { type = "string", description = "Nostr npub identifier" }
+                    ["DisplayName"] = new { type = "string", description = "Display name shown on the page" },
+                    ["Subtitle"] = new { type = "string", description = "Short subtitle below the name" },
+                    ["Bio"] = new { type = "string", description = "Brief biography / description" },
+                    ["GravatarEmail"] = new { type = "string", format = "email", description = "Email for Gravatar avatar" },
+                    ["GitHubUsername"] = new { type = "string", description = "GitHub username (also used as avatar fallback)" },
+                    ["SocialX"] = new { type = "string", description = "X (Twitter) handle" },
+                    ["SocialMastodon"] = new { type = "string", format = "uri", description = "Mastodon profile URL" },
+                    ["SocialNostr"] = new { type = "string", description = "Nostr npub identifier" }
                 }
             },
             ["project-hero"] = new Dictionary<string, object>
@@ -342,14 +342,14 @@ public class UIOpenPatronController(
                 ["description"] = "Project hero: title, subtitle, maintainer card, and social links",
                 ["properties"] = new Dictionary<string, object>
                 {
-                    ["title"] = new { type = "string", description = "Main headline" },
-                    ["subtitle"] = new { type = "string", description = "Subtitle below the headline" },
-                    ["displayName"] = new { type = "string", description = "Maintainer name shown in the profile card" },
-                    ["gravatarEmail"] = new { type = "string", format = "email", description = "Email for Gravatar avatar" },
-                    ["gitHubUsername"] = new { type = "string", description = "GitHub username (also used as avatar fallback)" },
-                    ["socialX"] = new { type = "string", description = "X (Twitter) handle" },
-                    ["socialMastodon"] = new { type = "string", format = "uri", description = "Mastodon profile URL" },
-                    ["socialNostr"] = new { type = "string", description = "Nostr npub identifier" }
+                    ["Title"] = new { type = "string", description = "Main headline" },
+                    ["Subtitle"] = new { type = "string", description = "Subtitle below the headline" },
+                    ["DisplayName"] = new { type = "string", description = "Maintainer name shown in the profile card" },
+                    ["GravatarEmail"] = new { type = "string", format = "email", description = "Email for Gravatar avatar" },
+                    ["GitHubUsername"] = new { type = "string", description = "GitHub username (also used as avatar fallback)" },
+                    ["SocialX"] = new { type = "string", description = "X (Twitter) handle" },
+                    ["SocialMastodon"] = new { type = "string", format = "uri", description = "Mastodon profile URL" },
+                    ["SocialNostr"] = new { type = "string", description = "Nostr npub identifier" }
                 }
             },
             ["funding-progress"] = new Dictionary<string, object>
@@ -358,7 +358,7 @@ public class UIOpenPatronController(
                 ["description"] = "Progress bar toward a funding goal",
                 ["properties"] = new Dictionary<string, object>
                 {
-                    ["goal"] = new { type = "number", description = "Funding goal amount (in default currency)", minimum = 0 }
+                    ["Goal"] = new { type = "number", description = "Funding goal amount (in default currency)", minimum = 0 }
                 }
             },
             ["description"] = new Dictionary<string, object>
@@ -367,8 +367,8 @@ public class UIOpenPatronController(
                 ["description"] = "Rich text section with heading and markdown content",
                 ["properties"] = new Dictionary<string, object>
                 {
-                    ["heading"] = new { type = "string", description = "Section heading" },
-                    ["content"] = new { type = "string", description = "Markdown-formatted body content" }
+                    ["Heading"] = new { type = "string", description = "Section heading" },
+                    ["Content"] = new { type = "string", description = "Markdown-formatted body content" }
                 }
             },
             ["projects-grid"] = new Dictionary<string, object>
@@ -377,7 +377,7 @@ public class UIOpenPatronController(
                 ["description"] = "Grid of open source project cards",
                 ["properties"] = new Dictionary<string, object>
                 {
-                    ["projects"] = new Dictionary<string, object>
+                    ["Projects"] = new Dictionary<string, object>
                     {
                         ["type"] = "array",
                         ["description"] = "List of projects to display",
@@ -386,13 +386,13 @@ public class UIOpenPatronController(
                             ["type"] = "object",
                             ["properties"] = new Dictionary<string, object>
                             {
-                                ["name"] = new { type = "string", description = "Project name (auto-filled from GitHub if URL is a GitHub repo)" },
-                                ["url"] = new { type = "string", format = "uri", description = "Project URL. GitHub repo URLs get dynamic stars and language at render time." },
-                                ["description"] = new { type = "string", description = "Short project description (auto-filled from GitHub if URL is a GitHub repo)" }
+                                ["Name"] = new { type = "string", description = "Project name (auto-filled from GitHub if URL is a GitHub repo)" },
+                                ["Url"] = new { type = "string", format = "uri", description = "Project URL. GitHub repo URLs get dynamic stars and language at render time." },
+                                ["Description"] = new { type = "string", description = "Short project description (auto-filled from GitHub if URL is a GitHub repo)" }
                             }
                         }
                     },
-                    ["columnsPerRow"] = new { type = "integer", description = "Number of project cards per row (1-4)", @enum = new[] { 1, 2, 3, 4 }, @default = 2 }
+                    ["ColumnsPerRow"] = new { type = "integer", description = "Number of project cards per row (1-4)", @enum = new[] { 1, 2, 3, 4 }, @default = 2 }
                 }
             },
             ["subscription-tiers"] = new Dictionary<string, object>
@@ -401,9 +401,9 @@ public class UIOpenPatronController(
                 ["description"] = "Subscription plan cards with subscribe actions",
                 ["properties"] = new Dictionary<string, object>
                 {
-                    ["heading"] = new { type = "string", description = "Section heading" },
-                    ["subtitle"] = new { type = "string", description = "Subtitle below the heading" },
-                    ["columnsPerRow"] = new { type = "integer", description = "Number of plan cards per row (1-4)", @enum = new[] { 1, 2, 3, 4 }, @default = 2 }
+                    ["Heading"] = new { type = "string", description = "Section heading" },
+                    ["Subtitle"] = new { type = "string", description = "Subtitle below the heading" },
+                    ["ColumnsPerRow"] = new { type = "integer", description = "Number of plan cards per row (1-4)", @enum = new[] { 1, 2, 3, 4 }, @default = 2 }
                 }
             },
             ["quick-support"] = new Dictionary<string, object>
@@ -412,8 +412,8 @@ public class UIOpenPatronController(
                 ["description"] = "Suggested one-time contribution amount buttons",
                 ["properties"] = new Dictionary<string, object>
                 {
-                    ["heading"] = new { type = "string", description = "Section heading" },
-                    ["suggestedAmounts"] = new { type = "array", description = "List of suggested amounts", items = new { type = "number", minimum = 0 } }
+                    ["Heading"] = new { type = "string", description = "Section heading" },
+                    ["SuggestedAmounts"] = new { type = "array", description = "List of suggested amounts", items = new { type = "number", minimum = 0 } }
                 }
             },
             ["sponsor-wall"] = new Dictionary<string, object>
@@ -422,7 +422,7 @@ public class UIOpenPatronController(
                 ["description"] = "Wall showing recent anonymous contributions",
                 ["properties"] = new Dictionary<string, object>
                 {
-                    ["heading"] = new { type = "string", description = "Section heading" }
+                    ["Heading"] = new { type = "string", description = "Section heading" }
                 }
             },
             ["sidebar-support"] = new Dictionary<string, object>
@@ -431,7 +431,7 @@ public class UIOpenPatronController(
                 ["description"] = "Compact sponsor panel with contribution form and call-to-action",
                 ["properties"] = new Dictionary<string, object>
                 {
-                    ["heading"] = new { type = "string", description = "Section heading" }
+                    ["Heading"] = new { type = "string", description = "Section heading" }
                 }
             }
         };
@@ -502,6 +502,27 @@ public class UIOpenPatronController(
         return Json(schema);
     }
 
+    [AllowAnonymous]
+    [HttpGet("{appId}/openpatron/badge.svg")]
+    [ResponseCache(Duration = 300)]
+    public async Task<IActionResult> Badge(string appId, string style = "flat", string? label = null)
+    {
+        var app = await appService.GetApp(appId, OpenPatronAppType.AppType, includeArchived: true);
+        if (app is null)
+            return NotFound();
+
+        var settings = app.GetSettings<OpenPatronAppSettings>();
+        if (!IsPublished(settings))
+            return NotFound();
+
+        var accentColor = settings.Theme?.AccentColor ?? "#6366f1";
+        var badgeLabel = string.IsNullOrWhiteSpace(label) ? "\u20bf" : label.Trim();
+        var isSquare = string.Equals(style, "flat-square", StringComparison.OrdinalIgnoreCase);
+
+        var svg = GenerateBadgeSvg(badgeLabel, "Sponsor", accentColor, isSquare);
+        return Content(svg, "image/svg+xml; charset=utf-8");
+    }
+
     public static void EnsurePageLayout(OpenPatronAppSettings settings)
     {
         settings.Theme ??= new PageTheme();
@@ -525,7 +546,7 @@ public class UIOpenPatronController(
                     new BlockDefinition
                     {
                         Type = BlockRegistry.SidebarSupport,
-                        Settings = JObject.FromObject(new { heading = "Sponsor now" })
+                        Settings = JObject.FromObject(new { Heading = "Sponsor now" })
                     }
                 ];
             }
@@ -551,6 +572,7 @@ public class UIOpenPatronController(
             AppId = app.Id,
             StoreId = app.StoreDataId,
             PublicPageUrl = GetPublicPageUrl(app.Id),
+            BadgeUrl = GetBadgeUrl(app.Id),
             OfferingId = offering?.Id ?? settings.OfferingId,
             ManageOfferingUrl = offering is null ? null : GetManageOfferingUrl(app.StoreDataId, offering.Id),
             AddPlanUrl = offering is null ? null : GetAddPlanUrl(app.StoreDataId, offering.Id),
@@ -646,6 +668,9 @@ public class UIOpenPatronController(
     private string GetPublicPageUrl(string appId)
         => Url.ActionLink(nameof(PublicPage), values: new { appId, area = OpenPatronPlugin.Area }) ?? $"/apps/{appId}/openpatron";
 
+    private string GetBadgeUrl(string appId)
+        => Url.ActionLink(nameof(Badge), values: new { appId, area = OpenPatronPlugin.Area }) ?? $"/apps/{appId}/openpatron/badge.svg";
+
     private string GetManageOfferingUrl(string storeId, string offeringId)
         => Url.Action("Offering", "UIOffering", new { area = SubscriptionsPlugin.Area, storeId, offeringId, section = "Plans" })
            ?? $"/stores/{storeId}/offerings/{offeringId}/Plans";
@@ -665,13 +690,13 @@ public class UIOpenPatronController(
 
         foreach (var block in projectsBlocks)
         {
-            var projects = BlockSettingsHelper.Arr(block.Settings, "projects");
+            var projects = BlockSettingsHelper.Arr(block.Settings, "Projects");
             if (projects is null)
                 continue;
 
             foreach (var token in projects.OfType<JObject>())
             {
-                var url = BlockSettingsHelper.Str(token, "url");
+                var url = BlockSettingsHelper.Str(token, "Url");
                 if (!GitHubRepoService.TryParseGitHubUrl(url, out var owner, out var repo))
                     continue;
 
@@ -679,9 +704,9 @@ public class UIOpenPatronController(
                 if (ghRepo is null)
                     continue;
 
-                token["stars"] = ghRepo.StargazersCount;
+                token["Stars"] = ghRepo.StargazersCount;
                 if (!string.IsNullOrWhiteSpace(ghRepo.Language))
-                    token["language"] = ghRepo.Language;
+                    token["Language"] = ghRepo.Language;
             }
         }
     }
@@ -697,6 +722,53 @@ public class UIOpenPatronController(
 
     private static string? NormalizeString(string? value)
         => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static string GenerateBadgeSvg(string label, string message, string color, bool square)
+    {
+        const double charWidth = 6.8;
+        const int sidePadding = 6;
+        const int height = 20;
+
+        var labelTextWidth = (int)Math.Ceiling(label.Length * charWidth);
+        var messageTextWidth = (int)Math.Ceiling(message.Length * charWidth);
+        var labelWidth = Math.Max(labelTextWidth + 2 * sidePadding, 24);
+        var messageWidth = messageTextWidth + 2 * sidePadding;
+        var totalWidth = labelWidth + messageWidth;
+
+        var labelMid = (labelWidth / 2.0).ToString("F1", CultureInfo.InvariantCulture);
+        var messageMid = (labelWidth + messageWidth / 2.0).ToString("F1", CultureInfo.InvariantCulture);
+        var rx = square ? 0 : 3;
+
+        label = EscapeXml(label);
+        message = EscapeXml(message);
+        color = EscapeXml(color);
+
+        return $"""
+            <svg xmlns="http://www.w3.org/2000/svg" width="{totalWidth}" height="{height}">
+              <linearGradient id="s" x2="0" y2="100%">
+                <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+                <stop offset="1" stop-opacity=".1"/>
+              </linearGradient>
+              <clipPath id="r">
+                <rect width="{totalWidth}" height="{height}" rx="{rx}" fill="#fff"/>
+              </clipPath>
+              <g clip-path="url(#r)">
+                <rect width="{labelWidth}" height="{height}" fill="#555"/>
+                <rect x="{labelWidth}" width="{messageWidth}" height="{height}" fill="{color}"/>
+                <rect width="{totalWidth}" height="{height}" fill="url(#s)"/>
+              </g>
+              <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" text-rendering="geometricPrecision" font-size="11">
+                <text x="{labelMid}" y="15" fill="#010101" fill-opacity=".3">{label}</text>
+                <text x="{labelMid}" y="14">{label}</text>
+                <text x="{messageMid}" y="15" fill="#010101" fill-opacity=".3">{message}</text>
+                <text x="{messageMid}" y="14">{message}</text>
+              </g>
+            </svg>
+            """;
+    }
+
+    private static string EscapeXml(string value) =>
+        value.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace("\"", "&quot;").Replace("'", "&apos;");
 
     public static string? ComputeGravatarUrl(string? email)
     {

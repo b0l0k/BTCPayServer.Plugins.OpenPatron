@@ -3,8 +3,8 @@
 @model BTCPayServer.Plugins.OpenPatron.ViewModels.BlockRenderContext
 @{
     var s = Model.Block.Settings;
-    var projects = BlockSettingsHelper.Arr(s, "projects");
-    var columnsPerRow = (int)(BlockSettingsHelper.Dec(s, "columnsPerRow") ?? 2);
+    var projects = BlockSettingsHelper.Arr(s, "Projects");
+    var columnsPerRow = (int)(BlockSettingsHelper.Dec(s, "ColumnsPerRow") ?? 2);
     if (columnsPerRow < 1 || columnsPerRow > 4) columnsPerRow = 2;
     var colClass = "col-12 col-md-" + (12 / columnsPerRow);
 }
@@ -17,11 +17,11 @@
         <div class="row g-3">
             @foreach (var project in projects.OfType<JObject>())
             {
-                var name = BlockSettingsHelper.Str(project, "name");
-                var url = BlockSettingsHelper.Str(project, "url");
-                var desc = BlockSettingsHelper.Str(project, "description");
-                var lang = BlockSettingsHelper.Str(project, "language");
-                var stars = (int?)BlockSettingsHelper.Dec(project, "stars");
+                var name = BlockSettingsHelper.Str(project, "Name");
+                var url = BlockSettingsHelper.Str(project, "Url");
+                var desc = BlockSettingsHelper.Str(project, "Description");
+                var lang = BlockSettingsHelper.Str(project, "Language");
+                var stars = (int?)BlockSettingsHelper.Dec(project, "Stars");
                 <div class="@colClass">
                     <a href="@url" target="_blank" rel="noreferrer" class="text-decoration-none">
                         <div class="openpatron-project-card d-flex flex-column h-100">
