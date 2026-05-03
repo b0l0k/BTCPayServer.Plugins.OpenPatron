@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using BTCPayServer.Plugins.OpenPatron.Controllers;
@@ -6,6 +7,8 @@ using BTCPayServer.Plugins.OpenPatron.Services;
 using BTCPayServer.Data.Subscriptions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using NJsonSchema;
+using NJsonSchema.Generation;
 using Xunit;
 
 namespace BTCPayServer.Plugins.OpenPatron.Tests;
@@ -96,26 +99,52 @@ public class FastTests
         Assert.True(BlockRegistry.IsKnownType("PROFILE-HERO"));
     }
 
-    // ── Default layouts have Settings populated ──
+    // ── Default section structure ──
 
     [Fact]
-    public void DefaultPersonalLayoutHasExpectedBlocks()
+    public void DefaultPersonalSectionsHaveExpectedBlocks()
     {
-        var layout = BlockRegistry.DefaultLayoutForPersonal();
-        var types = layout.Select(b => b.Type).ToList();
+        var sections = BlockRegistry.DefaultSectionsForPersonal();
+        Assert.Equal(2, sections.Count);
+        var col1Types = sections[0].Blocks.Select(b => b.Type).ToList();
         Assert.Equal(
-            new[] { "profile-hero", "funding-progress", "description", "projects-grid", "subscription-tiers", "quick-support", "sponsor-wall" },
-            types);
+            new[] { "profile-hero", "description", "projects-grid", "subscription-tiers", "quick-support", "sponsor-wall" },
+            col1Types);
+        Assert.Single(sections[1].Blocks);
+        Assert.Equal("sidebar-support", sections[1].Blocks[0].Type);
     }
 
     [Fact]
-    public void DefaultProjectLayoutHasExpectedBlocks()
+    public void DefaultProjectSectionsHaveExpectedBlocks()
     {
-        var layout = BlockRegistry.DefaultLayoutForProject();
-        var types = layout.Select(b => b.Type).ToList();
+        var sections = BlockRegistry.DefaultSectionsForProject();
+        Assert.Equal(2, sections.Count);
+        var col1Types = sections[0].Blocks.Select(b => b.Type).ToList();
         Assert.Equal(
             new[] { "project-hero", "funding-progress", "description", "subscription-tiers", "quick-support", "sponsor-wall" },
-            types);
+            col1Types);
+        Assert.Single(sections[1].Blocks);
+        Assert.Equal("sidebar-support", sections[1].Blocks[0].Type);
+    }
+
+    [Fact]
+    public void DefaultPersonalProfileHeroHasAllSettingsKeys()
+    {
+        var block = BlockRegistry.DefaultSectionsForPersonal()[0].Blocks.First(b => b.Type == "profile-hero");
+        var keys = block.Settings!.Properties().Select(p => p.Name).OrderBy(k => k).ToList();
+        Assert.Equal(
+            new[] { "Bio", "DisplayName", "GitHubUsername", "GravatarEmail", "SocialMastodon", "SocialNostr", "SocialX", "Subtitle" },
+            keys);
+    }
+
+    [Fact]
+    public void DefaultProjectHeroHasAllSettingsKeys()
+    {
+        var block = BlockRegistry.DefaultSectionsForProject()[0].Blocks.First(b => b.Type == "project-hero");
+        var keys = block.Settings!.Properties().Select(p => p.Name).OrderBy(k => k).ToList();
+        Assert.Equal(
+            new[] { "DisplayName", "GitHubUsername", "GravatarEmail", "SocialMastodon", "SocialNostr", "SocialX", "Subtitle", "Title" },
+            keys);
     }
 
     [Fact]
@@ -257,22 +286,49 @@ public class FastTests
     // ── EnsurePageLayout ──
 
     [Fact]
-    public void EnsurePageLayoutStartsEmpty()
+    public void EnsurePageLayoutPopulatesSections()
     {
-        var settings = new OpenPatronAppSettings { PageLayout = null };
+        var settings = new OpenPatronAppSettings();
         UIOpenPatronController.EnsurePageLayout(settings);
-        Assert.NotNull(settings.PageLayout);
-        Assert.Empty(settings.PageLayout!);
+        Assert.NotNull(settings.Sections);
+        Assert.True(settings.Sections!.Count > 0);
     }
 
     [Fact]
-    public void EnsurePageLayoutDoesNotOverwrite()
+    public void EnsurePageLayoutDoesNotOverwriteExistingSections()
     {
-        var existing = new List<BlockDefinition> { new() { Id = "x", Type = "description" } };
-        var settings = new OpenPatronAppSettings { PageLayout = existing };
+        var existing = new List<PageSection>
+        {
+            new() { Id = "col-1", Width = 12, Blocks = [new() { Id = "x", Type = "description" }] }
+        };
+        var settings = new OpenPatronAppSettings { Sections = existing };
         UIOpenPatronController.EnsurePageLayout(settings);
-        Assert.Single(settings.PageLayout!);
-        Assert.Equal("x", settings.PageLayout![0].Id);
+        Assert.Single(settings.Sections!);
+        Assert.Equal("x", settings.Sections![0].Blocks[0].Id);
+    }
+
+    [Fact]
+    public void EnsurePageLayoutMigratesLegacyPageLayoutToSections()
+    {
+        var legacyBlocks = new List<BlockDefinition>
+        {
+            new() { Id = "b1", Type = "profile-hero" },
+            new() { Id = "b2", Type = "description" }
+        };
+        var settings = new OpenPatronAppSettings { PageLayout = legacyBlocks, PageLayoutPreset = "8-4" };
+        UIOpenPatronController.EnsurePageLayout(settings);
+
+        Assert.NotNull(settings.Sections);
+        Assert.Equal(2, settings.Sections!.Count);
+        Assert.Null(settings.PageLayout);
+
+        var widerSection = settings.Sections.OrderByDescending(s => s.Width).First();
+        Assert.Equal(2, widerSection.Blocks.Count);
+        Assert.Equal("b1", widerSection.Blocks[0].Id);
+
+        var narrower = settings.Sections.First(s => s != widerSection);
+        Assert.Single(narrower.Blocks);
+        Assert.Equal("sidebar-support", narrower.Blocks[0].Type);
     }
 
     [Fact]
@@ -384,5 +440,332 @@ public class FastTests
     {
         Assert.Null(UIOpenPatronController.ComputeGravatarUrl(null));
         Assert.Null(UIOpenPatronController.ComputeGravatarUrl(""));
+    }
+
+    // ── Per-block settings round-trip ──
+
+    [Fact]
+    public void ProfileHeroSettingsRoundTrip()
+    {
+        var block = new BlockDefinition
+        {
+            Id = "ph1", Type = "profile-hero",
+            Settings = JObject.FromObject(new { DisplayName = "Jane", Subtitle = "Dev", Bio = "Hello", GravatarEmail = "a@b.com", GitHubUsername = "jane", SocialX = "jx", SocialMastodon = "https://m.social/@j", SocialNostr = "npub1abc" })
+        };
+        var json = JsonConvert.SerializeObject(block);
+        var d = JsonConvert.DeserializeObject<BlockDefinition>(json)!;
+        Assert.Equal("Jane", d.Settings!["DisplayName"]!.ToString());
+        Assert.Equal("Dev", d.Settings["Subtitle"]!.ToString());
+        Assert.Equal("Hello", d.Settings["Bio"]!.ToString());
+        Assert.Equal("a@b.com", d.Settings["GravatarEmail"]!.ToString());
+        Assert.Equal("jane", d.Settings["GitHubUsername"]!.ToString());
+        Assert.Equal("jx", d.Settings["SocialX"]!.ToString());
+        Assert.Equal("https://m.social/@j", d.Settings["SocialMastodon"]!.ToString());
+        Assert.Equal("npub1abc", d.Settings["SocialNostr"]!.ToString());
+    }
+
+    [Fact]
+    public void ProjectHeroSettingsRoundTrip()
+    {
+        var block = new BlockDefinition
+        {
+            Id = "prh1", Type = "project-hero",
+            Settings = JObject.FromObject(new { Title = "MyProject", Subtitle = "Sub", DisplayName = "Jane", GravatarEmail = "a@b.com", GitHubUsername = "jane", SocialX = "jx", SocialMastodon = "https://m.social/@j", SocialNostr = "npub1abc" })
+        };
+        var json = JsonConvert.SerializeObject(block);
+        var d = JsonConvert.DeserializeObject<BlockDefinition>(json)!;
+        Assert.Equal("MyProject", d.Settings!["Title"]!.ToString());
+        Assert.Equal("Sub", d.Settings["Subtitle"]!.ToString());
+        Assert.Equal("Jane", d.Settings["DisplayName"]!.ToString());
+    }
+
+    [Fact]
+    public void FundingProgressSettingsRoundTrip()
+    {
+        var block = new BlockDefinition
+        {
+            Id = "fp1", Type = "funding-progress",
+            Settings = JObject.FromObject(new { Goal = 5000m })
+        };
+        var json = JsonConvert.SerializeObject(block);
+        var d = JsonConvert.DeserializeObject<BlockDefinition>(json)!;
+        Assert.Equal(5000m, d.Settings!["Goal"]!.Value<decimal>());
+    }
+
+    [Fact]
+    public void DescriptionSettingsRoundTrip()
+    {
+        var block = new BlockDefinition
+        {
+            Id = "ds1", Type = "description",
+            Settings = JObject.FromObject(new { Heading = "About", Content = "# Hello\n\nWorld" })
+        };
+        var json = JsonConvert.SerializeObject(block);
+        var d = JsonConvert.DeserializeObject<BlockDefinition>(json)!;
+        Assert.Equal("About", d.Settings!["Heading"]!.ToString());
+        Assert.Equal("# Hello\n\nWorld", d.Settings["Content"]!.ToString());
+    }
+
+    [Fact]
+    public void ProjectsGridSettingsRoundTrip()
+    {
+        var block = new BlockDefinition
+        {
+            Id = "pg1", Type = "projects-grid",
+            Settings = JObject.FromObject(new
+            {
+                Projects = new[] { new { Name = "Proj1", Url = "https://github.com/a/b", Description = "Desc" } },
+                ColumnsPerRow = 3
+            })
+        };
+        var json = JsonConvert.SerializeObject(block);
+        var d = JsonConvert.DeserializeObject<BlockDefinition>(json)!;
+        var projects = d.Settings!["Projects"] as JArray;
+        Assert.NotNull(projects);
+        Assert.Single(projects!);
+        Assert.Equal("Proj1", projects[0]!["Name"]!.ToString());
+        Assert.Equal(3, d.Settings["ColumnsPerRow"]!.Value<int>());
+    }
+
+    [Fact]
+    public void SubscriptionTiersSettingsRoundTrip()
+    {
+        var block = new BlockDefinition
+        {
+            Id = "st1", Type = "subscription-tiers",
+            Settings = JObject.FromObject(new { Heading = "Sponsor", Subtitle = "Pick one", ColumnsPerRow = 2 })
+        };
+        var json = JsonConvert.SerializeObject(block);
+        var d = JsonConvert.DeserializeObject<BlockDefinition>(json)!;
+        Assert.Equal("Sponsor", d.Settings!["Heading"]!.ToString());
+        Assert.Equal("Pick one", d.Settings["Subtitle"]!.ToString());
+        Assert.Equal(2, d.Settings["ColumnsPerRow"]!.Value<int>());
+    }
+
+    [Fact]
+    public void QuickSupportSettingsRoundTrip()
+    {
+        var block = new BlockDefinition
+        {
+            Id = "qs1", Type = "quick-support",
+            Settings = JObject.FromObject(new { Heading = "Quick", SuggestedAmounts = new[] { 5m, 15m, 50m } })
+        };
+        var json = JsonConvert.SerializeObject(block);
+        var d = JsonConvert.DeserializeObject<BlockDefinition>(json)!;
+        Assert.Equal("Quick", d.Settings!["Heading"]!.ToString());
+        var amounts = (d.Settings["SuggestedAmounts"] as JArray)!.Select(t => t.Value<decimal>()).ToList();
+        Assert.Equal(new[] { 5m, 15m, 50m }, amounts);
+    }
+
+    [Fact]
+    public void SponsorWallSettingsRoundTrip()
+    {
+        var block = new BlockDefinition
+        {
+            Id = "sw1", Type = "sponsor-wall",
+            Settings = JObject.FromObject(new { Heading = "Supporters" })
+        };
+        var json = JsonConvert.SerializeObject(block);
+        var d = JsonConvert.DeserializeObject<BlockDefinition>(json)!;
+        Assert.Equal("Supporters", d.Settings!["Heading"]!.ToString());
+    }
+
+    [Fact]
+    public void SidebarSupportSettingsRoundTrip()
+    {
+        var block = new BlockDefinition
+        {
+            Id = "ss1", Type = "sidebar-support",
+            Settings = JObject.FromObject(new { Heading = "Sponsor now" })
+        };
+        var json = JsonConvert.SerializeObject(block);
+        var d = JsonConvert.DeserializeObject<BlockDefinition>(json)!;
+        Assert.Equal("Sponsor now", d.Settings!["Heading"]!.ToString());
+    }
+
+    // ── BlockSettingsHelper extended coverage ──
+
+    [Fact]
+    public void AvatarUrlPrefersGravatarOverGitHub()
+    {
+        var obj = JObject.FromObject(new { GravatarEmail = "test@example.com", GitHubUsername = "octocat" });
+        var url = BlockSettingsHelper.AvatarUrl(obj);
+        Assert.NotNull(url);
+        Assert.StartsWith("https://www.gravatar.com/avatar/", url);
+    }
+
+    [Fact]
+    public void AvatarUrlFallsBackToGitHub()
+    {
+        var obj = JObject.FromObject(new { GitHubUsername = "octocat" });
+        var url = BlockSettingsHelper.AvatarUrl(obj);
+        Assert.NotNull(url);
+        Assert.StartsWith("https://github.com/octocat", url);
+    }
+
+    [Fact]
+    public void AvatarUrlNullWhenBothMissing()
+    {
+        Assert.Null(BlockSettingsHelper.AvatarUrl(new JObject()));
+    }
+
+    [Fact]
+    public void BlockThemeStyleGeneratesCssVars()
+    {
+        var theme = new BlockTheme { AccentColor = "#ff0000", BorderRadius = "1rem" };
+        var style = BlockSettingsHelper.BlockThemeStyle(theme);
+        Assert.NotNull(style);
+        Assert.Contains("--op-accent:#ff0000", style);
+        Assert.Contains("--op-border-radius:1rem", style);
+    }
+
+    [Fact]
+    public void BlockThemeStyleNullForEmptyTheme()
+    {
+        Assert.Null(BlockSettingsHelper.BlockThemeStyle(null));
+        Assert.Null(BlockSettingsHelper.BlockThemeStyle(new BlockTheme()));
+    }
+
+    [Fact]
+    public void DecArrayIgnoresNonNumericTokens()
+    {
+        var obj = new JObject { ["Vals"] = new JArray(1, "bad", 3, true, 5.5) };
+        var result = BlockSettingsHelper.DecArray(obj, "Vals");
+        Assert.Equal(new[] { 1m, 3m, 5.5m }, result);
+    }
+
+    [Fact]
+    public void HasSocialLinksDetectsMastodon()
+    {
+        Assert.True(BlockSettingsHelper.HasSocialLinks(JObject.FromObject(new { SocialMastodon = "https://m.social/@user" })));
+    }
+
+    [Fact]
+    public void HasSocialLinksDetectsNostr()
+    {
+        Assert.True(BlockSettingsHelper.HasSocialLinks(JObject.FromObject(new { SocialNostr = "npub1abc" })));
+    }
+
+    // ── Full sections JSON round-trip ──
+
+    [Fact]
+    public void SectionsJsonRoundTripPreservesAllSettings()
+    {
+        var sections = new List<PageSection>
+        {
+            new()
+            {
+                Id = "col-1", Width = 8, Blocks =
+                [
+                    new() { Type = "profile-hero", Settings = JObject.FromObject(new { DisplayName = "Alice", Bio = "Dev", SocialX = "ax" }) },
+                    new() { Type = "funding-progress", Settings = JObject.FromObject(new { Goal = 1000m }) },
+                    new() { Type = "quick-support", Settings = JObject.FromObject(new { Heading = "Help", SuggestedAmounts = new[] { 5m, 25m } }) },
+                ]
+            },
+            new()
+            {
+                Id = "col-2", Width = 4, Blocks =
+                [
+                    new() { Type = "sidebar-support", Settings = JObject.FromObject(new { Heading = "Sponsor" }) },
+                ]
+            }
+        };
+
+        var json = JsonConvert.SerializeObject(sections);
+        var d = JsonConvert.DeserializeObject<List<PageSection>>(json)!;
+
+        Assert.Equal(2, d.Count);
+        Assert.Equal(3, d[0].Blocks.Count);
+        Assert.Equal("Alice", d[0].Blocks[0].Settings!["DisplayName"]!.ToString());
+        Assert.Equal(1000m, d[0].Blocks[1].Settings!["Goal"]!.Value<decimal>());
+        Assert.Equal("Help", d[0].Blocks[2].Settings!["Heading"]!.ToString());
+        var amounts = (d[0].Blocks[2].Settings!["SuggestedAmounts"] as JArray)!.Select(t => t.Value<decimal>()).ToList();
+        Assert.Equal(new[] { 5m, 25m }, amounts);
+        Assert.Equal("Sponsor", d[1].Blocks[0].Settings!["Heading"]!.ToString());
+    }
+
+    // ── Schema generation from DTOs ──
+
+    [Fact]
+    public void SchemaContainsAllBlockTypes()
+    {
+        var generator = new JsonSchemaGenerator(new SystemTextJsonSchemaGeneratorSettings());
+        foreach (var (typeKey, info) in BlockRegistry.AllTypes)
+        {
+            var schema = generator.Generate(info.SettingsType);
+            Assert.NotNull(schema);
+            Assert.Equal("object", schema.Type.ToString().ToLowerInvariant());
+        }
+    }
+
+    [Fact]
+    public void SchemaPropertyNamesArePascalCase()
+    {
+        var generator = new JsonSchemaGenerator(new SystemTextJsonSchemaGeneratorSettings());
+        foreach (var (typeKey, info) in BlockRegistry.AllTypes)
+        {
+            var schema = generator.Generate(info.SettingsType);
+            foreach (var propName in schema.Properties.Keys)
+            {
+                Assert.True(char.IsUpper(propName[0]),
+                    $"Property '{propName}' in {typeKey} schema should be PascalCase");
+            }
+        }
+    }
+
+    [Fact]
+    public void GeneratedSchemaMatchesDtoProperties()
+    {
+        var generator = new JsonSchemaGenerator(new SystemTextJsonSchemaGeneratorSettings());
+        foreach (var (typeKey, info) in BlockRegistry.AllTypes)
+        {
+            var schema = generator.Generate(info.SettingsType);
+            var dtoProps = info.SettingsType
+                .GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+                .Select(p => p.Name)
+                .OrderBy(n => n)
+                .ToList();
+            var schemaProps = schema.Properties.Keys.OrderBy(n => n).ToList();
+            Assert.Equal(dtoProps, schemaProps);
+        }
+    }
+
+    [Fact]
+    public void EveryBlockTypeHasSettingsType()
+    {
+        foreach (var (typeKey, info) in BlockRegistry.AllTypes)
+        {
+            Assert.NotNull(info.SettingsType);
+            Assert.True(info.SettingsType.IsClass, $"{typeKey} SettingsType should be a class");
+        }
+    }
+
+    [Fact]
+    public void GetSettingsTypeReturnsCorrectType()
+    {
+        Assert.Equal(typeof(ProfileHeroSettings), BlockRegistry.GetSettingsType("profile-hero"));
+        Assert.Equal(typeof(ProjectsGridSettings), BlockRegistry.GetSettingsType("projects-grid"));
+        Assert.Null(BlockRegistry.GetSettingsType("nonexistent"));
+    }
+
+    [Fact]
+    public void GetTypedDeserializesBlockSettings()
+    {
+        var block = new BlockDefinition
+        {
+            Type = "profile-hero",
+            Settings = JObject.FromObject(new ProfileHeroSettings { DisplayName = "Test", SocialX = "handle" })
+        };
+        var typed = BlockSettingsHelper.GetTyped<ProfileHeroSettings>(block);
+        Assert.NotNull(typed);
+        Assert.Equal("Test", typed!.DisplayName);
+        Assert.Equal("handle", typed.SocialX);
+    }
+
+    [Fact]
+    public void GetTypedReturnsNullForMissingSettings()
+    {
+        var block = new BlockDefinition { Type = "profile-hero" };
+        Assert.Null(BlockSettingsHelper.GetTyped<ProfileHeroSettings>(block));
     }
 }

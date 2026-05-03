@@ -24,6 +24,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using NJsonSchema;
+using NJsonSchema.Generation;
 
 namespace BTCPayServer.Plugins.OpenPatron.Controllers;
 
@@ -165,7 +167,7 @@ public class UIOpenPatronController(
             string.Equals(b.Type, BlockRegistry.FundingProgress, StringComparison.OrdinalIgnoreCase));
         if (fundingBlock != null)
         {
-            var goal = BlockSettingsHelper.Dec(fundingBlock.Settings, "Goal");
+            var goal = fundingBlock.Settings?.ToObject<FundingProgressSettings>()?.Goal;
             if (goal is > 0)
             {
                 vm.AmountRaised = await fundingProgressService.GetTotalRaisedAsync(app.Id, settings.DefaultCurrency);
@@ -295,195 +297,67 @@ public class UIOpenPatronController(
     [ResponseCache(Duration = 86400)]
     public IActionResult Schema()
     {
-        var themeSchema = new Dictionary<string, object>
+        var generatorSettings = new SystemTextJsonSchemaGeneratorSettings();
+        var generator = new JsonSchemaGenerator(generatorSettings);
+
+        var blockSettingsSchemas = new JObject();
+        foreach (var (typeKey, info) in BlockRegistry.AllTypes)
+        {
+            var typeSchema = generator.Generate(info.SettingsType);
+            blockSettingsSchemas[typeKey] = JObject.Parse(typeSchema.ToJson());
+        }
+
+        var themeSchema = JObject.Parse(generator.Generate(typeof(PageTheme)).ToJson());
+        var blockThemeSchema = JObject.Parse(generator.Generate(typeof(BlockTheme)).ToJson());
+
+        var blockItemSchema = new JObject
         {
             ["type"] = "object",
-            ["description"] = "Global page theme",
-            ["properties"] = new Dictionary<string, object>
+            ["required"] = new JArray("Id", "Type"),
+            ["properties"] = new JObject
             {
-                ["AccentColor"] = new { type = "string", description = "Primary accent color (hex)", pattern = "^#[0-9a-fA-F]{6}$", @default = "#6366f1" },
-                ["BorderRadius"] = new { type = "string", description = "Global border radius (CSS value)", @default = "1.5rem" },
-                ["BlockSpacing"] = new { type = "string", description = "Vertical spacing between blocks (CSS value)", @default = "1rem" }
-            }
-        };
-
-        var blockThemeSchema = new Dictionary<string, object>
-        {
-            ["type"] = "object",
-            ["description"] = "Per-block theme overrides (inherits from global Theme when omitted)",
-            ["properties"] = new Dictionary<string, object>
-            {
-                ["AccentColor"] = new { type = "string", description = "Override accent color for this block" },
-                ["BorderRadius"] = new { type = "string", description = "Override border radius for this block" }
-            }
-        };
-
-        var blockSettingsSchemas = new Dictionary<string, object>
-        {
-            ["profile-hero"] = new Dictionary<string, object>
-            {
-                ["type"] = "object",
-                ["description"] = "Personal profile hero: avatar, name, bio, and social links",
-                ["properties"] = new Dictionary<string, object>
-                {
-                    ["DisplayName"] = new { type = "string", description = "Display name shown on the page" },
-                    ["Subtitle"] = new { type = "string", description = "Short subtitle below the name" },
-                    ["Bio"] = new { type = "string", description = "Brief biography / description" },
-                    ["GravatarEmail"] = new { type = "string", format = "email", description = "Email for Gravatar avatar" },
-                    ["GitHubUsername"] = new { type = "string", description = "GitHub username (also used as avatar fallback)" },
-                    ["SocialX"] = new { type = "string", description = "X (Twitter) handle" },
-                    ["SocialMastodon"] = new { type = "string", format = "uri", description = "Mastodon profile URL" },
-                    ["SocialNostr"] = new { type = "string", description = "Nostr npub identifier" }
-                }
-            },
-            ["project-hero"] = new Dictionary<string, object>
-            {
-                ["type"] = "object",
-                ["description"] = "Project hero: title, subtitle, maintainer card, and social links",
-                ["properties"] = new Dictionary<string, object>
-                {
-                    ["Title"] = new { type = "string", description = "Main headline" },
-                    ["Subtitle"] = new { type = "string", description = "Subtitle below the headline" },
-                    ["DisplayName"] = new { type = "string", description = "Maintainer name shown in the profile card" },
-                    ["GravatarEmail"] = new { type = "string", format = "email", description = "Email for Gravatar avatar" },
-                    ["GitHubUsername"] = new { type = "string", description = "GitHub username (also used as avatar fallback)" },
-                    ["SocialX"] = new { type = "string", description = "X (Twitter) handle" },
-                    ["SocialMastodon"] = new { type = "string", format = "uri", description = "Mastodon profile URL" },
-                    ["SocialNostr"] = new { type = "string", description = "Nostr npub identifier" }
-                }
-            },
-            ["funding-progress"] = new Dictionary<string, object>
-            {
-                ["type"] = "object",
-                ["description"] = "Progress bar toward a funding goal",
-                ["properties"] = new Dictionary<string, object>
-                {
-                    ["Goal"] = new { type = "number", description = "Funding goal amount (in default currency)", minimum = 0 }
-                }
-            },
-            ["description"] = new Dictionary<string, object>
-            {
-                ["type"] = "object",
-                ["description"] = "Rich text section with heading and markdown content",
-                ["properties"] = new Dictionary<string, object>
-                {
-                    ["Heading"] = new { type = "string", description = "Section heading" },
-                    ["Content"] = new { type = "string", description = "Markdown-formatted body content" }
-                }
-            },
-            ["projects-grid"] = new Dictionary<string, object>
-            {
-                ["type"] = "object",
-                ["description"] = "Grid of open source project cards",
-                ["properties"] = new Dictionary<string, object>
-                {
-                    ["Projects"] = new Dictionary<string, object>
-                    {
-                        ["type"] = "array",
-                        ["description"] = "List of projects to display",
-                        ["items"] = new Dictionary<string, object>
-                        {
-                            ["type"] = "object",
-                            ["properties"] = new Dictionary<string, object>
-                            {
-                                ["Name"] = new { type = "string", description = "Project name (auto-filled from GitHub if URL is a GitHub repo)" },
-                                ["Url"] = new { type = "string", format = "uri", description = "Project URL. GitHub repo URLs get dynamic stars and language at render time." },
-                                ["Description"] = new { type = "string", description = "Short project description (auto-filled from GitHub if URL is a GitHub repo)" }
-                            }
-                        }
-                    },
-                    ["ColumnsPerRow"] = new { type = "integer", description = "Number of project cards per row (1-4)", @enum = new[] { 1, 2, 3, 4 }, @default = 2 }
-                }
-            },
-            ["subscription-tiers"] = new Dictionary<string, object>
-            {
-                ["type"] = "object",
-                ["description"] = "Subscription plan cards with subscribe actions",
-                ["properties"] = new Dictionary<string, object>
-                {
-                    ["Heading"] = new { type = "string", description = "Section heading" },
-                    ["Subtitle"] = new { type = "string", description = "Subtitle below the heading" },
-                    ["ColumnsPerRow"] = new { type = "integer", description = "Number of plan cards per row (1-4)", @enum = new[] { 1, 2, 3, 4 }, @default = 2 }
-                }
-            },
-            ["quick-support"] = new Dictionary<string, object>
-            {
-                ["type"] = "object",
-                ["description"] = "Suggested one-time contribution amount buttons",
-                ["properties"] = new Dictionary<string, object>
-                {
-                    ["Heading"] = new { type = "string", description = "Section heading" },
-                    ["SuggestedAmounts"] = new { type = "array", description = "List of suggested amounts", items = new { type = "number", minimum = 0 } }
-                }
-            },
-            ["sponsor-wall"] = new Dictionary<string, object>
-            {
-                ["type"] = "object",
-                ["description"] = "Wall showing recent anonymous contributions",
-                ["properties"] = new Dictionary<string, object>
-                {
-                    ["Heading"] = new { type = "string", description = "Section heading" }
-                }
-            },
-            ["sidebar-support"] = new Dictionary<string, object>
-            {
-                ["type"] = "object",
-                ["description"] = "Compact sponsor panel with contribution form and call-to-action",
-                ["properties"] = new Dictionary<string, object>
-                {
-                    ["Heading"] = new { type = "string", description = "Section heading" }
-                }
-            }
-        };
-
-        var blockItemSchema = new Dictionary<string, object>
-        {
-            ["type"] = "object",
-            ["required"] = new[] { "Id", "Type" },
-            ["properties"] = new Dictionary<string, object>
-            {
-                ["Id"] = new { type = "string", description = "Unique block identifier (12-char hex)" },
-                ["Type"] = new { type = "string", description = "Block type identifier", @enum = BlockRegistry.AllTypes.Keys.ToArray() },
-                ["Settings"] = new Dictionary<string, object>
+                ["Id"] = new JObject { ["type"] = "string", ["description"] = "Unique block identifier (12-char hex)" },
+                ["Type"] = new JObject { ["type"] = "string", ["description"] = "Block type identifier", ["enum"] = new JArray(BlockRegistry.AllTypes.Keys.ToArray()) },
+                ["Settings"] = new JObject
                 {
                     ["description"] = "Block content settings (schema depends on Type)",
-                    ["oneOf"] = blockSettingsSchemas.Select(kv => new Dictionary<string, object>
+                    ["oneOf"] = new JArray(blockSettingsSchemas.Properties().Select(kv => new JObject
                     {
-                        ["if"] = new { properties = new { Type = new { @const = kv.Key } } },
+                        ["if"] = new JObject { ["properties"] = new JObject { ["Type"] = new JObject { ["const"] = kv.Name } } },
                         ["then"] = kv.Value
-                    }).ToArray()
+                    }))
                 },
                 ["Theme"] = blockThemeSchema
             }
         };
 
-        var schema = new Dictionary<string, object>
+        var schema = new JObject
         {
             ["$schema"] = "https://json-schema.org/draft/2020-12/schema",
             ["title"] = "OpenPatron Page Layout",
             ["type"] = "object",
-            ["properties"] = new Dictionary<string, object>
+            ["properties"] = new JObject
             {
                 ["Theme"] = themeSchema,
-                ["Layout"] = new Dictionary<string, object>
+                ["Layout"] = new JObject
                 {
                     ["type"] = "string",
                     ["description"] = "Page layout preset",
-                    ["enum"] = BlockRegistry.LayoutPresets.Keys.ToArray()
+                    ["enum"] = new JArray(BlockRegistry.LayoutPresets.Keys.ToArray())
                 },
-                ["Sections"] = new Dictionary<string, object>
+                ["Sections"] = new JObject
                 {
                     ["type"] = "array",
                     ["description"] = "Page sections (columns), each containing blocks",
-                    ["items"] = new Dictionary<string, object>
+                    ["items"] = new JObject
                     {
                         ["type"] = "object",
-                        ["required"] = new[] { "Id", "Width", "Blocks" },
-                        ["properties"] = new Dictionary<string, object>
+                        ["required"] = new JArray("Id", "Width", "Blocks"),
+                        ["properties"] = new JObject
                         {
-                            ["Id"] = new { type = "string", description = "Section identifier (e.g. col-1, col-2)" },
-                            ["Width"] = new { type = "integer", description = "Bootstrap column width (4, 6, 8, or 12)", @enum = new[] { 4, 6, 8, 12 } },
-                            ["Blocks"] = new Dictionary<string, object>
+                            ["Id"] = new JObject { ["type"] = "string", ["description"] = "Section identifier (e.g. col-1, col-2)" },
+                            ["Width"] = new JObject { ["type"] = "integer", ["description"] = "Bootstrap column width (4, 6, 8, or 12)", ["enum"] = new JArray(4, 6, 8, 12) },
+                            ["Blocks"] = new JObject
                             {
                                 ["type"] = "array",
                                 ["description"] = "Ordered list of blocks in this section",
@@ -493,7 +367,7 @@ public class UIOpenPatronController(
                     }
                 }
             },
-            ["$defs"] = new Dictionary<string, object>
+            ["$defs"] = new JObject
             {
                 ["BlockSettings"] = blockSettingsSchemas
             }
@@ -546,7 +420,7 @@ public class UIOpenPatronController(
                     new BlockDefinition
                     {
                         Type = BlockRegistry.SidebarSupport,
-                        Settings = JObject.FromObject(new { Heading = "Sponsor now" })
+                        Settings = JObject.FromObject(new SidebarSupportSettings { Heading = "Sponsor now" })
                     }
                 ];
             }
@@ -690,11 +564,15 @@ public class UIOpenPatronController(
 
         foreach (var block in projectsBlocks)
         {
-            var projects = BlockSettingsHelper.Arr(block.Settings, "Projects");
-            if (projects is null)
+            var gridSettings = block.Settings?.ToObject<ProjectsGridSettings>();
+            if (gridSettings?.Projects is not { Count: > 0 })
                 continue;
 
-            foreach (var token in projects.OfType<JObject>())
+            var projectTokens = BlockSettingsHelper.Arr(block.Settings, nameof(ProjectsGridSettings.Projects));
+            if (projectTokens is null)
+                continue;
+
+            foreach (var token in projectTokens.OfType<JObject>())
             {
                 var url = BlockSettingsHelper.Str(token, "Url");
                 if (!GitHubRepoService.TryParseGitHubUrl(url, out var owner, out var repo))

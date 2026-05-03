@@ -11,6 +11,9 @@ namespace BTCPayServer.Plugins.OpenPatron.Services;
 
 public static class BlockSettingsHelper
 {
+    public static T? GetTyped<T>(BlockDefinition block) where T : class
+        => block.Settings?.ToObject<T>();
+
     private static readonly MarkdownPipeline MarkdownPipeline = new MarkdownPipelineBuilder()
         .DisableHtml()
         .UseAutoLinks()
@@ -48,7 +51,7 @@ public static class BlockSettingsHelper
 
     public static string? GravatarUrl(JObject? s)
     {
-        var email = Str(s, "GravatarEmail");
+        var email = Str(s, nameof(ProfileHeroSettings.GravatarEmail));
         if (string.IsNullOrWhiteSpace(email))
             return null;
         var hash = ComputeMd5Hash(email.Trim().ToLowerInvariant());
@@ -60,7 +63,7 @@ public static class BlockSettingsHelper
 
     public static string? GitHubAvatarUrl(JObject? s)
     {
-        var username = Str(s, "GitHubUsername");
+        var username = Str(s, nameof(ProfileHeroSettings.GitHubUsername));
         return string.IsNullOrWhiteSpace(username)
             ? null
             : $"https://github.com/{Uri.EscapeDataString(username.Trim())}.png?size=200";
@@ -68,16 +71,16 @@ public static class BlockSettingsHelper
 
     public static string? GitHubProfileUrl(JObject? s)
     {
-        var username = Str(s, "GitHubUsername");
+        var username = Str(s, nameof(ProfileHeroSettings.GitHubUsername));
         return string.IsNullOrWhiteSpace(username)
             ? null
             : $"https://github.com/{Uri.EscapeDataString(username)}";
     }
 
     public static bool HasSocialLinks(JObject? s)
-        => !string.IsNullOrWhiteSpace(Str(s, "SocialX"))
-        || !string.IsNullOrWhiteSpace(Str(s, "SocialMastodon"))
-        || !string.IsNullOrWhiteSpace(Str(s, "SocialNostr"));
+        => !string.IsNullOrWhiteSpace(Str(s, nameof(ProfileHeroSettings.SocialX)))
+        || !string.IsNullOrWhiteSpace(Str(s, nameof(ProfileHeroSettings.SocialMastodon)))
+        || !string.IsNullOrWhiteSpace(Str(s, nameof(ProfileHeroSettings.SocialNostr)));
 
     public static string? BlockThemeStyle(BlockTheme? theme)
     {

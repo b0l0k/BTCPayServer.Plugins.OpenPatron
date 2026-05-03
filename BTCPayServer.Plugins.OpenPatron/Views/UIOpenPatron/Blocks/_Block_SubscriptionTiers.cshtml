@@ -1,11 +1,12 @@
+@using BTCPayServer.Plugins.OpenPatron.Models
 @using BTCPayServer.Plugins.OpenPatron.Services
 @model BTCPayServer.Plugins.OpenPatron.ViewModels.BlockRenderContext
 @{
-    var s = Model.Block.Settings;
-    var heading = BlockSettingsHelper.Str(s, "Heading", "Choose a sponsorship tier");
-    var subtitle = BlockSettingsHelper.Str(s, "Subtitle", "Pick the level that fits you best");
+    var settings = BlockSettingsHelper.GetTyped<SubscriptionTiersSettings>(Model.Block) ?? new();
+    var heading = !string.IsNullOrWhiteSpace(settings.Heading) ? settings.Heading : "Choose a sponsorship tier";
+    var subtitle = !string.IsNullOrWhiteSpace(settings.Subtitle) ? settings.Subtitle : "Pick the level that fits you best";
     var plans = Model.Page.Plans;
-    var columnsPerRow = (int)(BlockSettingsHelper.Dec(s, "ColumnsPerRow") ?? 2);
+    var columnsPerRow = settings.ColumnsPerRow;
     if (columnsPerRow < 1 || columnsPerRow > 4) columnsPerRow = 2;
     var colClass = "col-12 col-md-" + (12 / columnsPerRow);
 }

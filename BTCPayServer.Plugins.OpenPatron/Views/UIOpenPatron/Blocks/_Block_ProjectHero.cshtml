@@ -1,16 +1,17 @@
+@using BTCPayServer.Plugins.OpenPatron.Models
 @using BTCPayServer.Plugins.OpenPatron.Services
 @model BTCPayServer.Plugins.OpenPatron.ViewModels.BlockRenderContext
 @{
-    var s = Model.Block.Settings;
-    var title = BlockSettingsHelper.Str(s, "Title", Model.Page.AppName);
-    var subtitle = BlockSettingsHelper.Str(s, "Subtitle");
-    var displayName = BlockSettingsHelper.Str(s, "DisplayName");
-    var avatarUrl = BlockSettingsHelper.AvatarUrl(s);
-    var gitHubUrl = BlockSettingsHelper.GitHubProfileUrl(s);
-    var socialX = BlockSettingsHelper.Str(s, "SocialX");
-    var socialMastodon = BlockSettingsHelper.Str(s, "SocialMastodon");
-    var socialNostr = BlockSettingsHelper.Str(s, "SocialNostr");
-    var hasSocial = BlockSettingsHelper.HasSocialLinks(s);
+    var settings = BlockSettingsHelper.GetTyped<ProjectHeroSettings>(Model.Block) ?? new();
+    var avatarUrl = BlockSettingsHelper.AvatarUrl(Model.Block.Settings);
+    var gitHubUrl = BlockSettingsHelper.GitHubProfileUrl(Model.Block.Settings);
+    var title = !string.IsNullOrWhiteSpace(settings.Title) ? settings.Title : Model.Page.AppName;
+    var subtitle = settings.Subtitle;
+    var displayName = settings.DisplayName;
+    var socialX = settings.SocialX;
+    var socialMastodon = settings.SocialMastodon;
+    var socialNostr = settings.SocialNostr;
+    var hasSocial = !string.IsNullOrWhiteSpace(socialX) || !string.IsNullOrWhiteSpace(socialMastodon) || !string.IsNullOrWhiteSpace(socialNostr);
     var hasProfile = !string.IsNullOrWhiteSpace(avatarUrl) || !string.IsNullOrWhiteSpace(displayName) || !string.IsNullOrWhiteSpace(gitHubUrl);
 }
 

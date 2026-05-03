@@ -1,21 +1,22 @@
+@using BTCPayServer.Plugins.OpenPatron.Models
 @using BTCPayServer.Plugins.OpenPatron.Services
 @using Newtonsoft.Json.Linq
 @model BTCPayServer.Plugins.OpenPatron.ViewModels.BlockRenderContext
 @{
-    var s = Model.Block.Settings;
-    var projects = BlockSettingsHelper.Arr(s, "Projects");
-    var columnsPerRow = (int)(BlockSettingsHelper.Dec(s, "ColumnsPerRow") ?? 2);
+    var settings = BlockSettingsHelper.GetTyped<ProjectsGridSettings>(Model.Block) ?? new();
+    var projectTokens = BlockSettingsHelper.Arr(Model.Block.Settings, nameof(ProjectsGridSettings.Projects));
+    var columnsPerRow = settings.ColumnsPerRow;
     if (columnsPerRow < 1 || columnsPerRow > 4) columnsPerRow = 2;
     var colClass = "col-12 col-md-" + (12 / columnsPerRow);
 }
 
-@if (projects is { Count: > 0 })
+@if (projectTokens is { Count: > 0 })
 {
     <section class="mb-block" data-block-type="projects-grid" data-block-id="@Model.Block.Id">
         <div class="openpatron-kicker mb-2">Projects</div>
         <h2 class="h3 fw-semibold mb-3">Open source work</h2>
         <div class="row g-3">
-            @foreach (var project in projects.OfType<JObject>())
+            @foreach (var project in projectTokens.OfType<JObject>())
             {
                 var name = BlockSettingsHelper.Str(project, "Name");
                 var url = BlockSettingsHelper.Str(project, "Url");

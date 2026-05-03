@@ -21,15 +21,15 @@ public static class BlockRegistry
 
     private static readonly Dictionary<string, BlockTypeInfo> Types = new(StringComparer.OrdinalIgnoreCase)
     {
-        [ProfileHero] = new("Profile Hero", "Avatar, name, bio, and social links", "/Views/UIOpenPatron/Blocks/_Block_ProfileHero.cshtml"),
-        [ProjectHero] = new("Project Hero", "Title, subtitle, and support badges", "/Views/UIOpenPatron/Blocks/_Block_ProjectHero.cshtml"),
-        [FundingProgress] = new("Funding Progress", "Progress bar toward funding goal", "/Views/UIOpenPatron/Blocks/_Block_FundingProgress.cshtml"),
-        [Description] = new("Description", "About section with text content", "/Views/UIOpenPatron/Blocks/_Block_Description.cshtml"),
-        [ProjectsGrid] = new("Projects Grid", "Grid of open source project cards", "/Views/UIOpenPatron/Blocks/_Block_ProjectsGrid.cshtml"),
-        [SubscriptionTiers] = new("Subscription Tiers", "Sponsor plan cards with subscribe actions", "/Views/UIOpenPatron/Blocks/_Block_SubscriptionTiers.cshtml"),
-        [QuickSupport] = new("Quick Support", "Suggested one-time amount buttons", "/Views/UIOpenPatron/Blocks/_Block_QuickSupport.cshtml"),
-        [SponsorWall] = new("Sponsor Wall", "Recent anonymous contributions", "/Views/UIOpenPatron/Blocks/_Block_SponsorWall.cshtml"),
-        [SidebarSupport] = new("Sidebar Support", "Compact sponsor panel with contribution form", "/Views/UIOpenPatron/Blocks/_Block_SidebarSupport.cshtml"),
+        [ProfileHero] = new("Profile Hero", "Avatar, name, bio, and social links", "/Views/UIOpenPatron/Blocks/_Block_ProfileHero.cshtml", typeof(ProfileHeroSettings)),
+        [ProjectHero] = new("Project Hero", "Title, subtitle, and support badges", "/Views/UIOpenPatron/Blocks/_Block_ProjectHero.cshtml", typeof(ProjectHeroSettings)),
+        [FundingProgress] = new("Funding Progress", "Progress bar toward funding goal", "/Views/UIOpenPatron/Blocks/_Block_FundingProgress.cshtml", typeof(FundingProgressSettings)),
+        [Description] = new("Description", "About section with text content", "/Views/UIOpenPatron/Blocks/_Block_Description.cshtml", typeof(DescriptionSettings)),
+        [ProjectsGrid] = new("Projects Grid", "Grid of open source project cards", "/Views/UIOpenPatron/Blocks/_Block_ProjectsGrid.cshtml", typeof(ProjectsGridSettings)),
+        [SubscriptionTiers] = new("Subscription Tiers", "Sponsor plan cards with subscribe actions", "/Views/UIOpenPatron/Blocks/_Block_SubscriptionTiers.cshtml", typeof(SubscriptionTiersSettings)),
+        [QuickSupport] = new("Quick Support", "Suggested one-time amount buttons", "/Views/UIOpenPatron/Blocks/_Block_QuickSupport.cshtml", typeof(QuickSupportSettings)),
+        [SponsorWall] = new("Sponsor Wall", "Recent anonymous contributions", "/Views/UIOpenPatron/Blocks/_Block_SponsorWall.cshtml", typeof(SponsorWallSettings)),
+        [SidebarSupport] = new("Sidebar Support", "Compact sponsor panel with contribution form", "/Views/UIOpenPatron/Blocks/_Block_SidebarSupport.cshtml", typeof(SidebarSupportSettings)),
     };
 
     public static IReadOnlyDictionary<string, BlockTypeInfo> AllTypes { get; } = new ReadOnlyDictionary<string, BlockTypeInfo>(Types);
@@ -39,6 +39,9 @@ public static class BlockRegistry
 
     public static bool IsKnownType(string blockType)
         => Types.ContainsKey(blockType);
+
+    public static Type? GetSettingsType(string blockType)
+        => Types.TryGetValue(blockType, out var info) ? info.SettingsType : null;
 
     // ── Layout presets ──
 
@@ -72,19 +75,19 @@ public static class BlockRegistry
         {
             Id = "col-1", Width = 8, Blocks =
             [
-                new() { Type = ProfileHero, Settings = JObject.FromObject(new { DisplayName = "", Bio = "", Subtitle = "", GravatarEmail = "", GitHubUsername = "", SocialX = "", SocialMastodon = "", SocialNostr = "" }) },
-                new() { Type = Description, Settings = JObject.FromObject(new { Heading = "What I work on", Content = "" }) },
-                new() { Type = ProjectsGrid, Settings = JObject.FromObject(new { Projects = new object[0] }) },
-                new() { Type = SubscriptionTiers, Settings = JObject.FromObject(new { Heading = "Choose a sponsorship tier", Subtitle = "Pick the level that fits you best" }) },
-                new() { Type = QuickSupport, Settings = JObject.FromObject(new { Heading = "Send quick support", SuggestedAmounts = new object[0] }) },
-                new() { Type = SponsorWall, Settings = JObject.FromObject(new { Heading = "Supporters" }) },
+                new() { Type = ProfileHero, Settings = JObject.FromObject(new ProfileHeroSettings()) },
+                new() { Type = Description, Settings = JObject.FromObject(new DescriptionSettings { Heading = "What I work on" }) },
+                new() { Type = ProjectsGrid, Settings = JObject.FromObject(new ProjectsGridSettings()) },
+                new() { Type = SubscriptionTiers, Settings = JObject.FromObject(new SubscriptionTiersSettings { Heading = "Choose a sponsorship tier", Subtitle = "Pick the level that fits you best" }) },
+                new() { Type = QuickSupport, Settings = JObject.FromObject(new QuickSupportSettings { Heading = "Send quick support" }) },
+                new() { Type = SponsorWall, Settings = JObject.FromObject(new SponsorWallSettings { Heading = "Supporters" }) },
             ]
         },
         new()
         {
             Id = "col-2", Width = 4, Blocks =
             [
-                new() { Type = SidebarSupport, Settings = JObject.FromObject(new { Heading = "Sponsor now" }) },
+                new() { Type = SidebarSupport, Settings = JObject.FromObject(new SidebarSupportSettings { Heading = "Sponsor now" }) },
             ]
         }
     ];
@@ -95,19 +98,19 @@ public static class BlockRegistry
         {
             Id = "col-1", Width = 8, Blocks =
             [
-                new() { Type = ProjectHero, Settings = JObject.FromObject(new { Title = "", Subtitle = "", DisplayName = "", GravatarEmail = "", GitHubUsername = "", SocialX = "", SocialMastodon = "", SocialNostr = "" }) },
-                new() { Type = FundingProgress, Settings = JObject.FromObject(new { Goal = 0 }) },
-                new() { Type = Description, Settings = JObject.FromObject(new { Heading = "Why sponsor this work?", Content = "" }) },
-                new() { Type = SubscriptionTiers, Settings = JObject.FromObject(new { Heading = "Choose a sponsorship tier", Subtitle = "Pick the level that fits you best" }) },
-                new() { Type = QuickSupport, Settings = JObject.FromObject(new { Heading = "Send quick support", SuggestedAmounts = new object[0] }) },
-                new() { Type = SponsorWall, Settings = JObject.FromObject(new { Heading = "Who's supporting this work" }) },
+                new() { Type = ProjectHero, Settings = JObject.FromObject(new ProjectHeroSettings()) },
+                new() { Type = FundingProgress, Settings = JObject.FromObject(new FundingProgressSettings()) },
+                new() { Type = Description, Settings = JObject.FromObject(new DescriptionSettings { Heading = "Why sponsor this work?" }) },
+                new() { Type = SubscriptionTiers, Settings = JObject.FromObject(new SubscriptionTiersSettings { Heading = "Choose a sponsorship tier", Subtitle = "Pick the level that fits you best" }) },
+                new() { Type = QuickSupport, Settings = JObject.FromObject(new QuickSupportSettings { Heading = "Send quick support" }) },
+                new() { Type = SponsorWall, Settings = JObject.FromObject(new SponsorWallSettings { Heading = "Who's supporting this work" }) },
             ]
         },
         new()
         {
             Id = "col-2", Width = 4, Blocks =
             [
-                new() { Type = SidebarSupport, Settings = JObject.FromObject(new { Heading = "Sponsor now" }) },
+                new() { Type = SidebarSupport, Settings = JObject.FromObject(new SidebarSupportSettings { Heading = "Sponsor now" }) },
             ]
         }
     ];
@@ -131,4 +134,4 @@ public static class BlockRegistry
         sections?.SelectMany(s => s.Blocks) ?? [];
 }
 
-public record BlockTypeInfo(string DisplayName, string Description, string PartialViewPath);
+public record BlockTypeInfo(string DisplayName, string Description, string PartialViewPath, Type SettingsType);
