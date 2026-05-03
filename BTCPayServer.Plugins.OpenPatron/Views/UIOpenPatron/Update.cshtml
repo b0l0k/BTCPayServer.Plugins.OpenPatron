@@ -428,11 +428,34 @@
         if (!card) return;
         var newPreset = card.dataset.preset;
         if (newPreset === layoutPreset) return;
-        var hasBlocks = sections.some(function (s) { return s.Blocks && s.Blocks.length > 0; });
-        if (hasBlocks && !confirm('Changing layout will reset all block placement. Continue?')) return;
+        var allBlocks = [];
+        sections.forEach(function (s) { allBlocks = allBlocks.concat(s.Blocks || []); });
+
         layoutPreset = newPreset;
         presetInput.value = layoutPreset;
-        sections = createSectionsFromPreset(layoutPreset);
+        var newSections = createSectionsFromPreset(layoutPreset);
+
+        if (allBlocks.length > 0) {
+            if (newSections.length === 1) {
+                newSections[0].Blocks = allBlocks;
+            } else {
+                for (var i = 0; i < allBlocks.length; i++) {
+                    var targetIdx = Math.min(i < sections.length ? i : 0, newSections.length - 1);
+                    if (i < sections.length && i < newSections.length) {
+                        newSections[i].Blocks = sections[i].Blocks || [];
+                    }
+                }
+                var placed = {};
+                newSections.forEach(function (s) { s.Blocks.forEach(function (b) { placed[b.Id] = true; }); });
+                var unplaced = allBlocks.filter(function (b) { return !placed[b.Id]; });
+                if (unplaced.length > 0) {
+                    var widest = newSections.reduce(function (a, b) { return a.Width >= b.Width ? a : b; });
+                    widest.Blocks = widest.Blocks.concat(unplaced);
+                }
+            }
+        }
+
+        sections = newSections;
         activeColumnIdx = 0;
         renderLayoutSelector();
         renderSections();
@@ -532,8 +555,7 @@
             e.preventDefault(); e.stopPropagation();
             openBlockEditModal(
                 parseInt(themeBtn.dataset.sectionIdx, 10),
-                parseInt(themeBtn.dataset.blockIdx, 10),
-                true
+                parseInt(themeBtn.dataset.blockIdx, 10)
             );
             return;
         }
@@ -565,30 +587,22 @@
         e.preventDefault();
         openBlockEditModal(
             parseInt(card.dataset.sectionIdx, 10),
-            parseInt(card.dataset.blockIdx, 10),
-            false
+            parseInt(card.dataset.blockIdx, 10)
         );
     });
 
     // ── Block edit modal ──────────────────────────────────────────
-    function openBlockEditModal(sIdx, bIdx, themeOnly) {
+    function openBlockEditModal(sIdx, bIdx) {
         editingSectionIdx = sIdx;
         editingBlockIdx = bIdx;
         var block = sections[sIdx].Blocks[bIdx];
         if (!block) return;
         var info = BLOCK_TYPES[block.Type] || { name: block.Type };
         modalTitle.textContent = 'Edit: ' + info.name;
-        modalBody.innerHTML = renderModalForm(block, themeOnly);
+        modalBody.innerHTML = renderBlockFormFields(block) + renderBlockThemeFields(block);
         if (!modalInstance) modalInstance = new bootstrap.Modal(modalEl);
         modalInstance.show();
         wireProjectFormEvents();
-    }
-
-    function renderModalForm(block, themeOnly) {
-        var html = '';
-        if (!themeOnly) html += renderBlockFormFields(block);
-        html += renderBlockThemeFields(block);
-        return html;
     }
 
     function renderBlockFormFields(block) {
