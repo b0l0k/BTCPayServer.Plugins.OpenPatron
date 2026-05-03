@@ -19,7 +19,11 @@ public class UpdateOpenPatronViewModel
     public OpenPatronPageType PageType { get; set; } = OpenPatronPageType.Project;
     public bool PageTypeConfirmed { get; set; }
 
-    // Block layout (JSON-serialized list of BlockDefinition, includes all content)
+    // Section-based layout (JSON-serialized)
+    public string PageLayoutPreset { get; set; } = "8-4";
+    public string SectionsJson { get; set; } = "[]";
+
+    // Legacy (kept for form compat during transition)
     public string PageLayoutJson { get; set; } = "[]";
 
     // Theme

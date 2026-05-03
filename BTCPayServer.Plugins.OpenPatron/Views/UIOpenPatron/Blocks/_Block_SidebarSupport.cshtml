@@ -1,0 +1,61 @@
+@using BTCPayServer.Plugins.OpenPatron.Services
+@model BTCPayServer.Plugins.OpenPatron.ViewModels.BlockRenderContext
+@{
+    var s = Model.Block.Settings;
+    var heading = BlockSettingsHelper.Str(s, "heading", "Sponsor now");
+}
+
+<div class="openpatron-panel openpatron-sidebar-card">
+    <div class="openpatron-kicker mb-2">@heading</div>
+    <h2 class="h3 fw-semibold mb-2">Sponsor this project</h2>
+    <p class="text-muted mb-4">Support the maintainer in the way that makes the most sense for you.</p>
+
+    @if (Model.Page.SupportsOneTime)
+    {
+        <form method="post" asp-action="Contribute" asp-controller="UIOpenPatron" asp-route-appId="@Model.Page.AppId" asp-route-area="OpenPatron" class="mb-4">
+            @Html.AntiForgeryToken()
+            <label for="customAmount_@Model.Block.Id" class="form-label fw-semibold">Custom one-time amount</label>
+            <div class="input-group input-group-lg">
+                <span class="input-group-text">@Model.Page.DefaultCurrency</span>
+                <input id="customAmount_@Model.Block.Id" name="amount" type="number" step="0.01" min="0.01" class="form-control" placeholder="25" />
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg w-100 mt-3" style="background: var(--op-accent); border-color: var(--op-accent);">Make a one-time payment</button>
+        </form>
+    }
+
+    @if (Model.Page.SupportsSubscriptions && Model.Page.Plans.Count > 0)
+    {
+        <div class="mb-4 p-3 rounded-4" style="background: var(--op-accent-10); border: 1px solid var(--op-accent-18);">
+            <div class="fw-semibold text-dark mb-1">Want to back this work over time?</div>
+            <div class="text-muted small">Pick one of the sponsor tiers on this page to get started.</div>
+        </div>
+    }
+
+    @if (Model.Page.SupportsSubscriptions || Model.Page.SupportsOneTime)
+    {
+        <div class="openpatron-divider"></div>
+
+        <div class="openpatron-sidebar-list">
+            @if (Model.Page.SupportsSubscriptions)
+            {
+                <div class="openpatron-sidebar-item">
+                    <span class="openpatron-sidebar-icon">↻</span>
+                    <div>
+                        <div class="fw-semibold text-dark">Sponsor over time</div>
+                        <div class="small">Pick a sponsorship tier above.</div>
+                    </div>
+                </div>
+            }
+            @if (Model.Page.SupportsOneTime)
+            {
+                <div class="openpatron-sidebar-item">
+                    <span class="openpatron-sidebar-icon">⚡</span>
+                    <div>
+                        <div class="fw-semibold text-dark">Send a quick thank-you</div>
+                        <div class="small">Use a quick amount or enter your own.</div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

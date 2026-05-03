@@ -12,9 +12,14 @@ public class OpenPatronAppSettings
     public OpenPatronPageType PageType { get; set; } = OpenPatronPageType.Project;
     public bool PageTypeConfirmed { get; set; }
 
-    // Block-based page layout (all content lives inside each block's Settings)
-    public List<BlockDefinition>? PageLayout { get; set; }
+    // Section-based page layout
+    public string PageLayoutPreset { get; set; } = "8-4";
+    public List<PageSection>? Sections { get; set; }
     public PageTheme? Theme { get; set; }
+
+    // Legacy flat layout (migrated to Sections on first load)
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+    public List<BlockDefinition>? PageLayout { get; set; }
 
     // Global settings
     public string? OfferingId { get; set; }
@@ -26,6 +31,13 @@ public class OpenPatronAppSettings
     public string? AccentColor { get; set; }
     public string? PrimaryCallToActionUrl { get; set; }
     public List<OpenPatronLink> Links { get; set; } = [];
+}
+
+public class PageSection
+{
+    public string Id { get; set; } = string.Empty;
+    public int Width { get; set; }
+    public List<BlockDefinition> Blocks { get; set; } = [];
 }
 
 public class BlockDefinition

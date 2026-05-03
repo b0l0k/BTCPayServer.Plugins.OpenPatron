@@ -78,8 +78,10 @@ public class UIOpenPatronController(
         {
             existingSettings.PageType = viewModel.PageType;
             existingSettings.PageTypeConfirmed = true;
-            existingSettings.PageLayout = BlockRegistry.DefaultLayoutFor(viewModel.PageType);
+            existingSettings.Sections = BlockRegistry.DefaultSectionsFor(viewModel.PageType);
+            existingSettings.PageLayoutPreset = "8-4";
             existingSettings.Theme = new PageTheme();
+            existingSettings.PageLayout = null;
             app.SetSettings(existingSettings);
             await appService.UpdateOrCreateApp(app);
             TempData[WellKnownTempData.SuccessMessage] = "Template selected. You can now configure your page.";
@@ -94,22 +96,24 @@ public class UIOpenPatronController(
             return View(UpdateViewPath, viewModel);
         }
 
-        List<BlockDefinition> pageLayout;
+        List<PageSection> sections;
         try
         {
-            pageLayout = JsonConvert.DeserializeObject<List<BlockDefinition>>(viewModel.PageLayoutJson ?? "[]") ?? [];
-            pageLayout = pageLayout.Where(b => BlockRegistry.IsKnownType(b.Type)).ToList();
+            sections = JsonConvert.DeserializeObject<List<PageSection>>(viewModel.SectionsJson ?? "[]") ?? [];
+            foreach (var section in sections)
+                section.Blocks = section.Blocks.Where(b => BlockRegistry.IsKnownType(b.Type)).ToList();
         }
         catch
         {
-            pageLayout = existingSettings.PageLayout ?? [];
+            sections = existingSettings.Sections ?? BlockRegistry.CreateSectionsForPreset(viewModel.PageLayoutPreset);
         }
 
         var settings = new OpenPatronAppSettings
         {
             PageType = existingSettings.PageType,
             PageTypeConfirmed = true,
-            PageLayout = pageLayout,
+            PageLayoutPreset = viewModel.PageLayoutPreset,
+            Sections = sections,
             Theme = new PageTheme
             {
                 AccentColor = NormalizeString(viewModel.ThemeAccentColor) ?? "#6366f1",
@@ -156,7 +160,8 @@ public class UIOpenPatronController(
         var vm = ToPublicViewModel(app, settings, offering);
 
         // Scan blocks for runtime data needs
-        var fundingBlock = settings.PageLayout?.FirstOrDefault(b =>
+        var allBlocks = BlockRegistry.AllBlocks(settings.Sections);
+        var fundingBlock = allBlocks.FirstOrDefault(b =>
             string.Equals(b.Type, BlockRegistry.FundingProgress, StringComparison.OrdinalIgnoreCase));
         if (fundingBlock != null)
         {
@@ -168,8 +173,8 @@ public class UIOpenPatronController(
             }
         }
 
-        var hasSponsorWall = settings.PageLayout?.Any(b =>
-            string.Equals(b.Type, BlockRegistry.SponsorWall, StringComparison.OrdinalIgnoreCase)) ?? false;
+        var hasSponsorWall = allBlocks.Any(b =>
+            string.Equals(b.Type, BlockRegistry.SponsorWall, StringComparison.OrdinalIgnoreCase));
         if (hasSponsorWall)
         {
             var entries = await sponsorWallService.GetRecentContributionsAsync(app.Id);
@@ -417,6 +422,36 @@ public class UIOpenPatronController(
                 {
                     ["heading"] = new { type = "string", description = "Section heading" }
                 }
+            },
+            ["sidebar-support"] = new Dictionary<string, object>
+            {
+                ["type"] = "object",
+                ["description"] = "Compact sponsor panel with contribution form and call-to-action",
+                ["properties"] = new Dictionary<string, object>
+                {
+                    ["heading"] = new { type = "string", description = "Section heading" }
+                }
+            }
+        };
+
+        var blockItemSchema = new Dictionary<string, object>
+        {
+            ["type"] = "object",
+            ["required"] = new[] { "Id", "Type" },
+            ["properties"] = new Dictionary<string, object>
+            {
+                ["Id"] = new { type = "string", description = "Unique block identifier (12-char hex)" },
+                ["Type"] = new { type = "string", description = "Block type identifier", @enum = BlockRegistry.AllTypes.Keys.ToArray() },
+                ["Settings"] = new Dictionary<string, object>
+                {
+                    ["description"] = "Block content settings (schema depends on Type)",
+                    ["oneOf"] = blockSettingsSchemas.Select(kv => new Dictionary<string, object>
+                    {
+                        ["if"] = new { properties = new { Type = new { @const = kv.Key } } },
+                        ["then"] = kv.Value
+                    }).ToArray()
+                },
+                ["Theme"] = blockThemeSchema
             }
         };
 
@@ -428,28 +463,30 @@ public class UIOpenPatronController(
             ["properties"] = new Dictionary<string, object>
             {
                 ["Theme"] = themeSchema,
-                ["Blocks"] = new Dictionary<string, object>
+                ["Layout"] = new Dictionary<string, object>
+                {
+                    ["type"] = "string",
+                    ["description"] = "Page layout preset",
+                    ["enum"] = BlockRegistry.LayoutPresets.Keys.ToArray()
+                },
+                ["Sections"] = new Dictionary<string, object>
                 {
                     ["type"] = "array",
-                    ["description"] = "Ordered list of page blocks",
+                    ["description"] = "Page sections (columns), each containing blocks",
                     ["items"] = new Dictionary<string, object>
                     {
                         ["type"] = "object",
-                        ["required"] = new[] { "Id", "Type" },
+                        ["required"] = new[] { "Id", "Width", "Blocks" },
                         ["properties"] = new Dictionary<string, object>
                         {
-                            ["Id"] = new { type = "string", description = "Unique block identifier (12-char hex)" },
-                            ["Type"] = new { type = "string", description = "Block type identifier", @enum = BlockRegistry.AllTypes.Keys.ToArray() },
-                            ["Settings"] = new Dictionary<string, object>
+                            ["Id"] = new { type = "string", description = "Section identifier (e.g. col-1, col-2)" },
+                            ["Width"] = new { type = "integer", description = "Bootstrap column width (4, 6, 8, or 12)", @enum = new[] { 4, 6, 8, 12 } },
+                            ["Blocks"] = new Dictionary<string, object>
                             {
-                                ["description"] = "Block content settings (schema depends on Type)",
-                                ["oneOf"] = blockSettingsSchemas.Select(kv => new Dictionary<string, object>
-                                {
-                                    ["if"] = new { properties = new { Type = new { @const = kv.Key } } },
-                                    ["then"] = kv.Value
-                                }).ToArray()
-                            },
-                            ["Theme"] = blockThemeSchema
+                                ["type"] = "array",
+                                ["description"] = "Ordered list of blocks in this section",
+                                ["items"] = blockItemSchema
+                            }
                         }
                     }
                 }
@@ -465,8 +502,39 @@ public class UIOpenPatronController(
 
     public static void EnsurePageLayout(OpenPatronAppSettings settings)
     {
-        settings.PageLayout ??= [];
         settings.Theme ??= new PageTheme();
+
+        if (settings.Sections is { Count: > 0 })
+            return;
+
+        // Migrate from flat PageLayout to section-based
+        if (settings.PageLayout is { Count: > 0 })
+        {
+            var sections = BlockRegistry.CreateSectionsForPreset(settings.PageLayoutPreset);
+            var widerSection = sections.OrderByDescending(s => s.Width).First();
+            widerSection.Blocks = settings.PageLayout;
+
+            // Add a default sidebar-support block to the narrower column if it exists
+            var narrower = sections.FirstOrDefault(s => s != widerSection);
+            if (narrower != null)
+            {
+                narrower.Blocks =
+                [
+                    new BlockDefinition
+                    {
+                        Type = BlockRegistry.SidebarSupport,
+                        Settings = JObject.FromObject(new { heading = "Sponsor now" })
+                    }
+                ];
+            }
+
+            settings.Sections = sections;
+            settings.PageLayout = null;
+        }
+        else
+        {
+            settings.Sections = BlockRegistry.CreateSectionsForPreset(settings.PageLayoutPreset);
+        }
     }
 
     private async Task<bool> IsAuthorized(AppData app, string policy)
@@ -488,7 +556,9 @@ public class UIOpenPatronController(
             Archived = app.Archived,
             PageType = settings.PageType,
             PageTypeConfirmed = settings.PageTypeConfirmed,
-            PageLayoutJson = JsonConvert.SerializeObject(settings.PageLayout ?? [], Formatting.None),
+            PageLayoutPreset = settings.PageLayoutPreset,
+            SectionsJson = JsonConvert.SerializeObject(settings.Sections ?? [], Formatting.None),
+            PageLayoutJson = JsonConvert.SerializeObject(settings.Sections ?? [], Formatting.None),
             ThemeAccentColor = theme.AccentColor,
             ThemeBorderRadius = theme.BorderRadius,
             ThemeBlockSpacing = theme.BlockSpacing,
@@ -502,6 +572,7 @@ public class UIOpenPatronController(
     private OpenPatronPublicViewModel ToPublicViewModel(AppData app, OpenPatronAppSettings settings, OfferingData? offering)
     {
         var theme = settings.Theme ?? new PageTheme();
+        var allBlocks = BlockRegistry.AllBlocks(settings.Sections).ToList();
 
         return new OpenPatronPublicViewModel
         {
@@ -511,7 +582,8 @@ public class UIOpenPatronController(
             SupportsOneTime = AllowsOneTime(settings),
             SupportsSubscriptions = AllowsSubscriptions(settings),
             DefaultCurrency = settings.DefaultCurrency,
-            PageLayout = settings.PageLayout ?? [],
+            Sections = settings.Sections ?? [],
+            PageLayout = allBlocks,
             Theme = theme,
             Plans = offering?.Plans
                 .Where(plan => plan.Status == PlanData.PlanStatus.Active)
@@ -582,7 +654,7 @@ public class UIOpenPatronController(
 
     private async Task EnrichGitHubProjectsAsync(OpenPatronAppSettings settings)
     {
-        var projectsBlocks = settings.PageLayout?
+        var projectsBlocks = BlockRegistry.AllBlocks(settings.Sections)
             .Where(b => string.Equals(b.Type, BlockRegistry.ProjectsGrid, StringComparison.OrdinalIgnoreCase))
             .ToList();
 

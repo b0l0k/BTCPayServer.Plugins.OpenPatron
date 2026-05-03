@@ -24,7 +24,8 @@
     <input asp-for="StoreId" type="hidden" />
     <input asp-for="OfferingId" type="hidden" />
     <input asp-for="PageTypeConfirmed" type="hidden" />
-    <input asp-for="PageLayoutJson" type="hidden" id="pageLayoutJson" />
+    <input asp-for="SectionsJson" type="hidden" id="sectionsJson" />
+    <input asp-for="PageLayoutPreset" type="hidden" id="pageLayoutPreset" />
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
     @if (!Model.PageTypeConfirmed)
@@ -83,7 +84,17 @@
                 <span asp-validation-for="AppName" class="text-danger"></span>
             </div>
 
-            @* ── Block list with Visual / JSON toggle ── *@
+            @* ── Layout preset selector ── *@
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="h5 mb-0">Page layout</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2" id="layoutPresetSelector"></div>
+                </div>
+            </div>
+
+            @* ── Page blocks with Visual / JSON toggle ── *@
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="h5 mb-0">Page blocks</h3>
@@ -95,14 +106,14 @@
                         </div>
                     </div>
                 </div>
-                <div class="card-body p-0" id="visualEditor">
-                    <div id="blockList" class="list-group list-group-flush"></div>
+                <div class="card-body" id="visualEditor">
+                    <div id="sectionPreview" class="row g-3"></div>
                     <div id="emptyBlockState" class="text-center text-muted py-4 d-none">
-                        No blocks yet. Add blocks from the panel on the right.
+                        No blocks yet. Add blocks from the panel on the right, or click <strong>+</strong> in a column.
                     </div>
                 </div>
                 <div class="card-body d-none" id="jsonEditor">
-                    <div class="form-text mb-2">Edit the raw block layout JSON. Switch back to Visual to see changes. <a href="@Url.Action("Schema", "UIOpenPatron", new { area = OpenPatronPlugin.Area })" target="_blank" rel="noreferrer">View JSON Schema</a></div>
+                    <div class="form-text mb-2">Edit the raw layout JSON. Switch back to Visual to see changes. <a href="@Url.Action("Schema", "UIOpenPatron", new { area = OpenPatronPlugin.Area })" target="_blank" rel="noreferrer">View JSON Schema</a></div>
                     <textarea id="jsonEditorTextarea" class="form-control font-monospace" rows="20" spellcheck="false" style="font-size:.85rem;tab-size:2;"></textarea>
                     <div id="jsonEditorError" class="text-danger small mt-1 d-none"></div>
                 </div>
@@ -134,7 +145,7 @@
         @* ── Sidebar ── *@
         <div class="col-12 col-lg-4">
 
-            <div class="card mb-3">
+            <div class="card mb-3" id="blockPickerCard">
                 <div class="card-header"><h3 class="h5 mb-0">Add blocks</h3></div>
                 <div class="card-body p-0">
                     <div class="list-group list-group-flush" id="blockPicker">
@@ -223,6 +234,23 @@
             </div>
         </div>
     </div>
+
+    @* ── Block edit modal ── *@
+    <div class="modal fade" id="blockEditModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="blockEditModalTitle">Edit block</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="blockEditModalBody"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="blockEditModalSave">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
     }
 </form>
 
@@ -252,19 +280,17 @@
     var BLOCK_TYPES = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(
         blockTypes.ToDictionary(kv => kv.Key, kv => new { name = kv.Value.DisplayName, description = kv.Value.Description })));
 
-    // ── Per-block-type form definitions ──
-    // Each returns {html, read(formEl) -> settings}
     var BLOCK_FORMS = {
         'profile-hero': {
             fields: [
                 { key: 'displayName', label: 'Display name', type: 'text', placeholder: 'Jane Doe' },
                 { key: 'subtitle', label: 'Subtitle', type: 'text', placeholder: 'Open source maintainer' },
-                { key: 'bio', label: 'Bio', type: 'textarea', placeholder: 'A few words about yourself…' },
+                { key: 'bio', label: 'Bio', type: 'textarea', placeholder: 'A few words about yourself\u2026' },
                 { key: 'gravatarEmail', label: 'Gravatar email', type: 'email', placeholder: 'you@example.com' },
                 { key: 'gitHubUsername', label: 'GitHub username', type: 'text', placeholder: 'octocat' },
                 { key: 'socialX', label: 'X (Twitter)', type: 'text', placeholder: 'handle' },
                 { key: 'socialMastodon', label: 'Mastodon URL', type: 'url', placeholder: 'https://mastodon.social/@@user' },
-                { key: 'socialNostr', label: 'Nostr (npub)', type: 'text', placeholder: 'npub1…' }
+                { key: 'socialNostr', label: 'Nostr (npub)', type: 'text', placeholder: 'npub1\u2026' }
             ]
         },
         'project-hero': {
@@ -276,7 +302,7 @@
                 { key: 'gitHubUsername', label: 'GitHub username', type: 'text', placeholder: 'octocat' },
                 { key: 'socialX', label: 'X (Twitter)', type: 'text', placeholder: 'handle' },
                 { key: 'socialMastodon', label: 'Mastodon URL', type: 'url', placeholder: 'https://mastodon.social/@@user' },
-                { key: 'socialNostr', label: 'Nostr (npub)', type: 'text', placeholder: 'npub1…' }
+                { key: 'socialNostr', label: 'Nostr (npub)', type: 'text', placeholder: 'npub1\u2026' }
             ]
         },
         'funding-progress': {
@@ -287,7 +313,7 @@
         'description': {
             fields: [
                 { key: 'heading', label: 'Section heading', type: 'text', placeholder: 'Why sponsor this work?' },
-                { key: 'content', label: 'Content', type: 'textarea', placeholder: 'Tell visitors why they should sponsor…', rows: 8 }
+                { key: 'content', label: 'Content', type: 'textarea', placeholder: 'Tell visitors why they should sponsor\u2026', rows: 8 }
             ]
         },
         'projects-grid': {
@@ -309,11 +335,19 @@
             fields: [
                 { key: 'heading', label: 'Section heading', type: 'text', placeholder: "Who's supporting this work" }
             ]
+        },
+        'sidebar-support': {
+            fields: [
+                { key: 'heading', label: 'Section heading', type: 'text', placeholder: 'Sponsor now' }
+            ]
         }
     };
 
-    var layoutInput = document.getElementById('pageLayoutJson');
-    var blockListEl = document.getElementById('blockList');
+    var LAYOUT_PRESETS = { '8-4': [8, 4], '4-8': [4, 8], '6-6': [6, 6], '12': [12] };
+
+    var sectionsInput = document.getElementById('sectionsJson');
+    var presetInput = document.getElementById('pageLayoutPreset');
+    var sectionPreview = document.getElementById('sectionPreview');
     var emptyState = document.getElementById('emptyBlockState');
     var blockCountEl = document.getElementById('blockCount');
     var visualEditor = document.getElementById('visualEditor');
@@ -322,13 +356,21 @@
     var jsonError = document.getElementById('jsonEditorError');
     var modeVisualBtn = document.getElementById('modeVisualBtn');
     var modeJsonBtn = document.getElementById('modeJsonBtn');
+    var modalEl = document.getElementById('blockEditModal');
+    var modalBody = document.getElementById('blockEditModalBody');
+    var modalTitle = document.getElementById('blockEditModalTitle');
 
-    var blocks = [];
-    try { blocks = JSON.parse(layoutInput.value); } catch (_) { blocks = []; }
-    if (!Array.isArray(blocks)) blocks = [];
+    var layoutPreset = presetInput.value || '8-4';
+    var sections = [];
+    try { sections = JSON.parse(sectionsInput.value); } catch (_) { sections = []; }
+    if (!Array.isArray(sections) || !sections.length) sections = createSectionsFromPreset(layoutPreset);
 
-    var expandedBlockId = null;
-    var layoutExpandedBlockId = null;
+    var activeColumnIdx = 0;
+    var currentMode = 'visual';
+    var sortableInstances = [];
+    var editingSectionIdx = -1;
+    var editingBlockIdx = -1;
+    var modalInstance = null;
 
     function generateId() { return Math.random().toString(36).substring(2, 14); }
 
@@ -343,324 +385,391 @@
         return settings[key];
     }
 
-    // ── Render a block's config form HTML ──
-    function renderBlockForm(block) {
-        var def = BLOCK_FORMS[block.Type];
-        if (!def) return '<div class="text-muted small p-3">No configuration for this block type.</div>';
-        var s = block.Settings || {};
+    // ── Sections from preset ──────────────────────────────────────
+    function createSectionsFromPreset(preset) {
+        var widths = LAYOUT_PRESETS[preset] || [12];
+        return widths.map(function (w, i) {
+            return { Id: 'col-' + (i + 1), Width: w, Blocks: [] };
+        });
+    }
 
-        if (def.custom && block.Type === 'projects-grid') {
-            return renderProjectsForm(s);
+    // ── Layout preset selector ────────────────────────────────────
+    function renderLayoutSelector() {
+        var container = document.getElementById('layoutPresetSelector');
+        container.innerHTML = '';
+        var keys = Object.keys(LAYOUT_PRESETS);
+        keys.forEach(function (key) {
+            var widths = LAYOUT_PRESETS[key];
+            var label = widths.join(' + ');
+            if (key === '12') label = '12 (full width)';
+            var isActive = layoutPreset === key;
+            var colDiv = document.createElement('div');
+            colDiv.className = 'col-6 col-sm-3';
+            colDiv.innerHTML =
+                '<div class="card text-center layout-preset-card' +
+                (isActive ? ' border-primary border-2 bg-primary-subtle' : '') +
+                '" data-preset="' + key + '" style="cursor:pointer">' +
+                '<div class="card-body py-2 px-1">' +
+                '<div class="d-flex gap-1 justify-content-center mb-1">' +
+                widths.map(function (w) {
+                    return '<div style="height:24px;flex:' + w +
+                        ';background:' + (isActive ? 'var(--bs-primary)' : '#dee2e6') +
+                        ';border-radius:3px"></div>';
+                }).join('') +
+                '</div>' +
+                '<div class="small fw-semibold">' + esc(label) + '</div>' +
+                '</div></div>';
+            container.appendChild(colDiv);
+        });
+    }
+
+    document.getElementById('layoutPresetSelector').addEventListener('click', function (e) {
+        var card = e.target.closest('.layout-preset-card');
+        if (!card) return;
+        var newPreset = card.dataset.preset;
+        if (newPreset === layoutPreset) return;
+        var hasBlocks = sections.some(function (s) { return s.Blocks && s.Blocks.length > 0; });
+        if (hasBlocks && !confirm('Changing layout will reset all block placement. Continue?')) return;
+        layoutPreset = newPreset;
+        presetInput.value = layoutPreset;
+        sections = createSectionsFromPreset(layoutPreset);
+        activeColumnIdx = 0;
+        renderLayoutSelector();
+        renderSections();
+    });
+
+    // ── Render schematic column preview ───────────────────────────
+    function renderSections() {
+        sortableInstances.forEach(function (s) { s.destroy(); });
+        sortableInstances = [];
+        sectionPreview.innerHTML = '';
+        var totalBlocks = 0;
+
+        sections.forEach(function (section, sIdx) {
+            var blocks = section.Blocks || [];
+            totalBlocks += blocks.length;
+
+            var col = document.createElement('div');
+            col.className = 'col-' + section.Width;
+
+            var isActive = sIdx === activeColumnIdx;
+            var html =
+                '<div class="border rounded-3 p-2 section-column' +
+                (isActive ? ' border-primary' : '') +
+                '" data-section-idx="' + sIdx + '" style="min-height:120px;background:#f8f9fa">';
+            html +=
+                '<div class="d-flex justify-content-between align-items-center mb-2">' +
+                '<span class="fw-semibold small text-muted">Column (' + section.Width + ')</span>' +
+                '</div>';
+            html += '<div class="section-block-list" data-section-idx="' + sIdx + '">';
+
+            blocks.forEach(function (block, bIdx) {
+                var info = BLOCK_TYPES[block.Type] || { name: block.Type };
+                var hasTheme = block.Theme && (block.Theme.AccentColor || block.Theme.BorderRadius);
+                html +=
+                    '<div class="card card-body p-2 mb-1 d-flex flex-row justify-content-between align-items-center block-card"' +
+                    ' data-block-idx="' + bIdx + '" data-section-idx="' + sIdx + '" style="cursor:grab">' +
+                    '<span class="small fw-semibold">' + esc(info.name) + '</span>' +
+                    '<div class="d-flex align-items-center gap-1">' +
+                    '<button type="button" class="btn btn-link btn-sm p-0 lh-1 block-theme-btn' +
+                    (hasTheme ? ' text-primary' : ' text-muted') +
+                    '" data-section-idx="' + sIdx + '" data-block-idx="' + bIdx +
+                    '" title="Style overrides">&#9881;</button>' +
+                    '<button type="button" class="btn btn-link btn-sm p-0 lh-1 text-danger block-remove-btn"' +
+                    ' data-section-idx="' + sIdx + '" data-block-idx="' + bIdx +
+                    '" title="Remove">&times;</button>' +
+                    '</div></div>';
+            });
+
+            html += '</div>';
+            html +=
+                '<button type="button" class="btn btn-sm btn-outline-secondary w-100 mt-1 section-add-btn"' +
+                ' data-section-idx="' + sIdx + '">+ Add block</button>';
+            html += '</div>';
+
+            col.innerHTML = html;
+            sectionPreview.appendChild(col);
+
+            var listEl = col.querySelector('.section-block-list');
+            if (listEl && typeof Sortable !== 'undefined') {
+                var sortable = Sortable.create(listEl, {
+                    group: 'blocks',
+                    animation: 150,
+                    ghostClass: 'bg-primary-subtle',
+                    onEnd: function (evt) {
+                        var fromIdx = parseInt(evt.from.dataset.sectionIdx, 10);
+                        var toIdx = parseInt(evt.to.dataset.sectionIdx, 10);
+                        var oldIndex = evt.oldIndex;
+                        var newIndex = evt.newIndex;
+                        var moved = sections[fromIdx].Blocks.splice(oldIndex, 1)[0];
+                        sections[toIdx].Blocks.splice(newIndex, 0, moved);
+                        renderSections();
+                    }
+                });
+                sortableInstances.push(sortable);
+            }
+        });
+
+        emptyState.classList.toggle('d-none', totalBlocks > 0);
+        blockCountEl.textContent = totalBlocks + ' block' + (totalBlocks !== 1 ? 's' : '');
+        syncToInput();
+    }
+
+    // ── Section preview events ────────────────────────────────────
+    sectionPreview.addEventListener('click', function (e) {
+        var removeBtn = e.target.closest('.block-remove-btn');
+        if (removeBtn) {
+            e.preventDefault(); e.stopPropagation();
+            var sIdx = parseInt(removeBtn.dataset.sectionIdx, 10);
+            var bIdx = parseInt(removeBtn.dataset.blockIdx, 10);
+            sections[sIdx].Blocks.splice(bIdx, 1);
+            renderSections();
+            return;
         }
 
-        var html = '<div class="p-3 bg-light border-top">';
+        var themeBtn = e.target.closest('.block-theme-btn');
+        if (themeBtn) {
+            e.preventDefault(); e.stopPropagation();
+            openBlockEditModal(
+                parseInt(themeBtn.dataset.sectionIdx, 10),
+                parseInt(themeBtn.dataset.blockIdx, 10),
+                true
+            );
+            return;
+        }
+
+        var addBtn = e.target.closest('.section-add-btn');
+        if (addBtn) {
+            e.preventDefault();
+            activeColumnIdx = parseInt(addBtn.dataset.sectionIdx, 10);
+            renderSections();
+            var pickerCard = document.getElementById('blockPickerCard');
+            if (pickerCard) {
+                pickerCard.classList.add('border-primary', 'border-2');
+                pickerCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                setTimeout(function () { pickerCard.classList.remove('border-primary', 'border-2'); }, 1500);
+            }
+            return;
+        }
+
+        var column = e.target.closest('.section-column');
+        if (column && !e.target.closest('.block-card')) {
+            activeColumnIdx = parseInt(column.dataset.sectionIdx, 10);
+            renderSections();
+        }
+    });
+
+    sectionPreview.addEventListener('dblclick', function (e) {
+        var card = e.target.closest('.block-card');
+        if (!card) return;
+        e.preventDefault();
+        openBlockEditModal(
+            parseInt(card.dataset.sectionIdx, 10),
+            parseInt(card.dataset.blockIdx, 10),
+            false
+        );
+    });
+
+    // ── Block edit modal ──────────────────────────────────────────
+    function openBlockEditModal(sIdx, bIdx, themeOnly) {
+        editingSectionIdx = sIdx;
+        editingBlockIdx = bIdx;
+        var block = sections[sIdx].Blocks[bIdx];
+        if (!block) return;
+        var info = BLOCK_TYPES[block.Type] || { name: block.Type };
+        modalTitle.textContent = 'Edit: ' + info.name;
+        modalBody.innerHTML = renderModalForm(block, themeOnly);
+        if (!modalInstance) modalInstance = new bootstrap.Modal(modalEl);
+        modalInstance.show();
+        wireProjectFormEvents();
+    }
+
+    function renderModalForm(block, themeOnly) {
+        var html = '';
+        if (!themeOnly) html += renderBlockFormFields(block);
+        html += renderBlockThemeFields(block);
+        return html;
+    }
+
+    function renderBlockFormFields(block) {
+        var def = BLOCK_FORMS[block.Type];
+        if (!def) return '<div class="text-muted small">No configuration for this block type.</div>';
+        var s = block.Settings || {};
+
+        if (def.custom && block.Type === 'projects-grid') return renderProjectsForm(s);
+
+        var html = '';
         (def.fields || []).forEach(function (f) {
             var v = val(s, f.key);
-            // suggestedAmounts is stored as array, display as comma-separated
-            if (f.key === 'suggestedAmounts' && Array.isArray(v)) {
-                v = v.join(', ');
-            }
+            if (f.key === 'suggestedAmounts' && Array.isArray(v)) v = v.join(', ');
             var id = 'bf_' + block.Id + '_' + f.key;
-            html += '<div class="form-group mb-2">';
-            html += '<label class="form-label small" for="' + id + '">' + esc(f.label) + '</label>';
+            html += '<div class="form-group mb-3">';
+            html += '<label class="form-label" for="' + id + '">' + esc(f.label) + '</label>';
             if (f.type === 'textarea') {
-                html += '<textarea class="form-control form-control-sm block-field" id="' + id + '" data-key="' + f.key + '" rows="' + (f.rows || 3) + '" placeholder="' + esc(f.placeholder) + '">' + esc(v) + '</textarea>';
+                html += '<textarea class="form-control block-field" id="' + id + '" data-key="' + f.key +
+                    '" rows="' + (f.rows || 3) + '" placeholder="' + esc(f.placeholder) + '">' + esc(v) + '</textarea>';
             } else {
-                html += '<input class="form-control form-control-sm block-field" id="' + id + '" data-key="' + f.key + '" type="' + (f.type || 'text') + '" placeholder="' + esc(f.placeholder) + '" value="' + esc(v) + '" />';
+                html += '<input class="form-control block-field" id="' + id + '" data-key="' + f.key +
+                    '" type="' + (f.type || 'text') + '" placeholder="' + esc(f.placeholder) +
+                    '" value="' + esc(v) + '" />';
             }
             html += '</div>';
         });
-        html += '</div>';
         return html;
     }
 
     function renderProjectsForm(s) {
         var projects = (s && s.projects) || [];
-        var html = '<div class="p-3 bg-light border-top" data-projects-form>';
+        var html = '<div data-projects-form>';
         projects.forEach(function (p, i) {
-            html += '<div class="border rounded-3 p-2 mb-2 project-entry">' +
+            html +=
+                '<div class="border rounded-3 p-2 mb-2 project-entry">' +
                 '<div class="d-flex justify-content-between align-items-center mb-1">' +
-                    '<strong class="small">Project ' + (i + 1) + '</strong>' +
-                    '<button type="button" class="btn btn-sm btn-outline-danger py-0 px-1 project-entry-remove" data-pidx="' + i + '">&times;</button>' +
+                '<strong class="small">Project ' + (i + 1) + '</strong>' +
+                '<button type="button" class="btn btn-sm btn-outline-danger py-0 px-1 project-entry-remove">&times;</button>' +
                 '</div>' +
                 '<div class="row g-1">' +
-                    '<div class="col-4"><input class="form-control form-control-sm proj-field" data-pkey="name" placeholder="Name" value="' + esc(p.name || '') + '" /></div>' +
-                    '<div class="col-4"><input class="form-control form-control-sm proj-field" data-pkey="url" placeholder="URL" value="' + esc(p.url || '') + '" /></div>' +
-                    '<div class="col-4"><input class="form-control form-control-sm proj-field" data-pkey="description" placeholder="Description" value="' + esc(p.description || '') + '" /></div>' +
-                '</div>' +
-            '</div>';
+                '<div class="col-4"><input class="form-control form-control-sm proj-field" data-pkey="name" placeholder="Name" value="' + esc(p.name || '') + '" /></div>' +
+                '<div class="col-4"><input class="form-control form-control-sm proj-field" data-pkey="url" placeholder="URL" value="' + esc(p.url || '') + '" /></div>' +
+                '<div class="col-4"><input class="form-control form-control-sm proj-field" data-pkey="description" placeholder="Description" value="' + esc(p.description || '') + '" /></div>' +
+                '</div></div>';
         });
         html += '<button type="button" class="btn btn-sm btn-outline-secondary project-add-btn">+ Add project</button>';
         html += '</div>';
         return html;
     }
 
-    // ── Collect form data back into block.Settings ──
-    function collectBlockSettings(blockEl, block) {
+    function renderBlockThemeFields(block) {
+        var lo = block.Theme || {};
+        var html = '<hr class="my-3"><h6>Theme overrides</h6>';
+        html += '<div class="row g-2 align-items-end">';
+        html += '<div class="col-auto">';
+        html += '<label class="form-label small mb-0">Accent color</label>';
+        html += '<div class="d-flex gap-1 align-items-center">';
+        html += '<input type="color" class="form-control form-control-color form-control-sm modal-accent-picker" value="' + esc(lo.AccentColor || '#6366f1') + '" />';
+        html += '<input type="text" class="form-control form-control-sm modal-theme-field" data-lkey="AccentColor" value="' + esc(lo.AccentColor || '') + '" placeholder="inherit" style="max-width:100px" />';
+        html += '</div></div>';
+        html += '<div class="col-auto">';
+        html += '<label class="form-label small mb-0">Border radius</label>';
+        html += '<select class="form-select form-select-sm modal-theme-field" data-lkey="BorderRadius">';
+        html += '<option value=""' + (!lo.BorderRadius ? ' selected' : '') + '>Inherit</option>';
+        html += '<option value="0"' + (lo.BorderRadius === '0' ? ' selected' : '') + '>Sharp (0)</option>';
+        html += '<option value="0.5rem"' + (lo.BorderRadius === '0.5rem' ? ' selected' : '') + '>Subtle (0.5rem)</option>';
+        html += '<option value="1rem"' + (lo.BorderRadius === '1rem' ? ' selected' : '') + '>Medium (1rem)</option>';
+        html += '<option value="1.5rem"' + (lo.BorderRadius === '1.5rem' ? ' selected' : '') + '>Rounded (1.5rem)</option>';
+        html += '<option value="2rem"' + (lo.BorderRadius === '2rem' ? ' selected' : '') + '>Very Rounded (2rem)</option>';
+        html += '</select></div>';
+        html += '<div class="col-auto"><button type="button" class="btn btn-sm btn-outline-secondary modal-theme-clear">Clear</button></div>';
+        html += '</div>';
+        return html;
+    }
+
+    // ── Modal internal events ─────────────────────────────────────
+    modalBody.addEventListener('input', function (e) {
+        var picker = e.target.closest('.modal-accent-picker');
+        if (picker) {
+            var textInput = modalBody.querySelector('.modal-theme-field[data-lkey="AccentColor"]');
+            if (textInput) textInput.value = picker.value;
+        }
+        var tf = e.target.closest('.modal-theme-field[data-lkey="AccentColor"]');
+        if (tf && /^#[0-9a-fA-F]{6}$/.test(tf.value)) {
+            var p2 = modalBody.querySelector('.modal-accent-picker');
+            if (p2) p2.value = tf.value;
+        }
+    });
+
+    modalBody.addEventListener('click', function (e) {
+        if (e.target.closest('.modal-theme-clear')) {
+            var af = modalBody.querySelector('.modal-theme-field[data-lkey="AccentColor"]');
+            var rf = modalBody.querySelector('.modal-theme-field[data-lkey="BorderRadius"]');
+            if (af) af.value = '';
+            if (rf) rf.value = '';
+        }
+    });
+
+    document.getElementById('blockEditModalSave').addEventListener('click', function () {
+        if (editingSectionIdx < 0 || editingBlockIdx < 0) return;
+        var block = sections[editingSectionIdx].Blocks[editingBlockIdx];
+        if (!block) return;
+
         var def = BLOCK_FORMS[block.Type];
-        if (!def) return;
-        if (!block.Settings) block.Settings = {};
-
-        if (def.custom && block.Type === 'projects-grid') {
-            collectProjectsSettings(blockEl, block);
-            return;
-        }
-
-        blockEl.querySelectorAll('.block-field').forEach(function (input) {
-            var key = input.dataset.key;
-            var value = input.value;
-            if (key === 'suggestedAmounts') {
-                block.Settings[key] = value.split(/[,;]/).map(function (s) { return parseFloat(s.trim()); }).filter(function (n) { return !isNaN(n) && n > 0; });
-            } else if (key === 'goal') {
-                block.Settings[key] = parseFloat(value) || 0;
-            } else {
-                block.Settings[key] = value;
+        if (def) {
+            if (!block.Settings) block.Settings = {};
+            if (def.custom && block.Type === 'projects-grid') {
+                var projects = [];
+                modalBody.querySelectorAll('.project-entry').forEach(function (entry) {
+                    var p = {};
+                    entry.querySelectorAll('.proj-field').forEach(function (f) { p[f.dataset.pkey] = f.value; });
+                    if (p.name || p.url) projects.push(p);
+                });
+                block.Settings.projects = projects;
+            } else if (def.fields) {
+                modalBody.querySelectorAll('.block-field').forEach(function (input) {
+                    var key = input.dataset.key;
+                    var value = input.value;
+                    if (key === 'suggestedAmounts') {
+                        block.Settings[key] = value.split(/[,;]/).map(function (s) { return parseFloat(s.trim()); }).filter(function (n) { return !isNaN(n) && n > 0; });
+                    } else if (key === 'goal') {
+                        block.Settings[key] = parseFloat(value) || 0;
+                    } else {
+                        block.Settings[key] = value;
+                    }
+                });
             }
-        });
-    }
-
-    function collectProjectsSettings(blockEl, block) {
-        if (!block.Settings) block.Settings = {};
-        var projects = [];
-        blockEl.querySelectorAll('.project-entry').forEach(function (entry) {
-            var p = {};
-            entry.querySelectorAll('.proj-field').forEach(function (f) { p[f.dataset.pkey] = f.value; });
-            if (p.name || p.url) projects.push(p);
-        });
-        block.Settings.projects = projects;
-    }
-
-    var sortableInstance = null;
-
-    function initSortable() {
-        if (sortableInstance) {
-            sortableInstance.destroy();
-            sortableInstance = null;
         }
-        if (typeof Sortable !== 'undefined' && blocks.length > 1) {
-            sortableInstance = Sortable.create(blockListEl, {
-                handle: '.block-drag-handle',
-                animation: 150,
-                ghostClass: 'bg-primary-subtle',
-                dragClass: 'shadow',
-                onEnd: function (evt) {
-                    var oldIndex = evt.oldIndex;
-                    var newIndex = evt.newIndex;
-                    if (oldIndex === newIndex) return;
-                    collectAllOpenForms();
-                    var moved = blocks.splice(oldIndex, 1)[0];
-                    blocks.splice(newIndex, 0, moved);
-                    renderBlockList();
-                }
-            });
-        }
-    }
 
-    // ── Render the full visual block list ──
-    function renderBlockList() {
-        // Collect settings from any open forms first
-        collectAllOpenForms();
-
-        blockListEl.innerHTML = '';
-        blocks.forEach(function (block, idx) {
-            var info = BLOCK_TYPES[block.Type] || { name: block.Type, description: '' };
-            var isExpanded = expandedBlockId === block.Id;
-            var isFirst = idx === 0;
-            var isLast = idx === blocks.length - 1;
-
-            var item = document.createElement('div');
-            item.className = 'list-group-item p-0 block-row';
-            item.dataset.idx = idx;
-            item.dataset.blockId = block.Id;
-
-            var hasLayoutOverride = block.Theme && (block.Theme.AccentColor || block.Theme.BorderRadius);
-
-            var headerHtml =
-                '<div class="d-flex justify-content-between align-items-center p-2 block-header" style="cursor:pointer;" data-block-id="' + block.Id + '">' +
-                    '<div class="d-flex align-items-center gap-2">' +
-                        '<span class="block-drag-handle d-flex align-items-center text-muted px-1" style="cursor:grab;" title="Drag to reorder">&#9776;</span>' +
-                        '<div>' +
-                            '<div class="fw-semibold">' + esc(info.name) + ' <span class="text-muted fw-normal">' + (isExpanded ? '&#9660;' : '&#9654;') + '</span></div>' +
-                            '<div class="text-muted small">' + esc(info.description) + '</div>' +
-                        '</div>' +
-                    '</div>' +
-                    '<div class="d-flex align-items-center gap-1">' +
-                        '<button type="button" class="btn btn-sm btn-link p-0 lh-1 block-layout-btn' + (hasLayoutOverride ? ' text-primary' : '') + '" data-block-id="' + block.Id + '" title="Style overrides">&#9998;</button>' +
-                        '<button type="button" class="btn btn-sm btn-link p-0 lh-1 block-move-btn" data-dir="up" data-idx="' + idx + '"' + (isFirst ? ' disabled' : '') + ' title="Move up">&#9650;</button>' +
-                        '<button type="button" class="btn btn-sm btn-link p-0 lh-1 block-move-btn" data-dir="down" data-idx="' + idx + '"' + (isLast ? ' disabled' : '') + ' title="Move down">&#9660;</button>' +
-                        '<button type="button" class="btn btn-sm btn-outline-danger block-remove-btn" data-idx="' + idx + '">&times;</button>' +
-                    '</div>' +
-                '</div>';
-
-            var layoutHtml = '';
-            if (layoutExpandedBlockId === block.Id) {
-                var lo = block.Theme || {};
-                layoutHtml = '<div class="p-2 bg-body-tertiary border-top border-bottom">' +
-                    '<div class="row g-2 align-items-end">' +
-                        '<div class="col-auto">' +
-                            '<label class="form-label small mb-0">Accent color</label>' +
-                            '<div class="d-flex gap-1 align-items-center">' +
-                                '<input type="color" class="form-control form-control-color form-control-sm layout-accent-picker" value="' + esc(lo.AccentColor || '#6366f1') + '" />' +
-                                '<input type="text" class="form-control form-control-sm layout-field" data-lkey="AccentColor" value="' + esc(lo.AccentColor || '') + '" placeholder="inherit" style="max-width:100px" />' +
-                            '</div>' +
-                        '</div>' +
-                        '<div class="col-auto">' +
-                            '<label class="form-label small mb-0">Border radius</label>' +
-                            '<select class="form-select form-select-sm layout-field" data-lkey="BorderRadius">' +
-                                '<option value=""' + (!lo.BorderRadius ? ' selected' : '') + '>Inherit</option>' +
-                                '<option value="0"' + (lo.BorderRadius === '0' ? ' selected' : '') + '>Sharp (0)</option>' +
-                                '<option value="0.5rem"' + (lo.BorderRadius === '0.5rem' ? ' selected' : '') + '>Subtle (0.5rem)</option>' +
-                                '<option value="1rem"' + (lo.BorderRadius === '1rem' ? ' selected' : '') + '>Medium (1rem)</option>' +
-                                '<option value="1.5rem"' + (lo.BorderRadius === '1.5rem' ? ' selected' : '') + '>Rounded (1.5rem)</option>' +
-                                '<option value="2rem"' + (lo.BorderRadius === '2rem' ? ' selected' : '') + '>Very Rounded (2rem)</option>' +
-                            '</select>' +
-                        '</div>' +
-                        '<div class="col-auto">' +
-                            '<button type="button" class="btn btn-sm btn-outline-secondary layout-clear-btn">Clear</button>' +
-                        '</div>' +
-                    '</div>' +
-                '</div>';
-            }
-
-            var formHtml = isExpanded ? renderBlockForm(block) : '';
-            item.innerHTML = headerHtml + layoutHtml + formHtml;
-            blockListEl.appendChild(item);
-        });
-
-        emptyState.classList.toggle('d-none', blocks.length > 0);
-        blockCountEl.textContent = blocks.length + ' block' + (blocks.length !== 1 ? 's' : '');
-        syncToInput();
-        initSortable();
-    }
-
-    function collectAllOpenForms() {
-        if (!expandedBlockId) return;
-        var openEl = blockListEl.querySelector('[data-block-id="' + expandedBlockId + '"]');
-        var openBlock = blocks.find(function (b) { return b.Id === expandedBlockId; });
-        if (openEl && openBlock) collectBlockSettings(openEl, openBlock);
-    }
-
-    function collectLayoutForm() {
-        if (!layoutExpandedBlockId) return;
-        var row = blockListEl.querySelector('[data-block-id="' + layoutExpandedBlockId + '"]');
-        var block = blocks.find(function (b) { return b.Id === layoutExpandedBlockId; });
-        if (!row || !block) return;
         var lo = {};
-        row.querySelectorAll('.layout-field').forEach(function (f) {
+        modalBody.querySelectorAll('.modal-theme-field').forEach(function (f) {
             var v = f.value.trim();
             if (v) lo[f.dataset.lkey] = v;
         });
         block.Theme = (lo.AccentColor || lo.BorderRadius) ? lo : null;
-    }
 
-    function syncToInput() {
-        layoutInput.value = JSON.stringify(blocks);
-    }
+        modalInstance.hide();
+        editingSectionIdx = -1;
+        editingBlockIdx = -1;
+        renderSections();
+    });
 
-    // ── Event: click on block list (remove, move, expand/collapse) ──
-    blockListEl.addEventListener('click', function (e) {
-        var removeBtn = e.target.closest('.block-remove-btn');
-        if (removeBtn) {
-            e.preventDefault(); e.stopPropagation();
-            var idx = parseInt(removeBtn.dataset.idx, 10);
-            if (blocks[idx] && blocks[idx].Id === expandedBlockId) expandedBlockId = null;
-            blocks.splice(idx, 1);
-            renderBlockList();
-            return;
-        }
+    function wireProjectFormEvents() {
+        modalBody.querySelectorAll('.project-entry-remove').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                var entry = btn.closest('.project-entry');
+                if (entry) entry.remove();
+            });
+        });
 
-        var moveBtn = e.target.closest('.block-move-btn');
-        if (moveBtn) {
-            e.preventDefault(); e.stopPropagation();
-            var idx = parseInt(moveBtn.dataset.idx, 10);
-            var dir = moveBtn.dataset.dir;
-            if (dir === 'up' && idx > 0) { var t = blocks[idx-1]; blocks[idx-1] = blocks[idx]; blocks[idx] = t; if (expandedBlockId) {} }
-            else if (dir === 'down' && idx < blocks.length - 1) { var t = blocks[idx+1]; blocks[idx+1] = blocks[idx]; blocks[idx] = t; }
-            renderBlockList();
-            return;
-        }
-
-        var layoutBtn = e.target.closest('.block-layout-btn');
-        if (layoutBtn) {
-            e.preventDefault(); e.stopPropagation();
-            var bid = layoutBtn.dataset.blockId;
-            collectLayoutForm();
-            layoutExpandedBlockId = (layoutExpandedBlockId === bid) ? null : bid;
-            renderBlockList();
-            return;
-        }
-
-        var layoutClearBtn = e.target.closest('.layout-clear-btn');
-        if (layoutClearBtn) {
-            e.preventDefault(); e.stopPropagation();
-            var row = layoutClearBtn.closest('.block-row');
-            if (row) {
-                var block = blocks.find(function (b) { return b.Id === row.dataset.blockId; });
-                if (block) block.Theme = null;
-            }
-            renderBlockList();
-            return;
-        }
-
-        var header = e.target.closest('.block-header');
-        if (header && !e.target.closest('.block-drag-handle')) {
-            e.preventDefault();
-            var bid = header.dataset.blockId;
-            collectAllOpenForms();
-            expandedBlockId = (expandedBlockId === bid) ? null : bid;
-            renderBlockList();
-            return;
-        }
-
-        // Project entry remove
-        var projRemove = e.target.closest('.project-entry-remove');
-        if (projRemove) {
-            e.preventDefault();
-            var entry = projRemove.closest('.project-entry');
-            if (entry) entry.remove();
-            return;
-        }
-
-        // Project add
-        var projAdd = e.target.closest('.project-add-btn');
-        if (projAdd) {
-            e.preventDefault();
-            var form = projAdd.closest('[data-projects-form]');
-            var newEntry = document.createElement('div');
-            newEntry.className = 'border rounded-3 p-2 mb-2 project-entry';
-            var count = form.querySelectorAll('.project-entry').length;
-            newEntry.innerHTML =
-                '<div class="d-flex justify-content-between align-items-center mb-1">' +
+        var addBtn = modalBody.querySelector('.project-add-btn');
+        if (addBtn) {
+            addBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                var form = addBtn.closest('[data-projects-form]');
+                var count = form.querySelectorAll('.project-entry').length;
+                var newEntry = document.createElement('div');
+                newEntry.className = 'border rounded-3 p-2 mb-2 project-entry';
+                newEntry.innerHTML =
+                    '<div class="d-flex justify-content-between align-items-center mb-1">' +
                     '<strong class="small">Project ' + (count + 1) + '</strong>' +
                     '<button type="button" class="btn btn-sm btn-outline-danger py-0 px-1 project-entry-remove">&times;</button>' +
-                '</div>' +
-                '<div class="row g-1">' +
+                    '</div>' +
+                    '<div class="row g-1">' +
                     '<div class="col-4"><input class="form-control form-control-sm proj-field" data-pkey="name" placeholder="Name" /></div>' +
                     '<div class="col-4"><input class="form-control form-control-sm proj-field" data-pkey="url" placeholder="URL" /></div>' +
                     '<div class="col-4"><input class="form-control form-control-sm proj-field" data-pkey="description" placeholder="Description" /></div>' +
-                '</div>';
-            form.insertBefore(newEntry, projAdd);
+                    '</div>';
+                form.insertBefore(newEntry, addBtn);
+                newEntry.querySelector('.project-entry-remove').addEventListener('click', function () {
+                    newEntry.remove();
+                });
+            });
         }
-    });
+    }
 
-    // ── Layout accent color picker sync ──
-    blockListEl.addEventListener('input', function (e) {
-        var picker = e.target.closest('.layout-accent-picker');
-        if (picker) {
-            var textInput = picker.parentElement.querySelector('.layout-field[data-lkey="AccentColor"]');
-            if (textInput) textInput.value = picker.value;
-        }
-        var textInput = e.target.closest('.layout-field[data-lkey="AccentColor"]');
-        if (textInput && /^#[0-9a-fA-F]{6}$/.test(textInput.value)) {
-            var picker2 = textInput.parentElement.querySelector('.layout-accent-picker');
-            if (picker2) picker2.value = textInput.value;
-        }
-    });
-
-    // ── GitHub auto-fill for project URL fields ──
+    // ── GitHub auto-fill for project URL fields ───────────────────
     var ghUrlPattern = /^https?:\/\/github\.com\/([^\/]+)\/([^\/?#]+)\/?$/i;
 
-    blockListEl.addEventListener('blur', function (e) {
+    modalBody.addEventListener('blur', function (e) {
         var input = e.target;
         if (!input.matches || !input.matches('.proj-field[data-pkey="url"]')) return;
 
@@ -692,12 +801,11 @@
         .finally(function () { input.classList.remove('opacity-50'); });
     }, true);
 
-    // ── Block picker ──
+    // ── Block picker ──────────────────────────────────────────────
     document.getElementById('blockPicker').addEventListener('click', function (e) {
         e.preventDefault();
         var item = e.target.closest('.block-picker-item');
         if (!item) return;
-        collectAllOpenForms();
         var type = item.dataset.blockType;
         var defaults = {};
         var def = BLOCK_FORMS[type];
@@ -710,15 +818,19 @@
         }
         if (type === 'projects-grid') defaults = { projects: [] };
         var newBlock = { Id: generateId(), Type: type, Settings: defaults };
-        blocks.push(newBlock);
-        expandedBlockId = newBlock.Id;
-        renderBlockList();
-        blockListEl.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        var targetIdx = activeColumnIdx;
+        if (targetIdx < 0 || targetIdx >= sections.length) targetIdx = 0;
+        sections[targetIdx].Blocks.push(newBlock);
+        renderSections();
     });
 
-    // ── Visual / JSON toggle ──
-    var currentMode = 'visual';
+    // ── Sync to hidden inputs ─────────────────────────────────────
+    function syncToInput() {
+        sectionsInput.value = JSON.stringify(sections);
+        presetInput.value = layoutPreset;
+    }
 
+    // ── Theme helpers ─────────────────────────────────────────────
     function getThemeFromForm() {
         return {
             AccentColor: document.getElementById('ThemeAccentColor').value || '#6366f1',
@@ -732,26 +844,26 @@
         var accentInput = document.getElementById('ThemeAccentColor');
         var radiusInput = document.getElementById('ThemeBorderRadius');
         var spacingInput = document.getElementById('ThemeBlockSpacing');
-        if (theme.AccentColor && accentInput) { accentInput.value = theme.AccentColor; }
-        if (theme.BorderRadius && radiusInput) { radiusInput.value = theme.BorderRadius; }
-        if (theme.BlockSpacing && spacingInput) { spacingInput.value = theme.BlockSpacing; }
+        if (theme.AccentColor && accentInput) accentInput.value = theme.AccentColor;
+        if (theme.BorderRadius && radiusInput) radiusInput.value = theme.BorderRadius;
+        if (theme.BlockSpacing && spacingInput) spacingInput.value = theme.BlockSpacing;
         var pickerEl = document.getElementById('accentColorPicker');
         if (pickerEl && theme.AccentColor && /^#[0-9a-fA-F]{6}$/.test(theme.AccentColor)) {
             pickerEl.value = theme.AccentColor;
         }
     }
 
+    // ── Visual / JSON toggle ──────────────────────────────────────
     function switchToVisual() {
         if (currentMode === 'json') {
             try {
                 var parsed = JSON.parse(jsonTextarea.value.trim());
-                if (parsed && !Array.isArray(parsed) && parsed.Blocks) {
-                    blocks = parsed.Blocks;
+                if (parsed && parsed.Sections) {
+                    sections = parsed.Sections;
+                    if (parsed.Layout) { layoutPreset = parsed.Layout; presetInput.value = layoutPreset; }
                     setThemeToForm(parsed.Theme);
-                } else if (Array.isArray(parsed)) {
-                    blocks = parsed;
                 } else {
-                    throw new Error('Must be an object with "Blocks" array or a plain array');
+                    throw new Error('Must be an object with "Sections" array');
                 }
                 jsonError.classList.add('d-none');
             } catch (err) {
@@ -761,20 +873,17 @@
             }
         }
         currentMode = 'visual';
-        expandedBlockId = null;
-        layoutExpandedBlockId = null;
         visualEditor.classList.remove('d-none');
         jsonEditor.classList.add('d-none');
         modeVisualBtn.classList.add('active');
         modeJsonBtn.classList.remove('active');
-        renderBlockList();
+        renderLayoutSelector();
+        renderSections();
     }
 
     function switchToJson() {
-        collectAllOpenForms();
-        collectLayoutForm();
         currentMode = 'json';
-        var payload = { Theme: getThemeFromForm(), Blocks: blocks };
+        var payload = { Theme: getThemeFromForm(), Layout: layoutPreset, Sections: sections };
         jsonTextarea.value = JSON.stringify(payload, null, 2);
         jsonError.classList.add('d-none');
         visualEditor.classList.add('d-none');
@@ -789,34 +898,35 @@
     jsonTextarea.addEventListener('input', function () {
         try {
             var parsed = JSON.parse(jsonTextarea.value);
-            if (parsed && !Array.isArray(parsed) && parsed.Blocks) {
-                blocks = parsed.Blocks;
-                syncToInput();
-                jsonError.classList.add('d-none');
-            } else if (Array.isArray(parsed)) {
-                blocks = parsed;
+            if (parsed && parsed.Sections) {
+                sections = parsed.Sections;
+                if (parsed.Layout) { layoutPreset = parsed.Layout; presetInput.value = layoutPreset; }
                 syncToInput();
                 jsonError.classList.add('d-none');
             }
         } catch (_) {}
     });
 
+    // ── Form submission ───────────────────────────────────────────
     document.getElementById('openpatronForm').addEventListener('submit', function () {
-        collectAllOpenForms();
-        collectLayoutForm();
         if (currentMode === 'json') {
             try {
                 var p = JSON.parse(jsonTextarea.value);
-                if (p && !Array.isArray(p) && p.Blocks) { blocks = p.Blocks; setThemeToForm(p.Theme); }
-                else if (Array.isArray(p)) { blocks = p; }
+                if (p && p.Sections) {
+                    sections = p.Sections;
+                    if (p.Layout) layoutPreset = p.Layout;
+                    setThemeToForm(p.Theme);
+                }
             } catch (_) {}
         }
         syncToInput();
     });
 
-    renderBlockList();
+    // ── Initial render ────────────────────────────────────────────
+    renderLayoutSelector();
+    renderSections();
 
-    // ── Accent color picker sync ──
+    // ── Accent color picker sync ──────────────────────────────────
     var picker = document.getElementById('accentColorPicker');
     var colorInput = document.getElementById('ThemeAccentColor');
     if (picker && colorInput) {

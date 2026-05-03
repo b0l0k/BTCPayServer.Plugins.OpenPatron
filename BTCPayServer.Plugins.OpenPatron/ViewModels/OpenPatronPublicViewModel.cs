@@ -13,9 +13,12 @@ public class OpenPatronPublicViewModel
     public bool SupportsSubscriptions { get; set; }
     public string DefaultCurrency { get; set; } = "USD";
 
-    // Block layout
-    public List<BlockDefinition> PageLayout { get; set; } = [];
+    // Section-based layout
+    public List<PageSection> Sections { get; set; } = [];
     public PageTheme Theme { get; set; } = new();
+
+    // Legacy (flat list, for compat in block partials that reference Model.Page.PageLayout)
+    public List<BlockDefinition> PageLayout { get; set; } = [];
 
     // Runtime/computed data (populated by controller, consumed by block partials)
     public decimal AmountRaised { get; set; }
