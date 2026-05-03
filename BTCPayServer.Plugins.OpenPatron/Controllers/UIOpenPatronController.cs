@@ -386,7 +386,7 @@ public class UIOpenPatronController(
             return NotFound();
 
         var settings = app.GetSettings<OpenPatronAppSettings>();
-        if (!IsPublished(settings))
+        if (!IsPublished(settings) && !await IsAuthorized(app, Policies.CanViewStoreSettings))
             return NotFound();
 
         var accentColor = settings.Theme?.AccentColor ?? "#6366f1";
