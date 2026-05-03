@@ -32,8 +32,6 @@ public class OpenPatronPlugin : BaseBTCPayServerPlugin
         services.AddTransient<GitHubRepoService>();
         services.AddTransient<SponsorWallService>();
         services.AddTransient<FundingProgressService>();
-        services.AddStartupTask<OpenPatronResetStartupTask>();
-
         base.Execute(services);
     }
 }
