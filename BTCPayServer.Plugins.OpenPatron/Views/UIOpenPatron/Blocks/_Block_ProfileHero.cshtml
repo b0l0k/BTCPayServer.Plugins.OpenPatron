@@ -14,7 +14,7 @@
     var hasSocial = !string.IsNullOrWhiteSpace(socialX) || !string.IsNullOrWhiteSpace(socialMastodon) || !string.IsNullOrWhiteSpace(socialNostr);
 }
 
-<section class="openpatron-profile-hero mb-block" data-block-type="profile-hero" data-block-id="@Model.Block.Id">
+<section class="openpatron-profile-hero" data-block-type="profile-hero" data-block-id="@Model.Block.Id">
     @if (!string.IsNullOrWhiteSpace(avatarUrl))
     {
         <img src="@avatarUrl" alt="@(displayName ?? "Avatar")" class="openpatron-avatar mb-3" />

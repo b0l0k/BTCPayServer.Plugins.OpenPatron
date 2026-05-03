@@ -336,7 +336,7 @@
     <div class="row g-4 align-items-start">
         @foreach (var col in Model.Sections)
         {
-            <div class="col-12 col-lg-@col.Width">
+            <div class="col-12 col-lg-@col.Width d-flex flex-column" style="gap: var(--op-block-spacing);">
                 @foreach (var block in col.Blocks)
                 {
                     var partialPath = BlockRegistry.GetPartialViewPath(block.Type);
