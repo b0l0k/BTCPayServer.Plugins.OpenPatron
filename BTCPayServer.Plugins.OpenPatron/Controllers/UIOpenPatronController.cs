@@ -391,7 +391,8 @@ public class UIOpenPatronController(
                                 ["description"] = new { type = "string", description = "Short project description (auto-filled from GitHub if URL is a GitHub repo)" }
                             }
                         }
-                    }
+                    },
+                    ["columnsPerRow"] = new { type = "integer", description = "Number of project cards per row (1-4)", @enum = new[] { 1, 2, 3, 4 }, @default = 2 }
                 }
             },
             ["subscription-tiers"] = new Dictionary<string, object>
@@ -401,7 +402,8 @@ public class UIOpenPatronController(
                 ["properties"] = new Dictionary<string, object>
                 {
                     ["heading"] = new { type = "string", description = "Section heading" },
-                    ["subtitle"] = new { type = "string", description = "Subtitle below the heading" }
+                    ["subtitle"] = new { type = "string", description = "Subtitle below the heading" },
+                    ["columnsPerRow"] = new { type = "integer", description = "Number of plan cards per row (1-4)", @enum = new[] { 1, 2, 3, 4 }, @default = 2 }
                 }
             },
             ["quick-support"] = new Dictionary<string, object>

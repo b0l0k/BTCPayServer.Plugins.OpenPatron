@@ -5,6 +5,9 @@
     var heading = BlockSettingsHelper.Str(s, "heading", "Choose a sponsorship tier");
     var subtitle = BlockSettingsHelper.Str(s, "subtitle", "Pick the level that fits you best");
     var plans = Model.Page.Plans;
+    var columnsPerRow = (int)(BlockSettingsHelper.Dec(s, "columnsPerRow") ?? 2);
+    if (columnsPerRow < 1 || columnsPerRow > 4) columnsPerRow = 2;
+    var colClass = "col-12 col-md-" + (12 / columnsPerRow);
 }
 
 @if (Model.Page.SupportsSubscriptions && plans.Count > 0)
@@ -21,7 +24,7 @@
         <div class="row g-3">
             @foreach (var plan in plans)
             {
-                <div class="col-12 col-md-6">
+                <div class="@colClass">
                     <div class="openpatron-plan-card d-flex flex-column">
                         <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
                             <div>

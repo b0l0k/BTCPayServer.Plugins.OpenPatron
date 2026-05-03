@@ -99,6 +99,7 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="h5 mb-0">Page blocks</h3>
                     <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary d-none" id="swapColumnsBtn" title="Swap column contents">&#8644; Swap</button>
                         <span class="text-muted small" id="blockCount"></span>
                         <div class="btn-group btn-group-sm" role="group">
                             <button type="button" class="btn btn-outline-secondary active" id="modeVisualBtn">Visual</button>
@@ -317,12 +318,16 @@
             ]
         },
         'projects-grid': {
-            custom: true
+            custom: true,
+            extraFields: [
+                { key: 'columnsPerRow', label: 'Items per row', type: 'select', options: [{v:'1',l:'1'},{v:'2',l:'2'},{v:'3',l:'3'},{v:'4',l:'4'}], default: '2' }
+            ]
         },
         'subscription-tiers': {
             fields: [
                 { key: 'heading', label: 'Section heading', type: 'text', placeholder: 'Choose a sponsorship tier' },
-                { key: 'subtitle', label: 'Subtitle', type: 'text', placeholder: 'Pick the level that fits you best' }
+                { key: 'subtitle', label: 'Subtitle', type: 'text', placeholder: 'Pick the level that fits you best' },
+                { key: 'columnsPerRow', label: 'Items per row', type: 'select', options: [{v:'1',l:'1'},{v:'2',l:'2'},{v:'3',l:'3'},{v:'4',l:'4'}], default: '2' }
             ]
         },
         'quick-support': {
@@ -535,8 +540,20 @@
 
         emptyState.classList.toggle('d-none', totalBlocks > 0);
         blockCountEl.textContent = totalBlocks + ' block' + (totalBlocks !== 1 ? 's' : '');
+        var swapBtn = document.getElementById('swapColumnsBtn');
+        if (swapBtn) swapBtn.classList.toggle('d-none', sections.length !== 2);
         syncToInput();
     }
+
+    // ── Swap columns button ──
+    document.getElementById('swapColumnsBtn').addEventListener('click', function (e) {
+        e.preventDefault();
+        if (sections.length !== 2) return;
+        var tmp = sections[0].Blocks;
+        sections[0].Blocks = sections[1].Blocks;
+        sections[1].Blocks = tmp;
+        renderSections();
+    });
 
     // ── Section preview events ────────────────────────────────────
     sectionPreview.addEventListener('click', function (e) {
@@ -605,30 +622,45 @@
         wireProjectFormEvents();
     }
 
+    function renderFieldHtml(f, block, s) {
+        var v = val(s, f.key);
+        if (f.key === 'suggestedAmounts' && Array.isArray(v)) v = v.join(', ');
+        if (!v && v !== 0 && f.default) v = f.default;
+        var id = 'bf_' + block.Id + '_' + f.key;
+        var html = '<div class="form-group mb-3">';
+        html += '<label class="form-label" for="' + id + '">' + esc(f.label) + '</label>';
+        if (f.type === 'select' && f.options) {
+            html += '<select class="form-select block-field" id="' + id + '" data-key="' + f.key + '">';
+            f.options.forEach(function (o) {
+                var selected = (String(v) === String(o.v)) ? ' selected' : '';
+                html += '<option value="' + esc(o.v) + '"' + selected + '>' + esc(o.l) + '</option>';
+            });
+            html += '</select>';
+        } else if (f.type === 'textarea') {
+            html += '<textarea class="form-control block-field" id="' + id + '" data-key="' + f.key +
+                '" rows="' + (f.rows || 3) + '" placeholder="' + esc(f.placeholder) + '">' + esc(v) + '</textarea>';
+        } else {
+            html += '<input class="form-control block-field" id="' + id + '" data-key="' + f.key +
+                '" type="' + (f.type || 'text') + '" placeholder="' + esc(f.placeholder || '') +
+                '" value="' + esc(v) + '" />';
+        }
+        html += '</div>';
+        return html;
+    }
+
     function renderBlockFormFields(block) {
         var def = BLOCK_FORMS[block.Type];
         if (!def) return '<div class="text-muted small">No configuration for this block type.</div>';
         var s = block.Settings || {};
 
-        if (def.custom && block.Type === 'projects-grid') return renderProjectsForm(s);
+        if (def.custom && block.Type === 'projects-grid') {
+            var html = renderProjectsForm(s);
+            (def.extraFields || []).forEach(function (f) { html += renderFieldHtml(f, block, s); });
+            return html;
+        }
 
         var html = '';
-        (def.fields || []).forEach(function (f) {
-            var v = val(s, f.key);
-            if (f.key === 'suggestedAmounts' && Array.isArray(v)) v = v.join(', ');
-            var id = 'bf_' + block.Id + '_' + f.key;
-            html += '<div class="form-group mb-3">';
-            html += '<label class="form-label" for="' + id + '">' + esc(f.label) + '</label>';
-            if (f.type === 'textarea') {
-                html += '<textarea class="form-control block-field" id="' + id + '" data-key="' + f.key +
-                    '" rows="' + (f.rows || 3) + '" placeholder="' + esc(f.placeholder) + '">' + esc(v) + '</textarea>';
-            } else {
-                html += '<input class="form-control block-field" id="' + id + '" data-key="' + f.key +
-                    '" type="' + (f.type || 'text') + '" placeholder="' + esc(f.placeholder) +
-                    '" value="' + esc(v) + '" />';
-            }
-            html += '</div>';
-        });
+        (def.fields || []).forEach(function (f) { html += renderFieldHtml(f, block, s); });
         return html;
     }
 
@@ -723,7 +755,7 @@
                     var value = input.value;
                     if (key === 'suggestedAmounts') {
                         block.Settings[key] = value.split(/[,;]/).map(function (s) { return parseFloat(s.trim()); }).filter(function (n) { return !isNaN(n) && n > 0; });
-                    } else if (key === 'goal') {
+                    } else if (key === 'goal' || key === 'columnsPerRow') {
                         block.Settings[key] = parseFloat(value) || 0;
                     } else {
                         block.Settings[key] = value;

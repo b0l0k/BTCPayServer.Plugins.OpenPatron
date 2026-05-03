@@ -4,6 +4,9 @@
 @{
     var s = Model.Block.Settings;
     var projects = BlockSettingsHelper.Arr(s, "projects");
+    var columnsPerRow = (int)(BlockSettingsHelper.Dec(s, "columnsPerRow") ?? 2);
+    if (columnsPerRow < 1 || columnsPerRow > 4) columnsPerRow = 2;
+    var colClass = "col-12 col-md-" + (12 / columnsPerRow);
 }
 
 @if (projects is { Count: > 0 })
@@ -19,7 +22,7 @@
                 var desc = BlockSettingsHelper.Str(project, "description");
                 var lang = BlockSettingsHelper.Str(project, "language");
                 var stars = (int?)BlockSettingsHelper.Dec(project, "stars");
-                <div class="col-12 col-md-6">
+                <div class="@colClass">
                     <a href="@url" target="_blank" rel="noreferrer" class="text-decoration-none">
                         <div class="openpatron-project-card d-flex flex-column h-100">
                             <h3 class="h5 fw-bold text-dark mb-2">@name</h3>
