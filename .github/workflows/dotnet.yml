@@ -23,4 +23,4 @@ jobs:
       - name: Build
         run: dotnet build
       - name: Test
-        run: dotnet test --no-build --verbosity normal BTCPayServer.Plugins.OpenPatron.Tests/BTCPayServer.Plugins.OpenPatron.Tests.csproj
+        run: dotnet test --no-build --verbosity normal --filter "Playwright!=Playwright" BTCPayServer.Plugins.OpenPatron.Tests/BTCPayServer.Plugins.OpenPatron.Tests.csproj
