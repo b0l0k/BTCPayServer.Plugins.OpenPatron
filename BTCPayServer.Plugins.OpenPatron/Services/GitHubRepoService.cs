@@ -7,10 +7,14 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 
 namespace BTCPayServer.Plugins.OpenPatron.Services;
 
-public class GitHubRepoService(IHttpClientFactory httpClientFactory, IMemoryCache memoryCache)
+public class GitHubRepoService(
+    IHttpClientFactory httpClientFactory,
+    IMemoryCache memoryCache,
+    ILogger<GitHubRepoService> logger)
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -70,8 +74,9 @@ public class GitHubRepoService(IHttpClientFactory httpClientFactory, IMemoryCach
 
             return result;
         }
-        catch
+        catch (Exception ex)
         {
+            logger.LogWarning(ex, "Failed to fetch GitHub repo {Owner}/{Repo}", owner, repo);
             return null;
         }
     }
