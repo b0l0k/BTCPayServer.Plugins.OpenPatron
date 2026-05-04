@@ -465,7 +465,8 @@ function copySnippet(inputId, btn) {
                 widths.map(function (w) {
                     return '<div style="height:24px;flex:' + w +
                         ';background:' + (isActive ? 'var(--bs-primary)' : 'var(--bs-secondary-bg, #adb5bd)') +
-                        ';border-radius:3px"></div>';
+                        ';border-radius:3px' + (isActive && widths.length > 1 ? ';outline:2px solid var(--bs-card-bg, #fff)' : '') +
+                        '"></div>';
                 }).join('') +
                 '</div>' +
                 '<div class="small fw-semibold">' + esc(label) + '</div>' +
