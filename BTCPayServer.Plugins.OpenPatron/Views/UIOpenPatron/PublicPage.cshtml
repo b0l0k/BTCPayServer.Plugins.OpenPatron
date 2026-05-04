@@ -12,6 +12,10 @@
 }
 
 @section PageHeadContent {
+    <script>
+        document.documentElement.setAttribute('data-btcpay-theme', 'light');
+        var d = document.getElementById('DarkThemeLinkTag'); if (d) d.rel = '';
+    </script>
     <style>
         :root {
             --op-accent: @accent;
@@ -376,3 +380,10 @@
         }
     </div>
 </div>
+
+@section PageFootContent {
+    <script>
+        document.documentElement.setAttribute('data-btcpay-theme', 'light');
+        var d = document.getElementById('DarkThemeLinkTag'); if (d) d.rel = '';
+    </script>
+}
