@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using BTCPayServer.Plugins.OpenPatron.Models;
+using BTCPayServer.Plugins.OpenPatron.Services;
 
 namespace BTCPayServer.Plugins.OpenPatron.ViewModels;
 
@@ -23,15 +24,8 @@ public class OpenPatronPublicViewModel
     // Runtime/computed data (populated by controller, consumed by block partials)
     public decimal AmountRaised { get; set; }
     public int FundingPercentage { get; set; }
-    public IReadOnlyList<SponsorWallEntryViewModel> SponsorWallEntries { get; set; } = [];
+    public IReadOnlyList<SponsorWallEntry> SponsorWallEntries { get; set; } = [];
     public IReadOnlyList<OpenPatronPublicPlanViewModel> Plans { get; set; } = [];
-}
-
-public class SponsorWallEntryViewModel
-{
-    public DateTimeOffset Timestamp { get; set; }
-    public decimal Amount { get; set; }
-    public string Currency { get; set; } = "USD";
 }
 
 public class OpenPatronPublicPlanViewModel

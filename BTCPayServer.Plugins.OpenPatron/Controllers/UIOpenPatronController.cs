@@ -177,13 +177,7 @@ public class UIOpenPatronController(
             string.Equals(b.Type, BlockRegistry.SponsorWall, StringComparison.OrdinalIgnoreCase));
         if (hasSponsorWall)
         {
-            var entries = await sponsorWallService.GetRecentContributionsAsync(app.Id);
-            vm.SponsorWallEntries = entries.Select(e => new SponsorWallEntryViewModel
-            {
-                Timestamp = e.Timestamp,
-                Amount = e.Amount,
-                Currency = e.Currency
-            }).ToList();
+            vm.SponsorWallEntries = await sponsorWallService.GetRecentContributionsAsync(app.Id);
         }
 
         await EnrichGitHubProjectsAsync(settings);
