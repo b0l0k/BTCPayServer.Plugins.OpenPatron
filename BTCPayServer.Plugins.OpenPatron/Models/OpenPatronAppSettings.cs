@@ -63,7 +63,9 @@ public class BlockTheme
 
 public class PageTheme
 {
-    public string AccentColor { get; set; } = "#6366f1";
+    public const string DefaultAccentColor = "#6366f1";
+
+    public string AccentColor { get; set; } = DefaultAccentColor;
     public string BorderRadius { get; set; } = "1.5rem";
     public string BlockSpacing { get; set; } = "1rem";
 }

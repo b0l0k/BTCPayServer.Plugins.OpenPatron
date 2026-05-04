@@ -70,7 +70,7 @@ public class FastTests
     public void PageThemeDefaults()
     {
         var theme = new PageTheme();
-        Assert.Equal("#6366f1", theme.AccentColor);
+        Assert.Equal(PageTheme.DefaultAccentColor, theme.AccentColor);
         Assert.Equal("1.5rem", theme.BorderRadius);
         Assert.Equal("1rem", theme.BlockSpacing);
     }
@@ -337,7 +337,7 @@ public class FastTests
         var settings = new OpenPatronAppSettings { Theme = null };
         UIOpenPatronController.EnsurePageLayout(settings);
         Assert.NotNull(settings.Theme);
-        Assert.Equal("#6366f1", settings.Theme!.AccentColor);
+        Assert.Equal(PageTheme.DefaultAccentColor, settings.Theme!.AccentColor);
     }
 
     [Fact]
