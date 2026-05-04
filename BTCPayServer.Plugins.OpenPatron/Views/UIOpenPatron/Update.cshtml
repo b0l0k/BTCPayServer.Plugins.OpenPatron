@@ -170,8 +170,8 @@
                     <div class="form-group mb-3">
                         <label asp-for="ThemeAccentColor" class="form-label"></label>
                         <div class="d-flex gap-2 align-items-center">
-                            <input type="color" id="accentColorPicker" value="@(Model.ThemeAccentColor ?? "#6366f1")" class="form-control form-control-color" />
-                            <input asp-for="ThemeAccentColor" class="form-control form-control-sm" placeholder="#6366f1" style="max-width:120px" />
+                            <input type="color" id="accentColorPicker" value="@(Model.ThemeAccentColor ?? PageTheme.DefaultAccentColor)" class="form-control form-control-color" />
+                            <input asp-for="ThemeAccentColor" class="form-control form-control-sm" placeholder="@PageTheme.DefaultAccentColor" style="max-width:120px" />
                         </div>
                         <span asp-validation-for="ThemeAccentColor" class="text-danger"></span>
                     </div>
@@ -320,6 +320,7 @@ function copySnippet(inputId, btn) {
 </script>
 <script>
 (function () {
+    var DEFAULT_ACCENT = '@PageTheme.DefaultAccentColor';
     var BLOCK_TYPES = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(
         blockTypes.ToDictionary(kv => kv.Key, kv => new { name = kv.Value.DisplayName, description = kv.Value.Description })));
 
@@ -734,7 +735,7 @@ function copySnippet(inputId, btn) {
         html += '<div class="col-auto">';
         html += '<label class="form-label small mb-0">Accent color</label>';
         html += '<div class="d-flex gap-1 align-items-center">';
-        html += '<input type="color" class="form-control form-control-color form-control-sm modal-accent-picker" value="' + esc(lo.AccentColor || '#6366f1') + '" />';
+        html += '<input type="color" class="form-control form-control-color form-control-sm modal-accent-picker" value="' + esc(lo.AccentColor || DEFAULT_ACCENT) + '" />';
         html += '<input type="text" class="form-control form-control-sm modal-theme-field" data-lkey="AccentColor" value="' + esc(lo.AccentColor || '') + '" placeholder="inherit" style="max-width:100px" />';
         html += '</div></div>';
         html += '<div class="col-auto">';
@@ -921,7 +922,7 @@ function copySnippet(inputId, btn) {
     // ── Theme helpers ─────────────────────────────────────────────
     function getThemeFromForm() {
         return {
-            AccentColor: document.getElementById('ThemeAccentColor').value || '#6366f1',
+            AccentColor: document.getElementById('ThemeAccentColor').value || DEFAULT_ACCENT,
             BorderRadius: document.getElementById('ThemeBorderRadius').value || '1.5rem',
             BlockSpacing: document.getElementById('ThemeBlockSpacing').value || '1rem'
         };

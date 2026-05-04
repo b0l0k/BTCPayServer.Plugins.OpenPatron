@@ -116,7 +116,7 @@ public class UIOpenPatronController(
             Sections = sections,
             Theme = new PageTheme
             {
-                AccentColor = NormalizeString(viewModel.ThemeAccentColor) ?? "#6366f1",
+                AccentColor = NormalizeString(viewModel.ThemeAccentColor) ?? PageTheme.DefaultAccentColor,
                 BorderRadius = NormalizeString(viewModel.ThemeBorderRadius) ?? "1.5rem",
                 BlockSpacing = NormalizeString(viewModel.ThemeBlockSpacing) ?? "1rem",
             },
@@ -381,7 +381,7 @@ public class UIOpenPatronController(
         if (!IsPublished(settings) && !await IsAuthorized(app, Policies.CanViewStoreSettings))
             return NotFound();
 
-        var accentColor = settings.Theme?.AccentColor ?? "#6366f1";
+        var accentColor = settings.Theme?.AccentColor ?? PageTheme.DefaultAccentColor;
         var badgeLabel = string.IsNullOrWhiteSpace(label) ? "\u20bf" : label.Trim();
         var isSquare = string.Equals(style, "flat-square", StringComparison.OrdinalIgnoreCase);
 
