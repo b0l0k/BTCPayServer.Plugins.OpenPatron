@@ -502,7 +502,7 @@ public class UIOpenPatronController(
         };
     }
 
-    private async Task<OfferingData?> GetOffering(AppData app, OpenPatronAppSettings settings)
+    private async Task<List<OfferingData>> GetOfferingsForApp(AppData app)
     {
         await using var ctx = dbContextFactory.CreateContext();
         var offerings = await ctx.Offerings
@@ -510,21 +510,23 @@ public class UIOpenPatronController(
             .Where(o => o.AppId == app.Id && o.App.StoreDataId == app.StoreDataId)
             .ToListAsync();
         await ctx.Plans.FetchPlanFeaturesAsync(offerings.SelectMany(o => o.Plans).ToArray());
+        return offerings;
+    }
+
+    private async Task<OfferingData?> GetOffering(AppData app, OpenPatronAppSettings settings)
+    {
+        var offerings = await GetOfferingsForApp(app);
         return OpenPatronOfferingResolver.SelectPreferredOffering(offerings, settings.OfferingId);
     }
 
     private async Task<string?> ResolveOfferingId(AppData app, string? preferredOfferingId, bool createIfMissing)
     {
-        await using var ctx = dbContextFactory.CreateContext();
-        var offerings = await ctx.Offerings
-            .IncludeAll()
-            .Where(o => o.AppId == app.Id && o.App.StoreDataId == app.StoreDataId)
-            .ToListAsync();
-
+        var offerings = await GetOfferingsForApp(app);
         var existing = OpenPatronOfferingResolver.SelectPreferredOffering(offerings, preferredOfferingId);
         if (existing is not null || !createIfMissing)
             return existing?.Id;
 
+        await using var ctx = dbContextFactory.CreateContext();
         var offering = new OfferingData { AppId = app.Id };
         ctx.Offerings.Add(offering);
         await ctx.SaveChangesAsync();
