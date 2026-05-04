@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
 using BTCPayServer.Abstractions.Constants;
 using BTCPayServer.Abstractions.Extensions;
@@ -648,20 +646,4 @@ public class UIOpenPatronController(
     private static string EscapeXml(string value) =>
         value.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace("\"", "&quot;").Replace("'", "&apos;");
 
-    public static string? ComputeGravatarUrl(string? email)
-    {
-        if (string.IsNullOrWhiteSpace(email))
-            return null;
-        var hash = ComputeMd5Hash(email.Trim().ToLowerInvariant());
-        return $"https://www.gravatar.com/avatar/{hash}?s=200&d=identicon";
-    }
-
-    public static string ComputeMd5Hash(string input)
-    {
-        var bytes = MD5.HashData(Encoding.UTF8.GetBytes(input));
-        var sb = new StringBuilder(32);
-        foreach (var b in bytes)
-            sb.Append(b.ToString("x2"));
-        return sb.ToString();
-    }
 }
