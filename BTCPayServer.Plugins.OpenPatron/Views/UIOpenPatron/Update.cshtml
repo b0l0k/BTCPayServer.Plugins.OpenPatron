@@ -120,17 +120,53 @@
                 </div>
             </div>
 
+            @* ── Theme ── *@
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3 class="h5 mb-3">Theme</h3>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="ThemeAccentColor" class="form-label"></label>
+                                <div class="d-flex gap-2 align-items-center">
+                                    <input type="color" id="accentColorPicker" value="@(Model.ThemeAccentColor ?? PageTheme.DefaultAccentColor)" class="form-control form-control-color" />
+                                    <input asp-for="ThemeAccentColor" class="form-control form-control-sm" placeholder="@PageTheme.DefaultAccentColor" style="max-width:120px" />
+                                </div>
+                                <span asp-validation-for="ThemeAccentColor" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="ThemeBorderRadius" class="form-label"></label>
+                                <select asp-for="ThemeBorderRadius" class="form-select">
+                                    <option value="0">Sharp (0)</option>
+                                    <option value="0.5rem">Subtle (0.5rem)</option>
+                                    <option value="1rem">Medium (1rem)</option>
+                                    <option value="1.5rem">Rounded (1.5rem)</option>
+                                    <option value="2rem">Very Rounded (2rem)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="ThemeBlockSpacing" class="form-label"></label>
+                                <select asp-for="ThemeBlockSpacing" class="form-select">
+                                    <option value="0.5rem">Tight (0.5rem)</option>
+                                    <option value="1rem">Normal (1rem)</option>
+                                    <option value="1.5rem">Relaxed (1.5rem)</option>
+                                    <option value="2rem">Spacious (2rem)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             @* ── Global settings ── *@
             <div class="card mb-4">
                 <div class="card-body">
                     <h3 class="h5 mb-3">Global settings</h3>
                     <div class="row g-3">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label asp-for="SupportMode" class="form-label"></label>
-                                <select asp-for="SupportMode" asp-items="Html.GetEnumSelectList<OpenPatronSupportMode>()" class="form-select"></select>
-                            </div>
-                        </div>
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label asp-for="DefaultCurrency" class="form-label"></label>
@@ -160,39 +196,6 @@
                                 <span class="badge text-bg-primary rounded-pill">+</span>
                             </button>
                         }
-                    </div>
-                </div>
-            </div>
-
-            <div class="card mb-3">
-                <div class="card-body">
-                    <h3 class="h5 mb-3">Theme</h3>
-                    <div class="form-group mb-3">
-                        <label asp-for="ThemeAccentColor" class="form-label"></label>
-                        <div class="d-flex gap-2 align-items-center">
-                            <input type="color" id="accentColorPicker" value="@(Model.ThemeAccentColor ?? PageTheme.DefaultAccentColor)" class="form-control form-control-color" />
-                            <input asp-for="ThemeAccentColor" class="form-control form-control-sm" placeholder="@PageTheme.DefaultAccentColor" style="max-width:120px" />
-                        </div>
-                        <span asp-validation-for="ThemeAccentColor" class="text-danger"></span>
-                    </div>
-                    <div class="form-group mb-3">
-                        <label asp-for="ThemeBorderRadius" class="form-label"></label>
-                        <select asp-for="ThemeBorderRadius" class="form-select">
-                            <option value="0">Sharp (0)</option>
-                            <option value="0.5rem">Subtle (0.5rem)</option>
-                            <option value="1rem">Medium (1rem)</option>
-                            <option value="1.5rem">Rounded (1.5rem)</option>
-                            <option value="2rem">Very Rounded (2rem)</option>
-                        </select>
-                    </div>
-                    <div class="form-group mb-0">
-                        <label asp-for="ThemeBlockSpacing" class="form-label"></label>
-                        <select asp-for="ThemeBlockSpacing" class="form-select">
-                            <option value="0.5rem">Tight (0.5rem)</option>
-                            <option value="1rem">Normal (1rem)</option>
-                            <option value="1.5rem">Relaxed (1.5rem)</option>
-                            <option value="2rem">Spacious (2rem)</option>
-                        </select>
                     </div>
                 </div>
             </div>
