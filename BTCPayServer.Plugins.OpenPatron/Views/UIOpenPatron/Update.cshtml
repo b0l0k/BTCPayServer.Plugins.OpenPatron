@@ -464,7 +464,7 @@ function copySnippet(inputId, btn) {
                 '<div class="d-flex gap-1 justify-content-center mb-1">' +
                 widths.map(function (w) {
                     return '<div style="height:24px;flex:' + w +
-                        ';background:' + (isActive ? 'var(--bs-primary)' : 'var(--bs-border-color)') +
+                        ';background:' + (isActive ? 'var(--bs-primary)' : 'var(--bs-secondary-bg, #adb5bd)') +
                         ';border-radius:3px"></div>';
                 }).join('') +
                 '</div>' +
