@@ -120,7 +120,6 @@ public class UIOpenPatronController(
                 BlockSpacing = NormalizeString(viewModel.ThemeBlockSpacing) ?? PageTheme.DefaultBlockSpacing,
             },
             OfferingId = viewModel.OfferingId,
-            SupportMode = viewModel.SupportMode,
             DefaultCurrency = viewModel.DefaultCurrency.Trim().ToUpperInvariant(),
             Visibility = viewModel.Visibility
         };
@@ -402,7 +401,7 @@ public class UIOpenPatronController(
             var widerSection = sections.OrderByDescending(s => s.Width).First();
             widerSection.Blocks = settings.PageLayout;
 
-            // Add a default sidebar-support block to the narrower column if it exists
+            // Add a default one-time-payment block to the narrower column if it exists
             var narrower = sections.FirstOrDefault(s => s != widerSection);
             if (narrower != null)
             {
@@ -410,8 +409,8 @@ public class UIOpenPatronController(
                 [
                     new BlockDefinition
                     {
-                        Type = BlockRegistry.SidebarSupport,
-                        Settings = JObject.FromObject(new SidebarSupportSettings { Heading = "Sponsor now" })
+                        Type = BlockRegistry.OneTimePayment,
+                        Settings = JObject.FromObject(new OneTimePaymentSettings { Heading = "Sponsor now" })
                     }
                 ];
             }
@@ -445,7 +444,7 @@ public class UIOpenPatronController(
             AppId = app.Id,
             StoreId = app.StoreDataId,
             PublicPageUrl = GetPublicPageUrl(app.Id),
-            BadgeUrl = GetBadgeUrl(app.Id),
+            BadgeUrl = GetBadgeUrl(app.Id, theme.AccentColor),
             OfferingId = offering?.Id ?? settings.OfferingId,
             ManageOfferingUrl = offering is null ? null : GetManageOfferingUrl(app.StoreDataId, offering.Id),
             AddPlanUrl = offering is null ? null : GetAddPlanUrl(app.StoreDataId, offering.Id),
@@ -458,7 +457,6 @@ public class UIOpenPatronController(
             ThemeAccentColor = theme.AccentColor,
             ThemeBorderRadius = theme.BorderRadius,
             ThemeBlockSpacing = theme.BlockSpacing,
-            SupportMode = settings.SupportMode,
             AppName = app.Name,
             DefaultCurrency = settings.DefaultCurrency,
             Visibility = settings.Visibility
@@ -542,8 +540,13 @@ public class UIOpenPatronController(
     private string GetPublicPageUrl(string appId)
         => Url.ActionLink(nameof(PublicPage), values: new { appId, area = OpenPatronPlugin.Area }) ?? $"/apps/{appId}/openpatron";
 
-    private string GetBadgeUrl(string appId)
-        => Url.ActionLink(nameof(Badge), values: new { appId, area = OpenPatronPlugin.Area }) ?? $"/apps/{appId}/openpatron/badge.svg";
+    private string GetBadgeUrl(string appId, string? accentColor = null)
+    {
+        var url = Url.ActionLink(nameof(Badge), values: new { appId, area = OpenPatronPlugin.Area }) ?? $"/apps/{appId}/openpatron/badge.svg";
+        if (!string.IsNullOrEmpty(accentColor) && accentColor != PageTheme.DefaultAccentColor)
+            url += $"?v={accentColor[1..].ToLowerInvariant()}";
+        return url;
+    }
 
     private string GetManageOfferingUrl(string storeId, string offeringId)
         => Url.Action("Offering", "UIOffering", new { area = SubscriptionsPlugin.Area, storeId, offeringId, section = "Plans" })
@@ -590,10 +593,12 @@ public class UIOpenPatronController(
     }
 
     private static bool AllowsOneTime(OpenPatronAppSettings settings)
-        => settings.SupportMode is OpenPatronSupportMode.OneTimeOnly or OpenPatronSupportMode.Both;
+        => BlockRegistry.AllBlocks(settings.Sections).Any(b =>
+            b.Type is BlockRegistry.QuickSupport or BlockRegistry.OneTimePayment);
 
     private static bool AllowsSubscriptions(OpenPatronAppSettings settings)
-        => settings.SupportMode is OpenPatronSupportMode.SubscriptionOnly or OpenPatronSupportMode.Both;
+        => BlockRegistry.AllBlocks(settings.Sections).Any(b =>
+            string.Equals(b.Type, BlockRegistry.SubscriptionTiers, StringComparison.OrdinalIgnoreCase));
 
     private static bool IsPublished(OpenPatronAppSettings settings)
         => settings.Visibility == OpenPatronVisibility.Published;

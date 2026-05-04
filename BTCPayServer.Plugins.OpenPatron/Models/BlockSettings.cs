@@ -116,7 +116,7 @@ public class SponsorWallSettings
 }
 
 [Description("Compact sponsor panel with contribution form and call-to-action")]
-public class SidebarSupportSettings
+public class OneTimePaymentSettings
 {
     [Description("Section heading")]
     public string Heading { get; set; } = "";

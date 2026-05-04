@@ -2,7 +2,7 @@
 @using BTCPayServer.Plugins.OpenPatron.Services
 @model BTCPayServer.Plugins.OpenPatron.ViewModels.BlockRenderContext
 @{
-    var settings = BlockSettingsHelper.GetTyped<SidebarSupportSettings>(Model.Block) ?? new();
+    var settings = BlockSettingsHelper.GetTyped<OneTimePaymentSettings>(Model.Block) ?? new();
     var heading = !string.IsNullOrWhiteSpace(settings.Heading) ? settings.Heading : "Sponsor now";
 }
 
