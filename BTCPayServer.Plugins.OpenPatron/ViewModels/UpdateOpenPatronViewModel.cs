@@ -30,10 +30,10 @@ public class UpdateOpenPatronViewModel
     public string? ThemeAccentColor { get; set; }
 
     [Display(Name = "Border radius")]
-    public string ThemeBorderRadius { get; set; } = "1.5rem";
+    public string ThemeBorderRadius { get; set; } = PageTheme.DefaultBorderRadius;
 
     [Display(Name = "Block spacing")]
-    public string ThemeBlockSpacing { get; set; } = "1rem";
+    public string ThemeBlockSpacing { get; set; } = PageTheme.DefaultBlockSpacing;
 
     // Global settings
     [Required]

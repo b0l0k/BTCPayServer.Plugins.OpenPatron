@@ -64,10 +64,12 @@ public class BlockTheme
 public class PageTheme
 {
     public const string DefaultAccentColor = "#6366f1";
+    public const string DefaultBorderRadius = "1.5rem";
+    public const string DefaultBlockSpacing = "1rem";
 
     public string AccentColor { get; set; } = DefaultAccentColor;
-    public string BorderRadius { get; set; } = "1.5rem";
-    public string BlockSpacing { get; set; } = "1rem";
+    public string BorderRadius { get; set; } = DefaultBorderRadius;
+    public string BlockSpacing { get; set; } = DefaultBlockSpacing;
 }
 
 public class OpenPatronLink
