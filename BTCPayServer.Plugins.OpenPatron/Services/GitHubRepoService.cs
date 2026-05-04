@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -75,34 +73,6 @@ public class GitHubRepoService(IHttpClientFactory httpClientFactory, IMemoryCach
         catch
         {
             return null;
-        }
-    }
-
-    public async Task<List<GitHubRepo>> GetPublicReposAsync(string username, CancellationToken ct = default)
-    {
-        if (string.IsNullOrWhiteSpace(username))
-            return [];
-
-        try
-        {
-            using var client = CreateClient();
-            var url = $"https://api.github.com/users/{Uri.EscapeDataString(username.Trim())}/repos?type=owner&sort=updated&per_page=30";
-            var response = await client.GetAsync(url, ct);
-
-            if (!response.IsSuccessStatusCode)
-                return [];
-
-            var json = await response.Content.ReadAsStringAsync(ct);
-            var repos = JsonSerializer.Deserialize<List<GitHubRepo>>(json, JsonOptions);
-            return repos?
-                .Where(r => !r.Fork && !r.Archived)
-                .OrderByDescending(r => r.StargazersCount)
-                .ThenByDescending(r => r.UpdatedAt)
-                .ToList() ?? [];
-        }
-        catch
-        {
-            return [];
         }
     }
 
