@@ -689,7 +689,8 @@ public class FastTests
     [Fact]
     public void SchemaContainsAllBlockTypes()
     {
-        var generator = new JsonSchemaGenerator(new SystemTextJsonSchemaGeneratorSettings());
+        var settings = new SystemTextJsonSchemaGeneratorSettings { FlattenInheritanceHierarchy = true };
+        var generator = new JsonSchemaGenerator(settings);
         foreach (var (typeKey, info) in BlockRegistry.AllTypes)
         {
             var schema = generator.Generate(info.SettingsType);
@@ -701,7 +702,8 @@ public class FastTests
     [Fact]
     public void SchemaPropertyNamesArePascalCase()
     {
-        var generator = new JsonSchemaGenerator(new SystemTextJsonSchemaGeneratorSettings());
+        var settings = new SystemTextJsonSchemaGeneratorSettings { FlattenInheritanceHierarchy = true };
+        var generator = new JsonSchemaGenerator(settings);
         foreach (var (typeKey, info) in BlockRegistry.AllTypes)
         {
             var schema = generator.Generate(info.SettingsType);
@@ -716,7 +718,8 @@ public class FastTests
     [Fact]
     public void GeneratedSchemaMatchesDtoProperties()
     {
-        var generator = new JsonSchemaGenerator(new SystemTextJsonSchemaGeneratorSettings());
+        var settings = new SystemTextJsonSchemaGeneratorSettings { FlattenInheritanceHierarchy = true };
+        var generator = new JsonSchemaGenerator(settings);
         foreach (var (typeKey, info) in BlockRegistry.AllTypes)
         {
             var schema = generator.Generate(info.SettingsType);

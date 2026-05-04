@@ -286,7 +286,10 @@ public class UIOpenPatronController(
     [ResponseCache(Duration = 86400)]
     public IActionResult Schema()
     {
-        var generatorSettings = new SystemTextJsonSchemaGeneratorSettings();
+        var generatorSettings = new SystemTextJsonSchemaGeneratorSettings
+        {
+            FlattenInheritanceHierarchy = true
+        };
         var generator = new JsonSchemaGenerator(generatorSettings);
 
         var blockSettingsSchemas = new JObject();

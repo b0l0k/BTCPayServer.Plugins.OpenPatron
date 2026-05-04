@@ -58,14 +58,14 @@ public static class BlockSettingsHelper
     }
 
     public static string? GravatarUrl(JObject? s)
-        => ComputeGravatarUrl(Str(s, nameof(ProfileHeroSettings.GravatarEmail)));
+        => ComputeGravatarUrl(Str(s, nameof(HeroSettingsBase.GravatarEmail)));
 
     public static string? AvatarUrl(JObject? s)
         => GravatarUrl(s) ?? GitHubAvatarUrl(s);
 
     public static string? GitHubAvatarUrl(JObject? s)
     {
-        var username = Str(s, nameof(ProfileHeroSettings.GitHubUsername));
+        var username = Str(s, nameof(HeroSettingsBase.GitHubUsername));
         return string.IsNullOrWhiteSpace(username)
             ? null
             : $"https://github.com/{Uri.EscapeDataString(username.Trim())}.png?size=200";
@@ -73,16 +73,16 @@ public static class BlockSettingsHelper
 
     public static string? GitHubProfileUrl(JObject? s)
     {
-        var username = Str(s, nameof(ProfileHeroSettings.GitHubUsername));
+        var username = Str(s, nameof(HeroSettingsBase.GitHubUsername));
         return string.IsNullOrWhiteSpace(username)
             ? null
             : $"https://github.com/{Uri.EscapeDataString(username)}";
     }
 
     public static bool HasSocialLinks(JObject? s)
-        => !string.IsNullOrWhiteSpace(Str(s, nameof(ProfileHeroSettings.SocialX)))
-        || !string.IsNullOrWhiteSpace(Str(s, nameof(ProfileHeroSettings.SocialMastodon)))
-        || !string.IsNullOrWhiteSpace(Str(s, nameof(ProfileHeroSettings.SocialNostr)));
+        => !string.IsNullOrWhiteSpace(Str(s, nameof(HeroSettingsBase.SocialX)))
+        || !string.IsNullOrWhiteSpace(Str(s, nameof(HeroSettingsBase.SocialMastodon)))
+        || !string.IsNullOrWhiteSpace(Str(s, nameof(HeroSettingsBase.SocialNostr)));
 
     public static string? BlockThemeStyle(BlockTheme? theme)
     {
