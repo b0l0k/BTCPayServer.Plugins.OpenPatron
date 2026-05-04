@@ -4,17 +4,13 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BTCPayServer.Plugins.OpenPatron.Models;
 
-[Description("Personal profile hero: avatar, name, bio, and social links")]
-public class ProfileHeroSettings
+public abstract class HeroSettingsBase
 {
     [Description("Display name shown on the page")]
     public string DisplayName { get; set; } = "";
 
     [Description("Short subtitle below the name")]
     public string Subtitle { get; set; } = "";
-
-    [Description("Brief biography / description")]
-    public string Bio { get; set; } = "";
 
     [Description("Email for Gravatar avatar")]
     public string GravatarEmail { get; set; } = "";
@@ -32,32 +28,18 @@ public class ProfileHeroSettings
     public string SocialNostr { get; set; } = "";
 }
 
+[Description("Personal profile hero: avatar, name, bio, and social links")]
+public class ProfileHeroSettings : HeroSettingsBase
+{
+    [Description("Brief biography / description")]
+    public string Bio { get; set; } = "";
+}
+
 [Description("Project hero: title, subtitle, maintainer card, and social links")]
-public class ProjectHeroSettings
+public class ProjectHeroSettings : HeroSettingsBase
 {
     [Description("Main headline")]
     public string Title { get; set; } = "";
-
-    [Description("Subtitle below the headline")]
-    public string Subtitle { get; set; } = "";
-
-    [Description("Maintainer name shown in the profile card")]
-    public string DisplayName { get; set; } = "";
-
-    [Description("Email for Gravatar avatar")]
-    public string GravatarEmail { get; set; } = "";
-
-    [Description("GitHub username (also used as avatar fallback)")]
-    public string GitHubUsername { get; set; } = "";
-
-    [Description("X (Twitter) handle")]
-    public string SocialX { get; set; } = "";
-
-    [Description("Mastodon profile URL")]
-    public string SocialMastodon { get; set; } = "";
-
-    [Description("Nostr npub identifier")]
-    public string SocialNostr { get; set; } = "";
 }
 
 [Description("Progress bar toward a funding goal")]
