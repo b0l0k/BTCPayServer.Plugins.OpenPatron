@@ -23,7 +23,6 @@ public class OpenPatronAppSettings
 
     // Global settings
     public string? OfferingId { get; set; }
-    public OpenPatronSupportMode SupportMode { get; set; } = OpenPatronSupportMode.Both;
     public string DefaultCurrency { get; set; } = "USD";
     public OpenPatronVisibility Visibility { get; set; } = OpenPatronVisibility.Unpublished;
 
@@ -94,9 +93,3 @@ public enum OpenPatronVisibility
     Published = 1
 }
 
-public enum OpenPatronSupportMode
-{
-    OneTimeOnly = 0,
-    SubscriptionOnly = 1,
-    Both = 2
-}

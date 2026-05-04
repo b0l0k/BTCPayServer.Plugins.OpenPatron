@@ -41,9 +41,6 @@ public class UpdateOpenPatronViewModel
     [MaxLength(50)]
     public string AppName { get; set; } = string.Empty;
 
-    [Display(Name = "Funding mode")]
-    public OpenPatronSupportMode SupportMode { get; set; } = OpenPatronSupportMode.Both;
-
     [Required]
     [Display(Name = "Default currency")]
     [MaxLength(12)]
