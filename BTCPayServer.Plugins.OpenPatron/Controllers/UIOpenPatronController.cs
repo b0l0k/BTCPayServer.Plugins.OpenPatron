@@ -45,14 +45,14 @@ public class UIOpenPatronController(
     [HttpGet("{appId}/settings/openpatron")]
     public async Task<IActionResult> Update(string appId)
     {
-        var app = await appService.GetApp(appId, OpenPatronAppType.AppType, includeArchived: true);
-        if (app is null)
+        var result = await GetAppWithSettings(appId);
+        if (result is null)
             return NotFound();
+        var (app, settings) = result.Value;
 
         if (!await IsAuthorized(app, Policies.CanViewStoreSettings))
             return Forbid();
 
-        var settings = app.GetSettings<OpenPatronAppSettings>();
         EnsurePageLayout(settings);
 
         var offering = await GetOffering(app, settings);
@@ -65,14 +65,13 @@ public class UIOpenPatronController(
     [HttpPost("{appId}/settings/openpatron")]
     public async Task<IActionResult> Update(string appId, UpdateOpenPatronViewModel viewModel)
     {
-        var app = await appService.GetApp(appId, OpenPatronAppType.AppType, includeArchived: true);
-        if (app is null)
+        var result = await GetAppWithSettings(appId);
+        if (result is null)
             return NotFound();
+        var (app, existingSettings) = result.Value;
 
         if (!await IsAuthorized(app, Policies.CanModifyStoreSettings))
             return Forbid();
-
-        var existingSettings = app.GetSettings<OpenPatronAppSettings>();
 
         if (!existingSettings.PageTypeConfirmed)
         {
@@ -143,11 +142,11 @@ public class UIOpenPatronController(
     [HttpGet("{appId}/openpatron")]
     public async Task<IActionResult> PublicPage(string appId)
     {
-        var app = await appService.GetApp(appId, OpenPatronAppType.AppType, includeArchived: true);
-        if (app is null)
+        var result = await GetAppWithSettings(appId);
+        if (result is null)
             return NotFound();
+        var (app, settings) = result.Value;
 
-        var settings = app.GetSettings<OpenPatronAppSettings>();
         if (!IsPublished(settings) && !await IsAuthorized(app, Policies.CanViewStoreSettings))
             return NotFound();
 
@@ -186,11 +185,11 @@ public class UIOpenPatronController(
     [HttpPost("{appId}/openpatron/contribute")]
     public async Task<IActionResult> Contribute(string appId, string amount)
     {
-        var app = await appService.GetApp(appId, OpenPatronAppType.AppType, includeArchived: true);
-        if (app is null)
+        var result = await GetAppWithSettings(appId);
+        if (result is null)
             return NotFound();
+        var (app, settings) = result.Value;
 
-        var settings = app.GetSettings<OpenPatronAppSettings>();
         if (!AllowsOneTime(settings))
             return NotFound();
 
@@ -241,11 +240,11 @@ public class UIOpenPatronController(
     [HttpPost("{appId}/openpatron/plans/{planId}/subscribe")]
     public async Task<IActionResult> Subscribe(string appId, string planId, bool isTrial = false)
     {
-        var app = await appService.GetApp(appId, OpenPatronAppType.AppType, includeArchived: true);
-        if (app is null)
+        var result = await GetAppWithSettings(appId);
+        if (result is null)
             return NotFound();
+        var (app, settings) = result.Value;
 
-        var settings = app.GetSettings<OpenPatronAppSettings>();
         if (!AllowsSubscriptions(settings))
             return NotFound();
 
@@ -373,11 +372,11 @@ public class UIOpenPatronController(
     [ResponseCache(Duration = 300)]
     public async Task<IActionResult> Badge(string appId, string style = "flat", string? label = null)
     {
-        var app = await appService.GetApp(appId, OpenPatronAppType.AppType, includeArchived: true);
-        if (app is null)
+        var result = await GetAppWithSettings(appId);
+        if (result is null)
             return NotFound();
+        var (app, settings) = result.Value;
 
-        var settings = app.GetSettings<OpenPatronAppSettings>();
         if (!IsPublished(settings) && !await IsAuthorized(app, Policies.CanViewStoreSettings))
             return NotFound();
 
@@ -428,6 +427,14 @@ public class UIOpenPatronController(
 
     private async Task<bool> IsAuthorized(AppData app, string policy)
         => (await authorizationService.AuthorizeAsync(User, app.StoreDataId, policy)).Succeeded;
+
+    private async Task<(AppData App, OpenPatronAppSettings Settings)?> GetAppWithSettings(string appId)
+    {
+        var app = await appService.GetApp(appId, OpenPatronAppType.AppType, includeArchived: true);
+        if (app is null)
+            return null;
+        return (app, app.GetSettings<OpenPatronAppSettings>());
+    }
 
     private UpdateOpenPatronViewModel ToUpdateViewModel(AppData app, OpenPatronAppSettings settings, OfferingData? offering)
     {
