@@ -308,17 +308,6 @@
 {
 <script src="~/vendor/vue-sortable/sortable.min.js"></script>
 <script>
-function copySnippet(inputId, btn) {
-    var input = document.getElementById(inputId);
-    if (!input) return;
-    navigator.clipboard.writeText(input.value).then(function () {
-        var orig = btn.textContent;
-        btn.textContent = 'Copied!';
-        setTimeout(function () { btn.textContent = orig; }, 1500);
-    });
-}
-</script>
-<script>
 window.__openpatron = {
     defaultAccent: '@PageTheme.DefaultAccentColor',
     defaultBorderRadius: '@PageTheme.DefaultBorderRadius',
