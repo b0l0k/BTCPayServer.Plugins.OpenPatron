@@ -432,14 +432,14 @@ public class FastTests
     [Fact]
     public void Md5HashIsCorrect()
     {
-        Assert.Equal("5d41402abc4b2a76b9719d911017c592", UIOpenPatronController.ComputeMd5Hash("hello"));
+        Assert.Equal("5d41402abc4b2a76b9719d911017c592", BlockSettingsHelper.ComputeMd5Hash("hello"));
     }
 
     [Fact]
     public void GravatarUrlNullForEmpty()
     {
-        Assert.Null(UIOpenPatronController.ComputeGravatarUrl(null));
-        Assert.Null(UIOpenPatronController.ComputeGravatarUrl(""));
+        Assert.Null(BlockSettingsHelper.ComputeGravatarUrl(null));
+        Assert.Null(BlockSettingsHelper.ComputeGravatarUrl(""));
     }
 
     // ── Per-block settings round-trip ──

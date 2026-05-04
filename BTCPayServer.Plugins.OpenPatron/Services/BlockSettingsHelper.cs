@@ -49,14 +49,16 @@ public static class BlockSettingsHelper
     public static JArray? Arr(JObject? s, string key)
         => s?[key] as JArray;
 
-    public static string? GravatarUrl(JObject? s)
+    public static string? ComputeGravatarUrl(string? email)
     {
-        var email = Str(s, nameof(ProfileHeroSettings.GravatarEmail));
         if (string.IsNullOrWhiteSpace(email))
             return null;
         var hash = ComputeMd5Hash(email.Trim().ToLowerInvariant());
         return $"https://www.gravatar.com/avatar/{hash}?s=200&d=identicon";
     }
+
+    public static string? GravatarUrl(JObject? s)
+        => ComputeGravatarUrl(Str(s, nameof(ProfileHeroSettings.GravatarEmail)));
 
     public static string? AvatarUrl(JObject? s)
         => GravatarUrl(s) ?? GitHubAvatarUrl(s);
@@ -95,7 +97,7 @@ public static class BlockSettingsHelper
         return sb.Length > 0 ? sb.ToString() : null;
     }
 
-    private static string ComputeMd5Hash(string input)
+    public static string ComputeMd5Hash(string input)
     {
         var bytes = MD5.HashData(Encoding.UTF8.GetBytes(input));
         var sb = new StringBuilder(32);
