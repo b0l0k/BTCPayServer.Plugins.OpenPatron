@@ -1,3 +1,13 @@
+function copySnippet(inputId, btn) {
+    var input = document.getElementById(inputId);
+    if (!input) return;
+    navigator.clipboard.writeText(input.value).then(function () {
+        var orig = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(function () { btn.textContent = orig; }, 1500);
+    });
+}
+
 (function () {
     var config = window.__openpatron || {};
     var DEFAULT_ACCENT = config.defaultAccent || '#6366f1';
