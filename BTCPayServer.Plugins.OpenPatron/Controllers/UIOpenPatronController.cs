@@ -445,7 +445,6 @@ public class UIOpenPatronController(
             PageTypeConfirmed = settings.PageTypeConfirmed,
             PageLayoutPreset = settings.PageLayoutPreset,
             SectionsJson = JsonConvert.SerializeObject(settings.Sections ?? [], Formatting.None),
-            PageLayoutJson = JsonConvert.SerializeObject(settings.Sections ?? [], Formatting.None),
             ThemeAccentColor = theme.AccentColor,
             ThemeBorderRadius = theme.BorderRadius,
             ThemeBlockSpacing = theme.BlockSpacing,

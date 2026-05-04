@@ -24,9 +24,6 @@ public class UpdateOpenPatronViewModel
     public string PageLayoutPreset { get; set; } = "8-4";
     public string SectionsJson { get; set; } = "[]";
 
-    // Legacy (kept for form compat during transition)
-    public string PageLayoutJson { get; set; } = "[]";
-
     // Theme
     [Display(Name = "Accent color")]
     [RegularExpression(@"^#[0-9a-fA-F]{6}$", ErrorMessage = "Must be a hex color like #6366f1.")]
