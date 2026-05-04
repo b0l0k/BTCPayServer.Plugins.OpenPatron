@@ -102,10 +102,4 @@ public class GitHubRepo
 
     [JsonPropertyName("stargazers_count")]
     public int StargazersCount { get; set; }
-
-    public bool Fork { get; set; }
-    public bool Archived { get; set; }
-
-    [JsonPropertyName("updated_at")]
-    public DateTimeOffset? UpdatedAt { get; set; }
 }

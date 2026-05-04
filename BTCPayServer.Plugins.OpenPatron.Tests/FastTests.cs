@@ -427,7 +427,7 @@ public class FastTests
         Assert.Equal("rich", OpenPatronOfferingResolver.SelectPreferredOffering([richer, empty], empty.Id)?.Id);
     }
 
-    // ── Gravatar / MD5 (controller static helpers) ──
+    // ── Gravatar / MD5 ──
 
     [Fact]
     public void Md5HashIsCorrect()
