@@ -38,7 +38,6 @@ public class OpenPatronAppType(
         {
             PageType = OpenPatronPageType.Project,
             PageTypeConfirmed = false,
-            SupportMode = OpenPatronSupportMode.Both,
             DefaultCurrency = defaultCurrency,
             Visibility = OpenPatronVisibility.Unpublished
         });
