@@ -123,10 +123,7 @@ public class UIOpenPatronController(
             OfferingId = viewModel.OfferingId,
             SupportMode = viewModel.SupportMode,
             DefaultCurrency = viewModel.DefaultCurrency.Trim().ToUpperInvariant(),
-            Visibility = viewModel.Visibility,
-            AccentColor = NormalizeString(viewModel.ThemeAccentColor),
-            PrimaryCallToActionUrl = existingSettings.PrimaryCallToActionUrl,
-            Links = existingSettings.Links
+            Visibility = viewModel.Visibility
         };
 
         settings.OfferingId = await ResolveOfferingId(

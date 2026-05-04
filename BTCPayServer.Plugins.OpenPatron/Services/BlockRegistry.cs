@@ -120,16 +120,6 @@ public static class BlockRegistry
             ? DefaultSectionsForPersonal()
             : DefaultSectionsForProject();
 
-    // Legacy compat (flat block list from sections)
-    public static List<BlockDefinition> DefaultLayoutFor(OpenPatronPageType pageType) =>
-        DefaultSectionsFor(pageType).SelectMany(s => s.Blocks).ToList();
-
-    public static List<BlockDefinition> DefaultLayoutForPersonal() =>
-        DefaultSectionsForPersonal().SelectMany(s => s.Blocks).ToList();
-
-    public static List<BlockDefinition> DefaultLayoutForProject() =>
-        DefaultSectionsForProject().SelectMany(s => s.Blocks).ToList();
-
     public static IEnumerable<BlockDefinition> AllBlocks(List<PageSection>? sections) =>
         sections?.SelectMany(s => s.Blocks) ?? [];
 }

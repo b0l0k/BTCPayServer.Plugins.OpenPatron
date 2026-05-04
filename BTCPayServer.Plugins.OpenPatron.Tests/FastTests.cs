@@ -148,13 +148,13 @@ public class FastTests
     }
 
     [Fact]
-    public void DefaultLayoutBlocksHaveSettings()
+    public void DefaultSectionBlocksHaveSettings()
     {
-        foreach (var block in BlockRegistry.DefaultLayoutForPersonal())
+        foreach (var block in BlockRegistry.AllBlocks(BlockRegistry.DefaultSectionsForPersonal()))
         {
             Assert.NotNull(block.Settings);
         }
-        foreach (var block in BlockRegistry.DefaultLayoutForProject())
+        foreach (var block in BlockRegistry.AllBlocks(BlockRegistry.DefaultSectionsForProject()))
         {
             Assert.NotNull(block.Settings);
         }
@@ -163,15 +163,15 @@ public class FastTests
     [Fact]
     public void DefaultDescriptionBlockHasHeading()
     {
-        var block = BlockRegistry.DefaultLayoutForProject().First(b => b.Type == "description");
+        var block = BlockRegistry.AllBlocks(BlockRegistry.DefaultSectionsForProject()).First(b => b.Type == "description");
         Assert.Equal("Why sponsor this work?", block.Settings!["Heading"]!.ToString());
     }
 
     [Fact]
-    public void DefaultLayoutBlocksHaveUniqueIds()
+    public void DefaultSectionBlocksHaveUniqueIds()
     {
-        var layout = BlockRegistry.DefaultLayoutForPersonal();
-        var ids = layout.Select(b => b.Id).ToList();
+        var blocks = BlockRegistry.AllBlocks(BlockRegistry.DefaultSectionsForPersonal()).ToList();
+        var ids = blocks.Select(b => b.Id).ToList();
         Assert.Equal(ids.Count, ids.Distinct().Count());
     }
 
