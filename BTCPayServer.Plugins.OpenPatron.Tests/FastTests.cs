@@ -23,7 +23,6 @@ public class FastTests
     {
         var settings = new OpenPatronAppSettings();
         Assert.Equal(OpenPatronVisibility.Unpublished, settings.Visibility);
-        Assert.Equal(OpenPatronSupportMode.Both, settings.SupportMode);
         Assert.Null(settings.OfferingId);
     }
 
@@ -111,7 +110,7 @@ public class FastTests
             new[] { "profile-hero", "description", "projects-grid", "subscription-tiers", "quick-support", "sponsor-wall" },
             col1Types);
         Assert.Single(sections[1].Blocks);
-        Assert.Equal("sidebar-support", sections[1].Blocks[0].Type);
+        Assert.Equal("one-time-payment", sections[1].Blocks[0].Type);
     }
 
     [Fact]
@@ -124,7 +123,7 @@ public class FastTests
             new[] { "project-hero", "funding-progress", "description", "subscription-tiers", "quick-support", "sponsor-wall" },
             col1Types);
         Assert.Single(sections[1].Blocks);
-        Assert.Equal("sidebar-support", sections[1].Blocks[0].Type);
+        Assert.Equal("one-time-payment", sections[1].Blocks[0].Type);
     }
 
     [Fact]
@@ -328,7 +327,7 @@ public class FastTests
 
         var narrower = settings.Sections.First(s => s != widerSection);
         Assert.Single(narrower.Blocks);
-        Assert.Equal("sidebar-support", narrower.Blocks[0].Type);
+        Assert.Equal("one-time-payment", narrower.Blocks[0].Type);
     }
 
     [Fact]
@@ -380,8 +379,7 @@ public class FastTests
                 new() { Id = "b2", Type = "quick-support", Settings = JObject.FromObject(new { SuggestedAmounts = new[] { 5, 15 } }) }
             ],
             Theme = new PageTheme { AccentColor = "#00ff00" },
-            DefaultCurrency = "EUR",
-            SupportMode = OpenPatronSupportMode.Both
+            DefaultCurrency = "EUR"
         };
 
         var json = JsonConvert.SerializeObject(settings);
@@ -571,11 +569,11 @@ public class FastTests
     }
 
     [Fact]
-    public void SidebarSupportSettingsRoundTrip()
+    public void OneTimePaymentSettingsRoundTrip()
     {
         var block = new BlockDefinition
         {
-            Id = "ss1", Type = "sidebar-support",
+            Id = "ss1", Type = "one-time-payment",
             Settings = JObject.FromObject(new { Heading = "Sponsor now" })
         };
         var json = JsonConvert.SerializeObject(block);
@@ -666,7 +664,7 @@ public class FastTests
             {
                 Id = "col-2", Width = 4, Blocks =
                 [
-                    new() { Type = "sidebar-support", Settings = JObject.FromObject(new { Heading = "Sponsor" }) },
+                    new() { Type = "one-time-payment", Settings = JObject.FromObject(new { Heading = "Sponsor" }) },
                 ]
             }
         };

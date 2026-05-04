@@ -17,7 +17,7 @@ public static class BlockRegistry
     public const string SubscriptionTiers = "subscription-tiers";
     public const string QuickSupport = "quick-support";
     public const string SponsorWall = "sponsor-wall";
-    public const string SidebarSupport = "sidebar-support";
+    public const string OneTimePayment = "one-time-payment";
 
     private static readonly Dictionary<string, BlockTypeInfo> Types = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -29,7 +29,7 @@ public static class BlockRegistry
         [SubscriptionTiers] = new("Subscription Tiers", "Sponsor plan cards with subscribe actions", "/Views/UIOpenPatron/Blocks/_Block_SubscriptionTiers.cshtml", typeof(SubscriptionTiersSettings)),
         [QuickSupport] = new("Quick Support", "Suggested one-time amount buttons", "/Views/UIOpenPatron/Blocks/_Block_QuickSupport.cshtml", typeof(QuickSupportSettings)),
         [SponsorWall] = new("Sponsor Wall", "Recent anonymous contributions", "/Views/UIOpenPatron/Blocks/_Block_SponsorWall.cshtml", typeof(SponsorWallSettings)),
-        [SidebarSupport] = new("Sidebar Support", "Compact sponsor panel with contribution form", "/Views/UIOpenPatron/Blocks/_Block_SidebarSupport.cshtml", typeof(SidebarSupportSettings)),
+        [OneTimePayment] = new("One-Time Payment", "Compact sponsor panel with contribution form", "/Views/UIOpenPatron/Blocks/_Block_OneTimePayment.cshtml", typeof(OneTimePaymentSettings)),
     };
 
     public static IReadOnlyDictionary<string, BlockTypeInfo> AllTypes { get; } = new ReadOnlyDictionary<string, BlockTypeInfo>(Types);
@@ -87,7 +87,7 @@ public static class BlockRegistry
         {
             Id = "col-2", Width = 4, Blocks =
             [
-                new() { Type = SidebarSupport, Settings = JObject.FromObject(new SidebarSupportSettings { Heading = "Sponsor now" }) },
+                new() { Type = OneTimePayment, Settings = JObject.FromObject(new OneTimePaymentSettings { Heading = "Sponsor now" }) },
             ]
         }
     ];
@@ -110,7 +110,7 @@ public static class BlockRegistry
         {
             Id = "col-2", Width = 4, Blocks =
             [
-                new() { Type = SidebarSupport, Settings = JObject.FromObject(new SidebarSupportSettings { Heading = "Sponsor now" }) },
+                new() { Type = OneTimePayment, Settings = JObject.FromObject(new OneTimePaymentSettings { Heading = "Sponsor now" }) },
             ]
         }
     ];
