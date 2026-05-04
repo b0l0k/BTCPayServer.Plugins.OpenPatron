@@ -150,7 +150,7 @@ function copySnippet(inputId, btn) {
                 '<div class="d-flex gap-1 justify-content-center mb-1">' +
                 widths.map(function (w) {
                     return '<div style="height:24px;flex:' + w +
-                        ';background:' + (isActive ? 'var(--bs-primary)' : '#dee2e6') +
+                        ';background:' + (isActive ? 'var(--bs-primary)' : 'var(--bs-secondary-bg)') +
                         ';border-radius:3px"></div>';
                 }).join('') +
                 '</div>' +
@@ -215,7 +215,7 @@ function copySnippet(inputId, btn) {
             var html =
                 '<div class="border rounded-3 p-2 section-column' +
                 (isActive ? ' border-primary' : '') +
-                '" data-section-idx="' + sIdx + '" style="min-height:120px;background:#f8f9fa">';
+                '" data-section-idx="' + sIdx + '" style="min-height:120px;background:var(--bs-tertiary-bg)">';
             html +=
                 '<div class="d-flex justify-content-between align-items-center mb-2">' +
                 '<span class="fw-semibold small text-muted">Column (' + section.Width + ')</span>' +
