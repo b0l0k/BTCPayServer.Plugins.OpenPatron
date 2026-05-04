@@ -116,8 +116,8 @@ public class UIOpenPatronController(
             Theme = new PageTheme
             {
                 AccentColor = NormalizeString(viewModel.ThemeAccentColor) ?? PageTheme.DefaultAccentColor,
-                BorderRadius = NormalizeString(viewModel.ThemeBorderRadius) ?? "1.5rem",
-                BlockSpacing = NormalizeString(viewModel.ThemeBlockSpacing) ?? "1rem",
+                BorderRadius = NormalizeString(viewModel.ThemeBorderRadius) ?? PageTheme.DefaultBorderRadius,
+                BlockSpacing = NormalizeString(viewModel.ThemeBlockSpacing) ?? PageTheme.DefaultBlockSpacing,
             },
             OfferingId = viewModel.OfferingId,
             SupportMode = viewModel.SupportMode,

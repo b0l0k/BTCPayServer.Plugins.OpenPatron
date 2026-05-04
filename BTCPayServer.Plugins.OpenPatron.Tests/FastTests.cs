@@ -71,8 +71,8 @@ public class FastTests
     {
         var theme = new PageTheme();
         Assert.Equal(PageTheme.DefaultAccentColor, theme.AccentColor);
-        Assert.Equal("1.5rem", theme.BorderRadius);
-        Assert.Equal("1rem", theme.BlockSpacing);
+        Assert.Equal(PageTheme.DefaultBorderRadius, theme.BorderRadius);
+        Assert.Equal(PageTheme.DefaultBlockSpacing, theme.BlockSpacing);
     }
 
     // ── BlockRegistry ──

@@ -1,6 +1,8 @@
 (function () {
     var config = window.__openpatron || {};
     var DEFAULT_ACCENT = config.defaultAccent || '#6366f1';
+    var DEFAULT_BORDER_RADIUS = config.defaultBorderRadius || '1.5rem';
+    var DEFAULT_BLOCK_SPACING = config.defaultBlockSpacing || '1rem';
     var BLOCK_TYPES = config.blockTypes || {};
 
     var BLOCK_FORMS = {
@@ -591,8 +593,8 @@
     function getThemeFromForm() {
         return {
             AccentColor: document.getElementById('ThemeAccentColor').value || DEFAULT_ACCENT,
-            BorderRadius: document.getElementById('ThemeBorderRadius').value || '1.5rem',
-            BlockSpacing: document.getElementById('ThemeBlockSpacing').value || '1rem'
+            BorderRadius: document.getElementById('ThemeBorderRadius').value || DEFAULT_BORDER_RADIUS,
+            BlockSpacing: document.getElementById('ThemeBlockSpacing').value || DEFAULT_BLOCK_SPACING
         };
     }
 

@@ -321,6 +321,8 @@ function copySnippet(inputId, btn) {
 <script>
 window.__openpatron = {
     defaultAccent: '@PageTheme.DefaultAccentColor',
+    defaultBorderRadius: '@PageTheme.DefaultBorderRadius',
+    defaultBlockSpacing: '@PageTheme.DefaultBlockSpacing',
     blockTypes: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(
         blockTypes.ToDictionary(kv => kv.Key, kv => new { name = kv.Value.DisplayName, description = kv.Value.Description })))
 };
