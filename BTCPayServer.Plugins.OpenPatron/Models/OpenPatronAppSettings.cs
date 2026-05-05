@@ -15,7 +15,9 @@ public class OpenPatronAppSettings
     // Section-based page layout
     public string PageLayoutPreset { get; set; } = "8-4";
     public List<PageSection>? Sections { get; set; }
-    public PageTheme Theme { get; set; } = new();
+
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+    public PageTheme? Theme { get; set; }
 
     // Legacy flat layout (migrated to Sections on first load)
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
@@ -70,6 +72,15 @@ public class PageTheme
     public string ShadowStyle { get; set; } = DefaultShadowStyle;
     public string TypographyStyle { get; set; } = DefaultTypographyStyle;
     public string BackgroundStyle { get; set; } = DefaultBackgroundStyle;
+
+    public bool IsDefault() =>
+        AccentColor == DefaultAccentColor &&
+        SecondaryColor == DefaultSecondaryColor &&
+        BorderRadius == DefaultBorderRadius &&
+        BlockSpacing == DefaultBlockSpacing &&
+        ShadowStyle == DefaultShadowStyle &&
+        TypographyStyle == DefaultTypographyStyle &&
+        BackgroundStyle == DefaultBackgroundStyle;
 }
 
 public enum OpenPatronPageType
