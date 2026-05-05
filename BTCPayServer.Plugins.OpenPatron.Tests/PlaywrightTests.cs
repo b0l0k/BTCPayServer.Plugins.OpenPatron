@@ -11,10 +11,10 @@ namespace BTCPayServer.Plugins.OpenPatron.Tests;
 [Collection(nameof(NonParallelizableCollectionDefinition))]
 public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
 {
-    // ── New app starts with block editor ──
+    // ── Template picker ──
 
     [Fact]
-    public async Task NewAppShowsBlockEditor()
+    public async Task NewAppShowsTemplatePicker()
     {
         await using var s = CreatePlaywrightTester();
         await s.StartAsync();
@@ -22,7 +22,57 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
         await s.CreateNewStore();
         await s.CreateApp("OpenPatron");
 
-        await Expect(s.Page.Locator("#sectionPreview")).ToBeVisibleAsync();
+        await Expect(s.Page.Locator("button[name='template'][value='personal']")).ToBeVisibleAsync();
+        await Expect(s.Page.Locator("button[name='template'][value='project']")).ToBeVisibleAsync();
+        await Expect(s.Page.Locator("button[name='template'][value='empty']")).ToBeVisibleAsync();
+    }
+
+    [Fact]
+    public async Task ProjectTemplatePopulatesBlocks()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+        await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[name='template'][value='project']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
+
+        await Expect(s.Page.Locator("#blockList .block-row")).ToHaveCountAsync(6);
+        await Expect(s.Page.Locator("button[name='template']")).ToHaveCountAsync(0);
+    }
+
+    [Fact]
+    public async Task PersonalTemplatePopulatesBlocks()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+        await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[name='template'][value='personal']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
+
+        await Expect(s.Page.Locator("#blockList .block-row")).ToHaveCountAsync(7);
+        await Expect(s.Page.Locator("button[name='template']")).ToHaveCountAsync(0);
+    }
+
+    [Fact]
+    public async Task EmptyTemplateShowsNoBlocks()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+        await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[name='template'][value='empty']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
+
+        await Expect(s.Page.Locator("#blockList .block-row")).ToHaveCountAsync(0);
+        await Expect(s.Page.Locator("button[name='template']")).ToHaveCountAsync(0);
     }
 
     // ── Block add / remove ──
@@ -35,6 +85,9 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
         await s.RegisterNewUser(true);
         await s.CreateNewStore();
         await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[name='template'][value='project']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
 
         var initial = await s.Page.Locator("#blockList .block-row").CountAsync();
         await s.Page.Locator(".block-picker-item[data-block-type='sponsor-wall']").ClickAsync();
@@ -49,6 +102,9 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
         await s.RegisterNewUser(true);
         await s.CreateNewStore();
         await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[name='template'][value='project']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
 
         // Add a block first so we can remove it
         await s.Page.Locator(".block-picker-item[data-block-type='sponsor-wall']").ClickAsync();
@@ -73,8 +129,8 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
         await s.CreateNewStore();
         await s.CreateApp("OpenPatron");
 
-        // Add a block so we can expand it
-        await s.Page.Locator(".block-picker-item[data-block-type='description']").ClickAsync();
+        await s.Page.Locator("button[name='template'][value='project']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
 
         // Click the first block header to expand it
         await s.Page.Locator("#blockList .block-header").First.ClickAsync();
@@ -93,14 +149,14 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
         await s.CreateNewStore();
         await s.CreateApp("OpenPatron");
 
-        // Add a description block so we can edit it
-        await s.Page.Locator(".block-picker-item[data-block-type='description']").ClickAsync();
+        await s.Page.Locator("button[name='template'][value='project']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
 
-        // Expand the description block
+        // Expand the project-hero block (first block in template)
         await s.Page.Locator("#blockList .block-header").First.ClickAsync();
 
-        // Fill in the heading field
-        var titleField = s.Page.Locator("#blockList .block-row").First.Locator(".block-field[data-key='heading']");
+        // Fill in the title field
+        var titleField = s.Page.Locator("#blockList .block-row").First.Locator(".block-field[data-key='title']");
         await titleField.ClearAsync();
         await titleField.FillAsync("My Great Project");
 
@@ -110,7 +166,7 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
 
         // Expand the block again and verify the value persisted
         await s.Page.Locator("#blockList .block-header").First.ClickAsync();
-        var titleFieldAfter = s.Page.Locator("#blockList .block-row").First.Locator(".block-field[data-key='heading']");
+        var titleFieldAfter = s.Page.Locator("#blockList .block-row").First.Locator(".block-field[data-key='title']");
         await Expect(titleFieldAfter).ToHaveValueAsync("My Great Project");
     }
 
@@ -124,6 +180,9 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
         await s.RegisterNewUser(true);
         await s.CreateNewStore();
         await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[name='template'][value='empty']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
 
         await s.Page.Locator("[name='ThemeAccentColor']").ClearAsync();
         await s.Page.Locator("[name='ThemeAccentColor']").FillAsync("#ff5500");
@@ -147,15 +206,18 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
         await s.CreateNewStore();
         var (_, appId) = await s.CreateApp("OpenPatron");
 
-        // Add a description block with content
-        // Add a description block
-        await s.Page.Locator(".block-picker-item[data-block-type='description']").ClickAsync();
-        await s.Page.Locator("#blockList .block-header").First.ClickAsync();
-        var headingField = s.Page.Locator("#blockList .block-row").First.Locator(".block-field[data-key='heading']");
-        await headingField.ClearAsync();
-        await headingField.FillAsync("Test Project");
+        await s.Page.Locator("button[name='template'][value='project']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
 
-        var contentField = s.Page.Locator("#blockList .block-row").First.Locator(".block-field[data-key='content']");
+        // Expand project-hero and set a title so it renders
+        await s.Page.Locator("#blockList .block-header").First.ClickAsync();
+        var titleField = s.Page.Locator("#blockList .block-row").First.Locator(".block-field[data-key='title']");
+        await titleField.ClearAsync();
+        await titleField.FillAsync("Test Project");
+
+        // Expand description block and add content
+        await s.Page.Locator("#blockList .block-header").Nth(2).ClickAsync();
+        var contentField = s.Page.Locator("#blockList .block-row").Nth(2).Locator(".block-field[data-key='content']");
         await contentField.FillAsync("A great project");
 
         await s.Page.Locator("[name='Visibility']").SelectOptionAsync("1");
@@ -167,7 +229,7 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
         var blocks = s.Page.Locator("[data-block-type]");
         var count = await blocks.CountAsync();
         Assert.True(count > 0);
-        Assert.Equal("description", await blocks.First.GetAttributeAsync("data-block-type"));
+        Assert.Equal("project-hero", await blocks.First.GetAttributeAsync("data-block-type"));
     }
 
     [Fact]
@@ -178,6 +240,9 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
         await s.RegisterNewUser(true);
         await s.CreateNewStore();
         var (_, appId) = await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[name='template'][value='empty']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
 
         await s.Page.Locator("[name='ThemeAccentColor']").ClearAsync();
         await s.Page.Locator("[name='ThemeAccentColor']").FillAsync("#ff5500");
@@ -198,6 +263,9 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
         await s.RegisterNewUser(true);
         await s.CreateNewStore();
         var (_, appId) = await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[name='template'][value='empty']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
 
         await s.Page.EvaluateAsync("() => { document.getElementById('pageLayoutJson').value = '[]'; }");
         await s.Page.Locator("[name='Visibility']").SelectOptionAsync("1");
@@ -220,9 +288,8 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
         await s.CreateNewStore();
         await s.CreateApp("OpenPatron");
 
-        // Add two blocks so we can reorder
-        await s.Page.Locator(".block-picker-item[data-block-type='description']").ClickAsync();
-        await s.Page.Locator(".block-picker-item[data-block-type='sponsor-wall']").ClickAsync();
+        await s.Page.Locator("button[name='template'][value='project']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
 
         var firstText = await s.Page.Locator("#blockList .block-row .fw-semibold").First.TextContentAsync();
 

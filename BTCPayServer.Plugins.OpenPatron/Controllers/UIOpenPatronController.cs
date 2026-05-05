@@ -66,7 +66,7 @@ public class UIOpenPatronController(
 
     [Authorize(Policy = Policies.CanModifyStoreSettings, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
     [HttpPost("{appId}/settings/openpatron")]
-    public async Task<IActionResult> Update(string appId, UpdateOpenPatronViewModel viewModel)
+    public async Task<IActionResult> Update(string appId, UpdateOpenPatronViewModel viewModel, string? template)
     {
         var result = await GetAppWithSettings(appId);
         if (result is null)
@@ -75,6 +75,19 @@ public class UIOpenPatronController(
 
         if (!await IsAuthorized(app, Policies.CanModifyStoreSettings))
             return Forbid();
+
+        // Template selection — populate sections and redirect
+        if (!string.IsNullOrEmpty(template))
+        {
+            existingSettings.Sections = BlockRegistry.GetTemplateSections(template)
+                                        ?? BlockRegistry.CreateSectionsForPreset(existingSettings.PageLayoutPreset);
+            existingSettings.Theme = null;
+            existingSettings.PageLayout = null;
+            app.SetSettings(existingSettings);
+            await appService.UpdateOrCreateApp(app);
+            TempData[WellKnownTempData.SuccessMessage] = "Template applied. You can now configure your page.";
+            return RedirectToAction(nameof(Update), new { appId = app.Id });
+        }
 
         if (!ModelState.IsValid)
         {
@@ -471,6 +484,7 @@ public class UIOpenPatronController(
             Archived = app.Archived,
             PageLayoutPreset = settings.PageLayoutPreset,
             SectionsJson = JsonConvert.SerializeObject(settings.Sections ?? [], Formatting.None),
+            HasBlocks = BlockRegistry.AllBlocks(settings.Sections).Any(),
             ThemeAccentColor = theme.AccentColor,
             ThemeSecondaryColor = theme.SecondaryColor,
             ThemeBorderRadius = theme.BorderRadius,

@@ -115,6 +115,14 @@ public static class BlockRegistry
         }
     ];
 
+    public static List<PageSection>? GetTemplateSections(string? template) => template switch
+    {
+        "personal" => DefaultSectionsForPersonal(),
+        "project" => DefaultSectionsForProject(),
+        "empty" => null,
+        _ => null
+    };
+
     public static IEnumerable<BlockDefinition> AllBlocks(List<PageSection>? sections) =>
         sections?.SelectMany(s => s.Blocks) ?? [];
 }
