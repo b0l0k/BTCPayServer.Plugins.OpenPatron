@@ -5,6 +5,7 @@
 @{
     Layout = "_LayoutSimple";
     ViewData["Title"] = Model.AppName;
+    ViewData["ShowFooter"] = false;
     var theme = Model.Theme;
     var accent = theme.AccentColor;
     var radius = theme.BorderRadius;
@@ -378,6 +379,10 @@
                 </div>
             </div>
         }
+    </div>
+
+    <div class="text-center text-muted small py-4" style="opacity:.6">
+        Powered by <a href="https://btcpayserver.org" target="_blank" rel="noreferrer" class="text-muted">BTCPay Server</a> and <a href="https://github.com/b0l0k/BTCPayServer.Plugins.OpenPatron" target="_blank" rel="noreferrer" class="text-muted">Open Patron</a> plugin
     </div>
 </div>
 
