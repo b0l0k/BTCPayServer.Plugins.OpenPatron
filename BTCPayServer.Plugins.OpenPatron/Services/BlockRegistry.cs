@@ -120,11 +120,23 @@ public static class BlockRegistry
         {
             Id = "col-1", Width = 8, Blocks =
             [
-                new() { Type = ProjectHero, Settings = JObject.FromObject(new ProjectHeroSettings()) },
-                new() { Type = FundingProgress, Settings = JObject.FromObject(new FundingProgressSettings()) },
-                new() { Type = Description, Settings = JObject.FromObject(new DescriptionSettings { Heading = "Why sponsor this work?" }) },
-                new() { Type = SubscriptionTiers, Settings = JObject.FromObject(new SubscriptionTiersSettings { Heading = "Choose a sponsorship tier", Subtitle = "Pick the level that fits you best" }) },
-                new() { Type = QuickSupport, Settings = JObject.FromObject(new QuickSupportSettings { Heading = "Send quick support" }) },
+                new() { Type = ProjectHero, Settings = JObject.FromObject(new ProjectHeroSettings
+                {
+                    Title = "BTCPay Server v3 — The Next Chapter",
+                    Subtitle = "Help us ship the most ambitious BTCPay Server release yet",
+                    DisplayName = "BTCPay Server Foundation",
+                    GitHubUsername = "btcpayserver",
+                    SocialX = "https://x.com/BtcpayServer",
+                    SocialNostr = "npub1r22dt8xraqj42x2kk49ycmpnfmfzc3faxap2kd3f0gpe4ul68nhsaxlas2",
+                }) },
+                new() { Type = FundingProgress, Settings = JObject.FromObject(new FundingProgressSettings { Goal = 21000, ProgressBarStyle = "gradient" }) },
+                new() { Type = Description, Settings = JObject.FromObject(new DescriptionSettings
+                {
+                    Heading = "Why sponsor this work?",
+                    Content = "BTCPay Server v3 is a ground-up rebuild of the plugin architecture, bringing a new dashboard, faster sync times, and first-class multi-tenant support.\n\nThis release requires months of dedicated full-time work from core contributors. Every contribution — large or small — goes directly toward developer salaries, infrastructure, and security audits.\n\nNo VCs. No token sales. Just open-source software funded by the people who use it.",
+                }) },
+                new() { Type = SubscriptionTiers, Settings = JObject.FromObject(new SubscriptionTiersSettings { Heading = "Become a project sponsor", Subtitle = "Recurring support keeps development sustainable" }) },
+                new() { Type = QuickSupport, Settings = JObject.FromObject(new QuickSupportSettings { Heading = "One-time contribution", SuggestedAmounts = [21, 100, 500, 1000] }) },
                 new() { Type = SponsorWall, Settings = JObject.FromObject(new SponsorWallSettings { Heading = "Who's supporting this work" }) },
             ]
         },
@@ -132,7 +144,7 @@ public static class BlockRegistry
         {
             Id = "col-2", Width = 4, Blocks =
             [
-                new() { Type = OneTimePayment, Settings = JObject.FromObject(new OneTimePaymentSettings { Heading = "Sponsor now" }) },
+                new() { Type = OneTimePayment, Settings = JObject.FromObject(new OneTimePaymentSettings { Heading = "Fund the next release" }) },
             ]
         }
     ];
