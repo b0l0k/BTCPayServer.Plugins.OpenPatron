@@ -307,4 +307,441 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
         var newFirstText = await s.Page.Locator("#blockList .block-row .fw-semibold").First.TextContentAsync();
         Assert.NotEqual(firstText, newFirstText);
     }
+
+    // ── JSON mode / two-way sync ──
+
+    [Fact]
+    public async Task SwitchToJsonShowsCurrentBlocks()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+        await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[name='template'][value='project']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
+
+        await s.Page.Locator("#modeJsonBtn").ClickAsync();
+        var json = await s.Page.Locator("#jsonEditorTextarea").InputValueAsync();
+        Assert.Contains("Sections", json);
+        Assert.Contains("project-hero", json);
+    }
+
+    [Fact]
+    public async Task SwitchToJsonShowsLayout()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+        await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[name='template'][value='project']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
+
+        await s.Page.Locator("#modeJsonBtn").ClickAsync();
+        var json = await s.Page.Locator("#jsonEditorTextarea").InputValueAsync();
+        Assert.Contains("\"Layout\"", json);
+    }
+
+    [Fact]
+    public async Task JsonModeThemeCardVisible()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+        await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[name='template'][value='empty']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
+
+        await s.Page.Locator("#modeJsonBtn").ClickAsync();
+        await Expect(s.Page.Locator("#themeCard")).ToBeVisibleAsync();
+    }
+
+    [Fact]
+    public async Task JsonModeBlockPickerVisible()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+        await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[name='template'][value='empty']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
+
+        await s.Page.Locator("#modeJsonBtn").ClickAsync();
+        await Expect(s.Page.Locator("#blockPickerCard")).ToBeVisibleAsync();
+    }
+
+    [Fact]
+    public async Task AddBlockInJsonModeUpdatesTextarea()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+        await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[name='template'][value='empty']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
+
+        await s.Page.Locator("#modeJsonBtn").ClickAsync();
+        var before = await s.Page.Locator("#jsonEditorTextarea").InputValueAsync();
+        Assert.DoesNotContain("sponsor-wall", before);
+
+        await s.Page.Locator(".block-picker-item[data-block-type='sponsor-wall']").ClickAsync();
+
+        var after = await s.Page.Locator("#jsonEditorTextarea").InputValueAsync();
+        Assert.Contains("sponsor-wall", after);
+    }
+
+    [Fact]
+    public async Task ChangeAccentColorInJsonModeUpdatesTextarea()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+        await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[name='template'][value='empty']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
+
+        await s.Page.Locator("#modeJsonBtn").ClickAsync();
+
+        // Set a non-default accent color
+        await s.Page.Locator("[name='ThemeAccentColor']").ClearAsync();
+        await s.Page.Locator("[name='ThemeAccentColor']").FillAsync("#ff5500");
+        // Dispatch input event to trigger sync
+        await s.Page.Locator("[name='ThemeAccentColor']").DispatchEventAsync("input");
+
+        var json = await s.Page.Locator("#jsonEditorTextarea").InputValueAsync();
+        Assert.Contains("#ff5500", json);
+        Assert.Contains("\"Theme\"", json);
+    }
+
+    [Fact]
+    public async Task DefaultThemeNotInJson()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+        await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[name='template'][value='empty']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
+
+        await s.Page.Locator("#modeJsonBtn").ClickAsync();
+
+        var json = await s.Page.Locator("#jsonEditorTextarea").InputValueAsync();
+        Assert.DoesNotContain("\"Theme\"", json);
+    }
+
+    [Fact]
+    public async Task ChangeBorderRadiusInJsonModeUpdatesTextarea()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+        await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[name='template'][value='empty']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
+
+        await s.Page.Locator("#modeJsonBtn").ClickAsync();
+
+        await s.Page.Locator("[name='ThemeBorderRadius']").SelectOptionAsync("2rem");
+
+        var json = await s.Page.Locator("#jsonEditorTextarea").InputValueAsync();
+        Assert.Contains("2rem", json);
+        Assert.Contains("\"Theme\"", json);
+    }
+
+    [Fact]
+    public async Task EditJsonTextareaUpdatesThemeForm()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+        await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[name='template'][value='empty']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
+
+        await s.Page.Locator("#modeJsonBtn").ClickAsync();
+
+        // Set JSON with custom theme
+        await s.Page.Locator("#jsonEditorTextarea").FillAsync(@"{
+  ""Layout"": ""single"",
+  ""Sections"": [{ ""Blocks"": [] }],
+  ""Theme"": { ""AccentColor"": ""#00ff00"", ""BorderRadius"": ""2rem"" }
+}");
+        await s.Page.Locator("#jsonEditorTextarea").DispatchEventAsync("input");
+
+        await Expect(s.Page.Locator("[name='ThemeAccentColor']")).ToHaveValueAsync("#00ff00");
+        await Expect(s.Page.Locator("[name='ThemeBorderRadius']")).ToHaveValueAsync("2rem");
+    }
+
+    [Fact]
+    public async Task EditJsonTextareaAndSwitchToVisualReflectsChanges()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+        await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[name='template'][value='empty']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
+
+        await s.Page.Locator("#modeJsonBtn").ClickAsync();
+
+        // Add a block via JSON
+        await s.Page.Locator("#jsonEditorTextarea").FillAsync(@"{
+  ""Layout"": ""single"",
+  ""Sections"": [{ ""Blocks"": [{ ""Type"": ""sponsor-wall"", ""Settings"": {} }] }]
+}");
+
+        await s.Page.Locator("#modeVisualBtn").ClickAsync();
+
+        await Expect(s.Page.Locator("#blockList .block-row")).ToHaveCountAsync(1);
+    }
+
+    [Fact]
+    public async Task JsonModeRemoveBlockUpdatesTextarea()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+        await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[name='template'][value='project']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
+
+        await s.Page.Locator("#modeJsonBtn").ClickAsync();
+
+        var firstType = await s.Page.Locator("#blockList .block-row .fw-semibold").First.TextContentAsync();
+        await s.Page.Locator("#blockList .block-row .block-remove-btn").First.ClickAsync();
+
+        var json = await s.Page.Locator("#jsonEditorTextarea").InputValueAsync();
+        Assert.DoesNotContain(firstType!.Trim().ToLower().Replace(" ", "-"), json);
+    }
+
+    [Fact]
+    public async Task SaveFromJsonModePersistsCorrectly()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+        await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[name='template'][value='empty']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
+
+        await s.Page.Locator("#modeJsonBtn").ClickAsync();
+
+        // Set up a custom configuration via JSON
+        await s.Page.Locator("#jsonEditorTextarea").FillAsync(@"{
+  ""Layout"": ""single"",
+  ""Sections"": [{ ""Blocks"": [{ ""Type"": ""sponsor-wall"", ""Settings"": {} }, { ""Type"": ""description"", ""Settings"": {} }] }]
+}");
+        await s.Page.Locator("#jsonEditorTextarea").DispatchEventAsync("input");
+
+        await s.Page.Locator("#saveBtn").ClickAsync();
+        await s.FindAlertMessage(partialText: "updated");
+
+        // Verify blocks persisted
+        await Expect(s.Page.Locator("#blockList .block-row")).ToHaveCountAsync(2);
+    }
+
+    [Fact]
+    public async Task SaveFromJsonModeWithThemePersists()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+        await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[name='template'][value='empty']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
+
+        await s.Page.Locator("#modeJsonBtn").ClickAsync();
+
+        await s.Page.Locator("#jsonEditorTextarea").FillAsync(@"{
+  ""Layout"": ""single"",
+  ""Sections"": [{ ""Blocks"": [] }],
+  ""Theme"": { ""AccentColor"": ""#abcdef"" }
+}");
+        await s.Page.Locator("#jsonEditorTextarea").DispatchEventAsync("input");
+
+        await s.Page.Locator("#saveBtn").ClickAsync();
+        await s.FindAlertMessage(partialText: "updated");
+
+        await Expect(s.Page.Locator("[name='ThemeAccentColor']")).ToHaveValueAsync("#abcdef");
+    }
+
+    [Fact]
+    public async Task ChangeLayoutPresetInJsonModeUpdatesTextarea()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+        await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[name='template'][value='project']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
+
+        await s.Page.Locator("#modeJsonBtn").ClickAsync();
+
+        // Change layout to sidebar-left
+        await s.Page.Locator(".layout-preset-btn[data-preset='sidebar-left']").ClickAsync();
+
+        var json = await s.Page.Locator("#jsonEditorTextarea").InputValueAsync();
+        Assert.Contains("sidebar-left", json);
+    }
+
+    [Fact]
+    public async Task SwitchToJsonAndBackPreservesState()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+        await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[name='template'][value='project']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
+
+        var blockCount = await s.Page.Locator("#blockList .block-row").CountAsync();
+
+        // Switch to JSON and back
+        await s.Page.Locator("#modeJsonBtn").ClickAsync();
+        await s.Page.Locator("#modeVisualBtn").ClickAsync();
+
+        await Expect(s.Page.Locator("#blockList .block-row")).ToHaveCountAsync(blockCount);
+    }
+
+    [Fact]
+    public async Task InvalidJsonShowsError()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+        await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[name='template'][value='empty']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
+
+        await s.Page.Locator("#modeJsonBtn").ClickAsync();
+
+        // Set invalid JSON
+        await s.Page.Locator("#jsonEditorTextarea").FillAsync("{ broken json");
+
+        // Try to switch back to visual – should show error
+        await s.Page.Locator("#modeVisualBtn").ClickAsync();
+        await Expect(s.Page.Locator("#jsonEditorError")).ToBeVisibleAsync();
+    }
+
+    [Fact]
+    public async Task ChangeSecondaryColorInJsonModeUpdatesTextarea()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+        await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[name='template'][value='empty']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
+
+        await s.Page.Locator("#modeJsonBtn").ClickAsync();
+
+        await s.Page.Locator("[name='ThemeSecondaryColor']").ClearAsync();
+        await s.Page.Locator("[name='ThemeSecondaryColor']").FillAsync("#112233");
+        await s.Page.Locator("[name='ThemeSecondaryColor']").DispatchEventAsync("input");
+
+        var json = await s.Page.Locator("#jsonEditorTextarea").InputValueAsync();
+        Assert.Contains("#112233", json);
+    }
+
+    [Fact]
+    public async Task ChangeShadowStyleInJsonModeUpdatesTextarea()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+        await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[name='template'][value='empty']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
+
+        await s.Page.Locator("#modeJsonBtn").ClickAsync();
+
+        await s.Page.Locator("[name='ThemeShadowStyle']").SelectOptionAsync("lg");
+
+        var json = await s.Page.Locator("#jsonEditorTextarea").InputValueAsync();
+        Assert.Contains("\"ShadowStyle\": \"lg\"", json);
+    }
+
+    [Fact]
+    public async Task MultipleBlocksAddedInJsonModeAllAppearInTextarea()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+        await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[name='template'][value='empty']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
+
+        await s.Page.Locator("#modeJsonBtn").ClickAsync();
+
+        await s.Page.Locator(".block-picker-item[data-block-type='sponsor-wall']").ClickAsync();
+        await s.Page.Locator(".block-picker-item[data-block-type='description']").ClickAsync();
+
+        var json = await s.Page.Locator("#jsonEditorTextarea").InputValueAsync();
+        Assert.Contains("sponsor-wall", json);
+        Assert.Contains("description", json);
+    }
+
+    [Fact]
+    public async Task JsonTextareaLayoutChangeReflectsInVisual()
+    {
+        await using var s = CreatePlaywrightTester();
+        await s.StartAsync();
+        await s.RegisterNewUser(true);
+        await s.CreateNewStore();
+        await s.CreateApp("OpenPatron");
+
+        await s.Page.Locator("button[name='template'][value='empty']").ClickAsync();
+        await s.FindAlertMessage(partialText: "Template applied");
+
+        await s.Page.Locator("#modeJsonBtn").ClickAsync();
+
+        // Set layout to sidebar-left via JSON
+        await s.Page.Locator("#jsonEditorTextarea").FillAsync(@"{
+  ""Layout"": ""sidebar-left"",
+  ""Sections"": [{ ""Blocks"": [] }, { ""Blocks"": [] }]
+}");
+
+        await s.Page.Locator("#modeVisualBtn").ClickAsync();
+
+        // The layout preset hidden input should reflect sidebar-left
+        var layout = await s.Page.Locator("[name='LayoutPreset']").InputValueAsync();
+        Assert.Equal("sidebar-left", layout);
+    }
 }

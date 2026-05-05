@@ -540,6 +540,7 @@ function copySnippet(inputId, btn) {
         activeColumnIdx = 0;
         renderLayoutSelector();
         renderSections();
+        syncJsonTextarea();
     });
 
     function renderSections() {
@@ -607,6 +608,7 @@ function copySnippet(inputId, btn) {
                         var moved = sections[fromIdx].Blocks.splice(oldIndex, 1)[0];
                         sections[toIdx].Blocks.splice(newIndex, 0, moved);
                         renderSections();
+                        syncJsonTextarea();
                     }
                 });
                 sortableInstances.push(sortable);
@@ -627,6 +629,7 @@ function copySnippet(inputId, btn) {
         sections[0].Blocks = sections[1].Blocks;
         sections[1].Blocks = tmp;
         renderSections();
+        syncJsonTextarea();
     });
 
     sectionPreview.addEventListener('click', function (e) {
@@ -637,6 +640,7 @@ function copySnippet(inputId, btn) {
             var bIdx = parseInt(removeBtn.dataset.blockIdx, 10);
             sections[sIdx].Blocks.splice(bIdx, 1);
             renderSections();
+            syncJsonTextarea();
             return;
         }
 
@@ -847,6 +851,7 @@ function copySnippet(inputId, btn) {
         editingSectionIdx = -1;
         editingBlockIdx = -1;
         renderSections();
+        syncJsonTextarea();
     });
 
     function wireProjectFormEvents() {
@@ -938,11 +943,20 @@ function copySnippet(inputId, btn) {
         if (targetIdx < 0 || targetIdx >= sections.length) targetIdx = 0;
         sections[targetIdx].Blocks.push(newBlock);
         renderSections();
+        syncJsonTextarea();
     });
 
     function syncToInput() {
         sectionsInput.value = JSON.stringify(sections);
         presetInput.value = layoutPreset;
+    }
+
+    function syncJsonTextarea() {
+        if (currentMode !== 'json') return;
+        var theme = getThemeFromForm();
+        var payload = { Layout: layoutPreset, Sections: sections };
+        if (!isDefaultTheme(theme)) payload.Theme = theme;
+        jsonTextarea.value = JSON.stringify(payload, null, 2);
     }
 
     function getThemeFromForm() {
@@ -1016,8 +1030,6 @@ function copySnippet(inputId, btn) {
         jsonEditor.classList.add('d-none');
         modeVisualBtn.classList.add('active');
         modeJsonBtn.classList.remove('active');
-        document.getElementById('themeCard').classList.remove('d-none');
-        document.getElementById('blockPickerCard').classList.remove('d-none');
         renderLayoutSelector();
         renderSections();
     }
@@ -1033,8 +1045,6 @@ function copySnippet(inputId, btn) {
         jsonEditor.classList.remove('d-none');
         modeVisualBtn.classList.remove('active');
         modeJsonBtn.classList.add('active');
-        document.getElementById('themeCard').classList.add('d-none');
-        document.getElementById('blockPickerCard').classList.add('d-none');
     }
 
     modeVisualBtn.addEventListener('click', function (e) { e.preventDefault(); switchToVisual(); });
@@ -1046,6 +1056,7 @@ function copySnippet(inputId, btn) {
             if (parsed && parsed.Sections) {
                 sections = parsed.Sections;
                 if (parsed.Layout) { layoutPreset = parsed.Layout; presetInput.value = layoutPreset; }
+                setThemeToForm(parsed.Theme);
                 syncToInput();
                 jsonError.classList.add('d-none');
             }
@@ -1072,20 +1083,28 @@ function copySnippet(inputId, btn) {
     var picker = document.getElementById('accentColorPicker');
     var colorInput = document.getElementById('ThemeAccentColor');
     if (picker && colorInput) {
-        picker.addEventListener('input', function () { colorInput.value = picker.value; });
+        picker.addEventListener('input', function () { colorInput.value = picker.value; syncJsonTextarea(); });
         colorInput.addEventListener('input', function () {
             if (/^#[0-9a-fA-F]{6}$/.test(colorInput.value)) picker.value = colorInput.value;
+            syncJsonTextarea();
         });
     }
 
     var picker2 = document.getElementById('secondaryColorPicker');
     var colorInput2 = document.getElementById('ThemeSecondaryColor');
     if (picker2 && colorInput2) {
-        picker2.addEventListener('input', function () { colorInput2.value = picker2.value; });
+        picker2.addEventListener('input', function () { colorInput2.value = picker2.value; syncJsonTextarea(); });
         colorInput2.addEventListener('input', function () {
             if (/^#[0-9a-fA-F]{6}$/.test(colorInput2.value)) picker2.value = colorInput2.value;
+            syncJsonTextarea();
         });
     }
+
+    // Sync theme selects to JSON
+    ['ThemeBorderRadius', 'ThemeBlockSpacing', 'ThemeShadowStyle', 'ThemeTypographyStyle', 'ThemeBackgroundStyle'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('change', function () { syncJsonTextarea(); });
+    });
 })();
 </script>
 }
