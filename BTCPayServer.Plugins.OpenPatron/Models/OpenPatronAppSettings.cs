@@ -15,7 +15,7 @@ public class OpenPatronAppSettings
     // Section-based page layout
     public string PageLayoutPreset { get; set; } = "8-4";
     public List<PageSection>? Sections { get; set; }
-    public PageTheme? Theme { get; set; }
+    public PageTheme Theme { get; set; } = new();
 
     // Legacy flat layout (migrated to Sections on first load)
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
