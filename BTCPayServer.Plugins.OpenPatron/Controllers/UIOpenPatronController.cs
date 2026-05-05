@@ -82,7 +82,7 @@ public class UIOpenPatronController(
             existingSettings.PageTypeConfirmed = true;
             existingSettings.Sections = BlockRegistry.DefaultSectionsFor(viewModel.PageType);
             existingSettings.PageLayoutPreset = "8-4";
-            existingSettings.Theme = new PageTheme();
+            existingSettings.Theme = null;
             existingSettings.PageLayout = null;
             app.SetSettings(existingSettings);
             await appService.UpdateOrCreateApp(app);
@@ -116,12 +116,16 @@ public class UIOpenPatronController(
             PageTypeConfirmed = true,
             PageLayoutPreset = viewModel.PageLayoutPreset,
             Sections = sections,
-            Theme = new PageTheme
+            Theme = NullIfDefault(new PageTheme
             {
                 AccentColor = NormalizeString(viewModel.ThemeAccentColor) ?? PageTheme.DefaultAccentColor,
+                SecondaryColor = NormalizeString(viewModel.ThemeSecondaryColor) ?? PageTheme.DefaultSecondaryColor,
                 BorderRadius = NormalizeString(viewModel.ThemeBorderRadius) ?? PageTheme.DefaultBorderRadius,
                 BlockSpacing = NormalizeString(viewModel.ThemeBlockSpacing) ?? PageTheme.DefaultBlockSpacing,
-            },
+                ShadowStyle = NormalizeString(viewModel.ThemeShadowStyle) ?? PageTheme.DefaultShadowStyle,
+                TypographyStyle = NormalizeString(viewModel.ThemeTypographyStyle) ?? PageTheme.DefaultTypographyStyle,
+                BackgroundStyle = NormalizeString(viewModel.ThemeBackgroundStyle) ?? PageTheme.DefaultBackgroundStyle,
+            }),
             OfferingId = viewModel.OfferingId,
             DefaultCurrency = viewModel.DefaultCurrency.Trim().ToUpperInvariant(),
             Visibility = viewModel.Visibility
@@ -486,8 +490,12 @@ public class UIOpenPatronController(
             PageLayoutPreset = settings.PageLayoutPreset,
             SectionsJson = JsonConvert.SerializeObject(settings.Sections ?? [], Formatting.None),
             ThemeAccentColor = theme.AccentColor,
+            ThemeSecondaryColor = theme.SecondaryColor,
             ThemeBorderRadius = theme.BorderRadius,
             ThemeBlockSpacing = theme.BlockSpacing,
+            ThemeShadowStyle = theme.ShadowStyle,
+            ThemeTypographyStyle = theme.TypographyStyle,
+            ThemeBackgroundStyle = theme.BackgroundStyle,
             AppName = app.Name,
             DefaultCurrency = settings.DefaultCurrency,
             Visibility = settings.Visibility
@@ -689,6 +697,9 @@ public class UIOpenPatronController(
 
     private static string? NormalizeString(string? value)
         => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static PageTheme? NullIfDefault(PageTheme theme)
+        => theme.IsDefault() ? null : theme;
 
     private static string GenerateBadgeSvg(string label, string message, string color, bool square)
     {
