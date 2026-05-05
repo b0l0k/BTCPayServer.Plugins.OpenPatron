@@ -25,11 +25,6 @@ public class OpenPatronAppSettings
     public string? OfferingId { get; set; }
     public string DefaultCurrency { get; set; } = "USD";
     public OpenPatronVisibility Visibility { get; set; } = OpenPatronVisibility.Unpublished;
-
-    // Legacy (kept for JSON compat on old data, ignored by new code)
-    public string? AccentColor { get; set; }
-    public string? PrimaryCallToActionUrl { get; set; }
-    public List<OpenPatronLink> Links { get; set; } = [];
 }
 
 public class PageSection
@@ -43,9 +38,7 @@ public class BlockDefinition
 {
     public string Id { get; set; } = Guid.NewGuid().ToString("N")[..12];
     public string Type { get; set; } = string.Empty;
-
-    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public JObject? Settings { get; set; }
+    public JObject Settings { get; set; } = new();
 
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
     public BlockTheme? Theme { get; set; }
@@ -77,12 +70,6 @@ public class PageTheme
     public string ShadowStyle { get; set; } = DefaultShadowStyle;
     public string TypographyStyle { get; set; } = DefaultTypographyStyle;
     public string BackgroundStyle { get; set; } = DefaultBackgroundStyle;
-}
-
-public class OpenPatronLink
-{
-    public string Label { get; set; } = string.Empty;
-    public string Url { get; set; } = string.Empty;
 }
 
 public enum OpenPatronPageType
