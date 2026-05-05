@@ -75,11 +75,33 @@ public static class BlockRegistry
         {
             Id = "col-1", Width = 8, Blocks =
             [
-                new() { Type = ProfileHero, Settings = JObject.FromObject(new ProfileHeroSettings()) },
-                new() { Type = Description, Settings = JObject.FromObject(new DescriptionSettings { Heading = "What I work on" }) },
-                new() { Type = ProjectsGrid, Settings = JObject.FromObject(new ProjectsGridSettings()) },
-                new() { Type = SubscriptionTiers, Settings = JObject.FromObject(new SubscriptionTiersSettings { Heading = "Choose a sponsorship tier", Subtitle = "Pick the level that fits you best" }) },
-                new() { Type = QuickSupport, Settings = JObject.FromObject(new QuickSupportSettings { Heading = "Send quick support" }) },
+                new() { Type = ProfileHero, Settings = JObject.FromObject(new ProfileHeroSettings
+                {
+                    DisplayName = "Nicolas Dorier",
+                    Subtitle = "Bitcoin Developer & Open-Source Builder",
+                    Bio = "Building freedom tech. Creator of BTCPay Server, an open-source Bitcoin payment processor. Author of \"Programming The Blockchain in C#\".",
+                    SocialX = "https://x.com/NicolasDorier",
+                    SocialNostr = "npub1yncz5kqzjxqxlhm0xpv40t2g5lksmvy7sh09apxkx6725mytctqcmudak",
+                    GitHubUsername = "NicolasDorier",
+                }) },
+                new() { Type = Description, Settings = JObject.FromObject(new DescriptionSettings
+                {
+                    Heading = "What I work on",
+                    Content = "I spend my time building open-source tools that empower individuals and merchants to accept Bitcoin without intermediaries. BTCPay Server is used by thousands of merchants worldwide and is entirely community-funded.\n\nYour support helps me continue working full-time on freedom tech — no corporate sponsors, no strings attached.",
+                }) },
+                new() { Type = ProjectsGrid, Settings = JObject.FromObject(new ProjectsGridSettings
+                {
+                    ColumnsPerRow = 2,
+                    Projects =
+                    [
+                        new() { Name = "BTCPay Server", Url = "https://github.com/btcpayserver/btcpayserver", Description = "Open-source Bitcoin payment processor" },
+                        new() { Name = "NBitcoin", Url = "https://github.com/MetacoSA/NBitcoin", Description = "Comprehensive Bitcoin library for .NET" },
+                        new() { Name = "NBXplorer", Url = "https://github.com/dgarage/NBXplorer", Description = "Minimalist UTXO tracker for HD wallets" },
+                        new() { Name = "Programming The Blockchain in C#", Url = "https://programmingblockchain.gitbook.io", Description = "Free book to learn Bitcoin development" },
+                    ],
+                }) },
+                new() { Type = SubscriptionTiers, Settings = JObject.FromObject(new SubscriptionTiersSettings { Heading = "Become a sponsor", Subtitle = "Pick the level that fits you best" }) },
+                new() { Type = QuickSupport, Settings = JObject.FromObject(new QuickSupportSettings { Heading = "Send a tip", SuggestedAmounts = [5, 21, 50, 100] }) },
                 new() { Type = SponsorWall, Settings = JObject.FromObject(new SponsorWallSettings { Heading = "Supporters" }) },
             ]
         },
