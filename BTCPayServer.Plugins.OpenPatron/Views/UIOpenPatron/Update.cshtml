@@ -23,11 +23,10 @@
     <input asp-for="PageLayoutPreset" type="hidden" id="pageLayoutPreset" />
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-    <div class="row g-4">
-        <div class="col-12 col-lg-8">
-
-            @if (!Model.HasBlocks)
-            {
+    @if (!Model.HasBlocks)
+    {
+        <div class="row g-4">
+            <div class="col-12 col-lg-8">
                 <div class="card mb-4">
                     <div class="card-body text-center py-5">
                         <h3 class="h5 mb-1">Choose a starting template</h3>
@@ -51,7 +50,13 @@
                         </div>
                     </div>
                 </div>
-            }
+            </div>
+        </div>
+    }
+    else
+    {
+    <div class="row g-4">
+        <div class="col-12 col-lg-8">
 
             <div class="form-group mb-3">
                 <label asp-for="AppName" class="form-label"></label>
@@ -302,8 +307,11 @@
             </div>
         </div>
     </div>
+    }
 </form>
 
+@if (Model.HasBlocks)
+{
 <div class="d-grid d-sm-flex flex-wrap gap-3 mt-3" permission="@Policies.CanModifyStoreSettings">
         <form method="post" asp-area="" asp-controller="UIApps" asp-action="ToggleArchive" asp-route-appId="@Model.AppId">
             <button type="submit" class="w-100 btn btn-outline-secondary" id="btn-archive-toggle">
@@ -316,9 +324,12 @@
            data-confirm-input="DELETE">Delete this app</a>
     </div>
     <partial name="_Confirm" model="@(new BTCPayServer.Abstractions.Models.ConfirmModel("Delete app", "This app will be removed from this store.", "Delete"))" permission="@Policies.CanModifyStoreSettings" />
+}
 
 <partial name="_ValidationScriptsPartial" />
 
+@if (Model.HasBlocks)
+{
 <script src="~/vendor/vue-sortable/sortable.min.js"></script>
 <script>
 function copySnippet(inputId, btn) {
@@ -1061,3 +1072,4 @@ function copySnippet(inputId, btn) {
     }
 })();
 </script>
+}
