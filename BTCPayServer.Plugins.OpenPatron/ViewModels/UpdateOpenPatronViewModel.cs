@@ -29,11 +29,24 @@ public class UpdateOpenPatronViewModel
     [RegularExpression(@"^#[0-9a-fA-F]{6}$", ErrorMessage = "Must be a hex color like #6366f1.")]
     public string? ThemeAccentColor { get; set; }
 
+    [Display(Name = "Secondary color")]
+    [RegularExpression(@"^#[0-9a-fA-F]{6}$", ErrorMessage = "Must be a hex color like #ec4899.")]
+    public string? ThemeSecondaryColor { get; set; }
+
     [Display(Name = "Border radius")]
     public string ThemeBorderRadius { get; set; } = PageTheme.DefaultBorderRadius;
 
     [Display(Name = "Block spacing")]
     public string ThemeBlockSpacing { get; set; } = PageTheme.DefaultBlockSpacing;
+
+    [Display(Name = "Shadow style")]
+    public string ThemeShadowStyle { get; set; } = PageTheme.DefaultShadowStyle;
+
+    [Display(Name = "Typography")]
+    public string ThemeTypographyStyle { get; set; } = PageTheme.DefaultTypographyStyle;
+
+    [Display(Name = "Background")]
+    public string ThemeBackgroundStyle { get; set; } = PageTheme.DefaultBackgroundStyle;
 
     // Global settings
     [Required]

@@ -7,6 +7,9 @@
     var currency = Model.Page.DefaultCurrency;
     var raised = Model.Page.AmountRaised;
     var pct = Model.Page.FundingPercentage;
+    var barStyle = string.Equals(settings.ProgressBarStyle, "gradient", StringComparison.OrdinalIgnoreCase)
+        ? "openpatron-progress-bar--gradient"
+        : "openpatron-progress-bar--solid";
 }
 
 @if (goal is > 0)
@@ -21,7 +24,7 @@
             <span class="fw-semibold" style="color: var(--op-accent);">@pct%</span>
         </div>
         <div class="openpatron-progress">
-            <div class="openpatron-progress-bar" style="width: @pct%"></div>
+            <div class="openpatron-progress-bar @barStyle" style="width: @pct%"></div>
         </div>
     </section>
 }
