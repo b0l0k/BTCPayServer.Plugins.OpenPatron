@@ -62,13 +62,21 @@ public class BlockTheme
 
 public class PageTheme
 {
-    public const string DefaultAccentColor = "#6366f1";
-    public const string DefaultBorderRadius = "1.5rem";
+    public const string DefaultAccentColor = "#51b13e";
+    public const string DefaultSecondaryColor = "#CEDC21";
+    public const string DefaultBorderRadius = "8px";
     public const string DefaultBlockSpacing = "1rem";
+    public const string DefaultShadowStyle = "subtle";
+    public const string DefaultTypographyStyle = "standard";
+    public const string DefaultBackgroundStyle = "flat";
 
     public string AccentColor { get; set; } = DefaultAccentColor;
+    public string SecondaryColor { get; set; } = DefaultSecondaryColor;
     public string BorderRadius { get; set; } = DefaultBorderRadius;
     public string BlockSpacing { get; set; } = DefaultBlockSpacing;
+    public string ShadowStyle { get; set; } = DefaultShadowStyle;
+    public string TypographyStyle { get; set; } = DefaultTypographyStyle;
+    public string BackgroundStyle { get; set; } = DefaultBackgroundStyle;
 }
 
 public class OpenPatronLink

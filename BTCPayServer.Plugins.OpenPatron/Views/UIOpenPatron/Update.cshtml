@@ -137,17 +137,28 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label asp-for="ThemeBorderRadius" class="form-label"></label>
-                                <select asp-for="ThemeBorderRadius" class="form-select">
-                                    <option value="0">Sharp (0)</option>
-                                    <option value="0.5rem">Subtle (0.5rem)</option>
-                                    <option value="1rem">Medium (1rem)</option>
-                                    <option value="1.5rem">Rounded (1.5rem)</option>
-                                    <option value="2rem">Very Rounded (2rem)</option>
-                                </select>
+                                <label asp-for="ThemeSecondaryColor" class="form-label"></label>
+                                <div class="d-flex gap-2 align-items-center">
+                                    <input type="color" id="secondaryColorPicker" value="@(Model.ThemeSecondaryColor ?? PageTheme.DefaultSecondaryColor)" class="form-control form-control-color" />
+                                    <input asp-for="ThemeSecondaryColor" class="form-control form-control-sm" placeholder="@PageTheme.DefaultSecondaryColor" style="max-width:120px" />
+                                </div>
+                                <span asp-validation-for="ThemeSecondaryColor" class="text-danger"></span>
                             </div>
                         </div>
                         <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="ThemeBorderRadius" class="form-label"></label>
+                                <select asp-for="ThemeBorderRadius" class="form-select">
+                                    <option value="0">Sharp (0)</option>
+                                    <option value="4px">Subtle (4px)</option>
+                                    <option value="8px">Default (8px)</option>
+                                    <option value="1rem">Rounded (1rem)</option>
+                                    <option value="1.5rem">Very Rounded (1.5rem)</option>
+                                    <option value="2rem">Extra Rounded (2rem)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label asp-for="ThemeBlockSpacing" class="form-label"></label>
                                 <select asp-for="ThemeBlockSpacing" class="form-select">
@@ -155,6 +166,35 @@
                                     <option value="1rem">Normal (1rem)</option>
                                     <option value="1.5rem">Relaxed (1.5rem)</option>
                                     <option value="2rem">Spacious (2rem)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label asp-for="ThemeShadowStyle" class="form-label"></label>
+                                <select asp-for="ThemeShadowStyle" class="form-select">
+                                    <option value="none">None</option>
+                                    <option value="subtle">Subtle (default)</option>
+                                    <option value="elevated">Elevated (glassmorphism)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label asp-for="ThemeTypographyStyle" class="form-label"></label>
+                                <select asp-for="ThemeTypographyStyle" class="form-select">
+                                    <option value="standard">Standard (default)</option>
+                                    <option value="modern">Modern (large display)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label asp-for="ThemeBackgroundStyle" class="form-label"></label>
+                                <select asp-for="ThemeBackgroundStyle" class="form-select">
+                                    <option value="flat">Flat (default)</option>
+                                    <option value="subtle">Subtle tint</option>
+                                    <option value="gradient">Gradient</option>
                                 </select>
                             </div>
                         </div>
@@ -324,8 +364,12 @@ function copySnippet(inputId, btn) {
 <script>
 (function () {
     var DEFAULT_ACCENT = '@PageTheme.DefaultAccentColor';
+    var DEFAULT_SECONDARY = '@PageTheme.DefaultSecondaryColor';
     var DEFAULT_BORDER_RADIUS = '@PageTheme.DefaultBorderRadius';
     var DEFAULT_BLOCK_SPACING = '@PageTheme.DefaultBlockSpacing';
+    var DEFAULT_SHADOW_STYLE = '@PageTheme.DefaultShadowStyle';
+    var DEFAULT_TYPOGRAPHY_STYLE = '@PageTheme.DefaultTypographyStyle';
+    var DEFAULT_BACKGROUND_STYLE = '@PageTheme.DefaultBackgroundStyle';
     var BLOCK_TYPES = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(
         blockTypes.ToDictionary(kv => kv.Key, kv => new { name = kv.Value.DisplayName, description = kv.Value.Description })));
 
@@ -356,7 +400,11 @@ function copySnippet(inputId, btn) {
         },
         'funding-progress': {
             fields: [
-                { key: 'Goal', label: 'Funding goal amount', type: 'number', placeholder: '1000' }
+                { key: 'Goal', label: 'Funding goal amount', type: 'number', placeholder: '1000' },
+                { key: 'ProgressBarStyle', label: 'Progress bar style', type: 'select', options: [
+                    { v: 'solid', l: 'Solid (accent color)' },
+                    { v: 'gradient', l: 'Gradient (accent → secondary)' }
+                ]}
             ]
         },
         'description': {
@@ -743,10 +791,11 @@ function copySnippet(inputId, btn) {
         html += '<select class="form-select form-select-sm modal-theme-field" data-lkey="BorderRadius">';
         html += '<option value=""' + (!lo.BorderRadius ? ' selected' : '') + '>Inherit</option>';
         html += '<option value="0"' + (lo.BorderRadius === '0' ? ' selected' : '') + '>Sharp (0)</option>';
-        html += '<option value="0.5rem"' + (lo.BorderRadius === '0.5rem' ? ' selected' : '') + '>Subtle (0.5rem)</option>';
-        html += '<option value="1rem"' + (lo.BorderRadius === '1rem' ? ' selected' : '') + '>Medium (1rem)</option>';
-        html += '<option value="1.5rem"' + (lo.BorderRadius === '1.5rem' ? ' selected' : '') + '>Rounded (1.5rem)</option>';
-        html += '<option value="2rem"' + (lo.BorderRadius === '2rem' ? ' selected' : '') + '>Very Rounded (2rem)</option>';
+        html += '<option value="4px"' + (lo.BorderRadius === '4px' ? ' selected' : '') + '>Subtle (4px)</option>';
+        html += '<option value="8px"' + (lo.BorderRadius === '8px' ? ' selected' : '') + '>Default (8px)</option>';
+        html += '<option value="1rem"' + (lo.BorderRadius === '1rem' ? ' selected' : '') + '>Rounded (1rem)</option>';
+        html += '<option value="1.5rem"' + (lo.BorderRadius === '1.5rem' ? ' selected' : '') + '>Very Rounded (1.5rem)</option>';
+        html += '<option value="2rem"' + (lo.BorderRadius === '2rem' ? ' selected' : '') + '>Extra Rounded (2rem)</option>';
         html += '</select></div>';
         html += '<div class="col-auto"><button type="button" class="btn btn-sm btn-outline-secondary modal-theme-clear">Clear</button></div>';
         html += '</div>';
@@ -918,22 +967,38 @@ function copySnippet(inputId, btn) {
     function getThemeFromForm() {
         return {
             AccentColor: document.getElementById('ThemeAccentColor').value || DEFAULT_ACCENT,
+            SecondaryColor: document.getElementById('ThemeSecondaryColor').value || DEFAULT_SECONDARY,
             BorderRadius: document.getElementById('ThemeBorderRadius').value || DEFAULT_BORDER_RADIUS,
-            BlockSpacing: document.getElementById('ThemeBlockSpacing').value || DEFAULT_BLOCK_SPACING
+            BlockSpacing: document.getElementById('ThemeBlockSpacing').value || DEFAULT_BLOCK_SPACING,
+            ShadowStyle: document.getElementById('ThemeShadowStyle').value || DEFAULT_SHADOW_STYLE,
+            TypographyStyle: document.getElementById('ThemeTypographyStyle').value || DEFAULT_TYPOGRAPHY_STYLE,
+            BackgroundStyle: document.getElementById('ThemeBackgroundStyle').value || DEFAULT_BACKGROUND_STYLE
         };
     }
 
     function setThemeToForm(theme) {
         if (!theme) return;
         var accentInput = document.getElementById('ThemeAccentColor');
+        var secondaryInput = document.getElementById('ThemeSecondaryColor');
         var radiusInput = document.getElementById('ThemeBorderRadius');
         var spacingInput = document.getElementById('ThemeBlockSpacing');
+        var shadowInput = document.getElementById('ThemeShadowStyle');
+        var typoInput = document.getElementById('ThemeTypographyStyle');
+        var bgInput = document.getElementById('ThemeBackgroundStyle');
         if (theme.AccentColor && accentInput) accentInput.value = theme.AccentColor;
+        if (theme.SecondaryColor && secondaryInput) secondaryInput.value = theme.SecondaryColor;
         if (theme.BorderRadius && radiusInput) radiusInput.value = theme.BorderRadius;
         if (theme.BlockSpacing && spacingInput) spacingInput.value = theme.BlockSpacing;
+        if (theme.ShadowStyle && shadowInput) shadowInput.value = theme.ShadowStyle;
+        if (theme.TypographyStyle && typoInput) typoInput.value = theme.TypographyStyle;
+        if (theme.BackgroundStyle && bgInput) bgInput.value = theme.BackgroundStyle;
         var pickerEl = document.getElementById('accentColorPicker');
         if (pickerEl && theme.AccentColor && /^#[0-9a-fA-F]{6}$/.test(theme.AccentColor)) {
             pickerEl.value = theme.AccentColor;
+        }
+        var picker2 = document.getElementById('secondaryColorPicker');
+        if (picker2 && theme.SecondaryColor && /^#[0-9a-fA-F]{6}$/.test(theme.SecondaryColor)) {
+            picker2.value = theme.SecondaryColor;
         }
     }
 
@@ -1013,6 +1078,15 @@ function copySnippet(inputId, btn) {
         picker.addEventListener('input', function () { colorInput.value = picker.value; });
         colorInput.addEventListener('input', function () {
             if (/^#[0-9a-fA-F]{6}$/.test(colorInput.value)) picker.value = colorInput.value;
+        });
+    }
+
+    var picker2 = document.getElementById('secondaryColorPicker');
+    var colorInput2 = document.getElementById('ThemeSecondaryColor');
+    if (picker2 && colorInput2) {
+        picker2.addEventListener('input', function () { colorInput2.value = picker2.value; });
+        colorInput2.addEventListener('input', function () {
+            if (/^#[0-9a-fA-F]{6}$/.test(colorInput2.value)) picker2.value = colorInput2.value;
         });
     }
 })();

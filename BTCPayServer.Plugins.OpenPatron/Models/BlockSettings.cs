@@ -48,6 +48,9 @@ public class FundingProgressSettings
     [Description("Funding goal amount (in default currency)")]
     [Range(0, double.MaxValue)]
     public decimal Goal { get; set; }
+
+    [Description("Progress bar fill style: solid accent color or gradient from accent to secondary")]
+    public string ProgressBarStyle { get; set; } = "solid";
 }
 
 [Description("Rich text section with heading and markdown content")]
