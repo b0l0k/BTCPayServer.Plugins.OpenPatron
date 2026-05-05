@@ -8,10 +8,6 @@ namespace BTCPayServer.Plugins.OpenPatron.Models;
 
 public class OpenPatronAppSettings
 {
-    // Template metadata
-    public OpenPatronPageType PageType { get; set; } = OpenPatronPageType.Project;
-    public bool PageTypeConfirmed { get; set; }
-
     // Section-based page layout
     public string PageLayoutPreset { get; set; } = "8-4";
     public List<PageSection>? Sections { get; set; }
@@ -81,14 +77,6 @@ public class PageTheme
         ShadowStyle == DefaultShadowStyle &&
         TypographyStyle == DefaultTypographyStyle &&
         BackgroundStyle == DefaultBackgroundStyle;
-}
-
-public enum OpenPatronPageType
-{
-    [Display(Name = "Personal")]
-    Personal = 0,
-    [Display(Name = "Project")]
-    Project = 1
 }
 
 public enum OpenPatronVisibility

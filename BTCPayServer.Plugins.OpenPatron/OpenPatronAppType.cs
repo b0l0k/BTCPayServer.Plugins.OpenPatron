@@ -36,8 +36,6 @@ public class OpenPatronAppType(
     {
         appData.SetSettings(new OpenPatronAppSettings
         {
-            PageType = OpenPatronPageType.Project,
-            PageTypeConfirmed = false,
             DefaultCurrency = defaultCurrency,
             Visibility = OpenPatronVisibility.Unpublished
         });

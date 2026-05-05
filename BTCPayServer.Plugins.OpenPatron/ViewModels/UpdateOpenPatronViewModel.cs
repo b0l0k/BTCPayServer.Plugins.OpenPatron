@@ -15,11 +15,6 @@ public class UpdateOpenPatronViewModel
     public int ActivePlanCount { get; set; }
     public bool Archived { get; set; }
 
-    // Template metadata
-    [Display(Name = "Page type")]
-    public OpenPatronPageType PageType { get; set; } = OpenPatronPageType.Project;
-    public bool PageTypeConfirmed { get; set; }
-
     // Section-based layout (JSON-serialized)
     public string PageLayoutPreset { get; set; } = "8-4";
     public string SectionsJson { get; set; } = "[]";
