@@ -19,6 +19,8 @@ using BTCPayServer.Services.Apps;
 using BTCPayServer.Services.Invoices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -36,7 +38,8 @@ public class UIOpenPatronController(
     IAuthorizationService authorizationService,
     SponsorWallService sponsorWallService,
     FundingProgressService fundingProgressService,
-    GitHubRepoService gitHubRepoService) : Controller
+    GitHubRepoService gitHubRepoService,
+    LinkGenerator linkGenerator) : Controller
 {
     private const string UpdateViewPath = "/Views/UIOpenPatron/Update.cshtml";
     private const string PublicPageViewPath = "/Views/UIOpenPatron/PublicPage.cshtml";
@@ -277,6 +280,34 @@ public class UIOpenPatronController(
         await ctx.SaveChangesAsync();
 
         return RedirectToAction("PlanCheckout", "UIPlanCheckout", new { area = SubscriptionsPlugin.Area, checkoutId = checkout.Id });
+    }
+
+    [AllowAnonymous]
+    [HttpGet("{appId}/openpatron/portal")]
+    public async Task<IActionResult> SubscriberPortalRedirect(string appId, long subscriberId)
+    {
+        var app = await appService.GetApp(appId, OpenPatronAppType.AppType, includeArchived: true);
+        if (app is null)
+            return NotFound();
+
+        var settings = app.GetSettings<OpenPatronAppSettings>();
+        if (!AllowsSubscriptions(settings))
+            return NotFound();
+
+        await using var ctx = dbContextFactory.CreateContext();
+        var subscriber = await ctx.Subscribers.GetById(subscriberId);
+        if (subscriber is null || subscriber.Offering?.AppId != appId)
+            return NotFound();
+
+        var portal = new PortalSessionData
+        {
+            SubscriberId = subscriber.Id,
+            BaseUrl = Request.GetRequestBaseUrl()
+        };
+        ctx.PortalSessions.Add(portal);
+        await ctx.SaveChangesAsync();
+
+        return Redirect(linkGenerator.SubscriberPortalLink(portal.Id, portal.BaseUrl));
     }
 
     [AllowAnonymous]
@@ -534,7 +565,60 @@ public class UIOpenPatronController(
         var offering = new OfferingData { AppId = app.Id };
         ctx.Offerings.Add(offering);
         await ctx.SaveChangesAsync();
+        await CreateDefaultEmailRules(ctx, app.StoreDataId, offering.Id);
         return offering.Id;
+    }
+
+    private static async Task CreateDefaultEmailRules(ApplicationDbContext ctx, string storeId, string offeringId)
+    {
+        var reminderTrigger = EmailRuleData.GetWebhookTriggerName(WebhookSubscriptionEvent.PaymentReminder);
+        var createdTrigger = EmailRuleData.GetWebhookTriggerName(WebhookSubscriptionEvent.SubscriberCreated);
+
+        var existingTriggers = await ctx.EmailRules
+            .Where(r => r.OfferingId == offeringId && (r.Trigger == reminderTrigger || r.Trigger == createdTrigger))
+            .Select(r => r.Trigger)
+            .ToListAsync();
+
+        if (!existingTriggers.Contains(reminderTrigger))
+        {
+            ctx.EmailRules.Add(new EmailRuleData
+            {
+                StoreId = storeId,
+                OfferingId = offeringId,
+                Trigger = reminderTrigger,
+                To = ["{Subscriber.Email}"],
+                Subject = "Time to renew your sponsorship for {Offering.Name}",
+                Body = "Hello {Customer.Name},\n\n"
+                     + "Your sponsorship for {Offering.Name} ({Plan.Name}) is coming up for renewal.\n\n"
+                     + "We truly appreciate your support! To continue your sponsorship, please visit your portal:\n"
+                     + "{OpenPatron.PortalUrl}\n\n"
+                     + "Thank you for making a difference.\n\n"
+                     + "Regards,\n{Store.Name}"
+            });
+        }
+
+        if (!existingTriggers.Contains(createdTrigger))
+        {
+            ctx.EmailRules.Add(new EmailRuleData
+            {
+                StoreId = storeId,
+                OfferingId = offeringId,
+                Trigger = createdTrigger,
+                To = ["{Subscriber.Email}"],
+                Subject = "Welcome to {Offering.Name}!",
+                Body = "Hello {Customer.Name},\n\n"
+                     + "Thank you for becoming a sponsor of {Offering.Name}!\n\n"
+                     + "Your support means the world to us and helps keep the project alive and growing.\n\n"
+                     + "You can manage your sponsorship anytime through your portal:\n"
+                     + "{OpenPatron.PortalUrl}\n\n"
+                     + "Regards,\n{Store.Name}"
+            });
+        }
+
+        if (!existingTriggers.Contains(reminderTrigger) || !existingTriggers.Contains(createdTrigger))
+        {
+            await ctx.SaveChangesAsync();
+        }
     }
 
     private string GetPublicPageUrl(string appId)

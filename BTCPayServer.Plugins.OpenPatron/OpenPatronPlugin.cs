@@ -1,7 +1,9 @@
 using BTCPayServer.Abstractions.Contracts;
 using BTCPayServer.Abstractions.Extensions;
 using BTCPayServer.Abstractions.Models;
+using BTCPayServer.Plugins.Emails;
 using BTCPayServer.Plugins.OpenPatron.Services;
+using BTCPayServer.Services;
 using BTCPayServer.Services.Apps;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -32,6 +34,9 @@ public class OpenPatronPlugin : BaseBTCPayServerPlugin
         services.AddTransient<GitHubRepoService>();
         services.AddTransient<SponsorWallService>();
         services.AddTransient<FundingProgressService>();
+        services.AddSingleton<IEmailTriggerViewModelTransformer, OpenPatronEmailTriggerTransformer>();
+        services.AddSingleton<IEmailTriggerEventTransformer, OpenPatronEmailTriggerTransformer>();
+        services.AddDefaultTranslations(OpenPatronEmailTriggerTransformer.TranslatedStrings);
         base.Execute(services);
     }
 }
