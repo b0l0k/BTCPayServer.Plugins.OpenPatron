@@ -957,6 +957,16 @@ function copySnippet(inputId, btn) {
         };
     }
 
+    function isDefaultTheme(t) {
+        return t.AccentColor === DEFAULT_ACCENT &&
+            t.SecondaryColor === DEFAULT_SECONDARY &&
+            t.BorderRadius === DEFAULT_BORDER_RADIUS &&
+            t.BlockSpacing === DEFAULT_BLOCK_SPACING &&
+            t.ShadowStyle === DEFAULT_SHADOW_STYLE &&
+            t.TypographyStyle === DEFAULT_TYPOGRAPHY_STYLE &&
+            t.BackgroundStyle === DEFAULT_BACKGROUND_STYLE;
+    }
+
     function setThemeToForm(theme) {
         if (!theme) return;
         var accentInput = document.getElementById('ThemeAccentColor');
@@ -1012,7 +1022,9 @@ function copySnippet(inputId, btn) {
 
     function switchToJson() {
         currentMode = 'json';
-        var payload = { Theme: getThemeFromForm(), Layout: layoutPreset, Sections: sections };
+        var theme = getThemeFromForm();
+        var payload = { Layout: layoutPreset, Sections: sections };
+        if (!isDefaultTheme(theme)) payload.Theme = theme;
         jsonTextarea.value = JSON.stringify(payload, null, 2);
         jsonError.classList.add('d-none');
         visualEditor.classList.add('d-none');
