@@ -18,6 +18,7 @@ public class UpdateOpenPatronViewModel
     // Section-based layout (JSON-serialized)
     public string PageLayoutPreset { get; set; } = "8-4";
     public string SectionsJson { get; set; } = "[]";
+    public bool HasBlocks { get; set; }
 
     // Theme
     [Display(Name = "Accent color")]

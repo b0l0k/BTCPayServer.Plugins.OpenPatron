@@ -26,6 +26,33 @@
     <div class="row g-4">
         <div class="col-12 col-lg-8">
 
+            @if (!Model.HasBlocks)
+            {
+                <div class="card mb-4">
+                    <div class="card-body text-center py-5">
+                        <h3 class="h5 mb-1">Choose a starting template</h3>
+                        <p class="text-muted mb-4">You can customize everything after.</p>
+                        <div class="d-flex justify-content-center gap-3 flex-wrap">
+                            <button type="submit" name="template" value="personal" class="btn btn-outline-primary px-4 py-3">
+                                <i class="fa fa-user d-block mb-1 fs-4"></i>
+                                <span class="fw-semibold">Personal</span>
+                                <small class="d-block text-muted">Profile, bio &amp; social links</small>
+                            </button>
+                            <button type="submit" name="template" value="project" class="btn btn-outline-primary px-4 py-3">
+                                <i class="fa fa-code d-block mb-1 fs-4"></i>
+                                <span class="fw-semibold">Project</span>
+                                <small class="d-block text-muted">Funding goal &amp; project info</small>
+                            </button>
+                            <button type="submit" name="template" value="empty" class="btn btn-outline-secondary px-4 py-3">
+                                <i class="fa fa-plus d-block mb-1 fs-4"></i>
+                                <span class="fw-semibold">Empty</span>
+                                <small class="d-block text-muted">Start from scratch</small>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+
             <div class="form-group mb-3">
                 <label asp-for="AppName" class="form-label"></label>
                 <input asp-for="AppName" class="form-control" />
