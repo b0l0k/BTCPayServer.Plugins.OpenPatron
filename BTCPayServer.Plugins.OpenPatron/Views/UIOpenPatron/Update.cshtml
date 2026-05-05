@@ -12,10 +12,6 @@
 <div class="sticky-header">
     <h2>
         @ViewData["Title"]
-        @if (Model.PageTypeConfirmed)
-        {
-            <span class="badge text-bg-secondary fs-6 ms-2 align-middle">@(Model.PageType == OpenPatronPageType.Personal ? "Personal" : "Project")</span>
-        }
     </h2>
 </div>
 
@@ -23,56 +19,9 @@
     <input asp-for="AppId" type="hidden" />
     <input asp-for="StoreId" type="hidden" />
     <input asp-for="OfferingId" type="hidden" />
-    <input asp-for="PageTypeConfirmed" type="hidden" />
     <input asp-for="SectionsJson" type="hidden" id="sectionsJson" />
     <input asp-for="PageLayoutPreset" type="hidden" id="pageLayoutPreset" />
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-    @if (!Model.PageTypeConfirmed)
-    {
-        <div class="row justify-content-center mt-5">
-            <div class="col-12 col-md-8 col-lg-6">
-                <div class="card">
-                    <div class="card-body p-4">
-                        <h3 class="h5 mb-2">Choose a starting template</h3>
-                        <div class="form-text mb-4">You can customize the blocks freely afterward.</div>
-                        <div class="d-flex flex-column gap-3">
-                            <label class="d-flex align-items-start gap-3 border rounded-3 p-3 cursor-pointer page-type-option @(Model.PageType == OpenPatronPageType.Personal ? "border-primary border-2 bg-body-tertiary" : "")" for="pageTypePersonal">
-                                <input type="radio" asp-for="PageType" value="@((int)OpenPatronPageType.Personal)" id="pageTypePersonal" onchange="highlightPageType()" style="margin-top:4px;flex-shrink:0" />
-                                <div>
-                                    <span class="fw-semibold text-body">Personal</span>
-                                    <div class="text-secondary small mt-1">Your profile, avatar, and a list of projects you maintain.</div>
-                                </div>
-                            </label>
-                            <label class="d-flex align-items-start gap-3 border rounded-3 p-3 cursor-pointer page-type-option @(Model.PageType == OpenPatronPageType.Project ? "border-primary border-2 bg-body-tertiary" : "")" for="pageTypeProject">
-                                <input type="radio" asp-for="PageType" value="@((int)OpenPatronPageType.Project)" id="pageTypeProject" onchange="highlightPageType()" style="margin-top:4px;flex-shrink:0" />
-                                <div>
-                                    <span class="fw-semibold text-body">Project</span>
-                                    <div class="text-secondary small mt-1">A single project — description, hero copy, and sponsorship tiers.</div>
-                                </div>
-                            </label>
-                        </div>
-                        <div class="d-grid mt-4">
-                            <button type="submit" class="btn btn-primary">Continue</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <script>
-            function highlightPageType() {
-                document.querySelectorAll('.page-type-option').forEach(function (el) {
-                    el.classList.remove('border-primary', 'border-2', 'bg-body-tertiary');
-                });
-                var sel = document.querySelector('input[name="PageType"]:checked');
-                if (sel) sel.closest('.page-type-option').classList.add('border-primary', 'border-2', 'bg-body-tertiary');
-            }
-        </script>
-    }
-    else
-    {
-    <input asp-for="PageType" type="hidden" />
 
     <div class="row g-4">
         <div class="col-12 col-lg-8">
@@ -326,12 +275,9 @@
             </div>
         </div>
     </div>
-    }
 </form>
 
-@if (Model.PageTypeConfirmed)
-{
-    <div class="d-grid d-sm-flex flex-wrap gap-3 mt-3" permission="@Policies.CanModifyStoreSettings">
+<div class="d-grid d-sm-flex flex-wrap gap-3 mt-3" permission="@Policies.CanModifyStoreSettings">
         <form method="post" asp-area="" asp-controller="UIApps" asp-action="ToggleArchive" asp-route-appId="@Model.AppId">
             <button type="submit" class="w-100 btn btn-outline-secondary" id="btn-archive-toggle">
                 @(Model.Archived ? "Unarchive this app" : "Archive this app")
@@ -343,12 +289,9 @@
            data-confirm-input="DELETE">Delete this app</a>
     </div>
     <partial name="_Confirm" model="@(new BTCPayServer.Abstractions.Models.ConfirmModel("Delete app", "This app will be removed from this store.", "Delete"))" permission="@Policies.CanModifyStoreSettings" />
-}
 
 <partial name="_ValidationScriptsPartial" />
 
-@if (Model.PageTypeConfirmed)
-{
 <script src="~/vendor/vue-sortable/sortable.min.js"></script>
 <script>
 function copySnippet(inputId, btn) {
@@ -1091,4 +1034,3 @@ function copySnippet(inputId, btn) {
     }
 })();
 </script>
-}

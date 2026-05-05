@@ -76,20 +76,6 @@ public class UIOpenPatronController(
         if (!await IsAuthorized(app, Policies.CanModifyStoreSettings))
             return Forbid();
 
-        if (!existingSettings.PageTypeConfirmed)
-        {
-            existingSettings.PageType = viewModel.PageType;
-            existingSettings.PageTypeConfirmed = true;
-            existingSettings.Sections = BlockRegistry.DefaultSectionsFor(viewModel.PageType);
-            existingSettings.PageLayoutPreset = "8-4";
-            existingSettings.Theme = null;
-            existingSettings.PageLayout = null;
-            app.SetSettings(existingSettings);
-            await appService.UpdateOrCreateApp(app);
-            TempData[WellKnownTempData.SuccessMessage] = "Template selected. You can now configure your page.";
-            return RedirectToAction(nameof(Update), new { appId = app.Id });
-        }
-
         if (!ModelState.IsValid)
         {
             viewModel.AppId = app.Id;
@@ -112,8 +98,6 @@ public class UIOpenPatronController(
 
         var settings = new OpenPatronAppSettings
         {
-            PageType = existingSettings.PageType,
-            PageTypeConfirmed = true,
             PageLayoutPreset = viewModel.PageLayoutPreset,
             Sections = sections,
             Theme = NullIfDefault(new PageTheme
@@ -485,8 +469,6 @@ public class UIOpenPatronController(
             AddPlanUrl = offering is null ? null : GetAddPlanUrl(app.StoreDataId, offering.Id),
             ActivePlanCount = offering?.Plans.Count(p => p.Status == PlanData.PlanStatus.Active) ?? 0,
             Archived = app.Archived,
-            PageType = settings.PageType,
-            PageTypeConfirmed = settings.PageTypeConfirmed,
             PageLayoutPreset = settings.PageLayoutPreset,
             SectionsJson = JsonConvert.SerializeObject(settings.Sections ?? [], Formatting.None),
             ThemeAccentColor = theme.AccentColor,

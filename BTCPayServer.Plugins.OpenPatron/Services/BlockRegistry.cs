@@ -115,11 +115,6 @@ public static class BlockRegistry
         }
     ];
 
-    public static List<PageSection> DefaultSectionsFor(OpenPatronPageType pageType) =>
-        pageType == OpenPatronPageType.Personal
-            ? DefaultSectionsForPersonal()
-            : DefaultSectionsForProject();
-
     public static IEnumerable<BlockDefinition> AllBlocks(List<PageSection>? sections) =>
         sections?.SelectMany(s => s.Blocks) ?? [];
 }

@@ -27,14 +27,6 @@ public class FastTests
     }
 
     [Fact]
-    public void DefaultPageTypeIsProject()
-    {
-        var settings = new OpenPatronAppSettings();
-        Assert.Equal(OpenPatronPageType.Project, settings.PageType);
-        Assert.False(settings.PageTypeConfirmed);
-    }
-
-    [Fact]
     public void PageLayoutDefaultNull()
     {
         var settings = new OpenPatronAppSettings();
@@ -58,9 +50,10 @@ public class FastTests
     }
 
     [Fact]
-    public void BlockDefinitionSettingsDefaultNull()
+    public void BlockDefinitionSettingsDefaultEmpty()
     {
-        Assert.Null(new BlockDefinition().Settings);
+        Assert.NotNull(new BlockDefinition().Settings);
+        Assert.Empty(new BlockDefinition().Settings);
     }
 
     // ── PageTheme ──
@@ -371,8 +364,6 @@ public class FastTests
     {
         var settings = new OpenPatronAppSettings
         {
-            PageType = OpenPatronPageType.Personal,
-            PageTypeConfirmed = true,
             PageLayout =
             [
                 new() { Id = "b1", Type = "profile-hero", Settings = JObject.FromObject(new { DisplayName = "Jane" }) },
@@ -764,9 +755,11 @@ public class FastTests
     }
 
     [Fact]
-    public void GetTypedReturnsNullForMissingSettings()
+    public void GetTypedReturnsDefaultForEmptySettings()
     {
         var block = new BlockDefinition { Type = "profile-hero" };
-        Assert.Null(BlockSettingsHelper.GetTyped<ProfileHeroSettings>(block));
+        var typed = BlockSettingsHelper.GetTyped<ProfileHeroSettings>(block);
+        Assert.NotNull(typed);
+        Assert.Empty(typed!.DisplayName);
     }
 }
