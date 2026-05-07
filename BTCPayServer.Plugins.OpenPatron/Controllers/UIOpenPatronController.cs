@@ -58,6 +58,13 @@ public class UIOpenPatronController(
 
         EnsurePageLayout(settings);
 
+        if (settings.OfferingId is null)
+        {
+            settings.OfferingId = await ResolveOfferingId(app, null, createIfMissing: true);
+            app.SetSettings(settings);
+            await appService.UpdateOrCreateApp(app);
+        }
+
         var offering = await GetOffering(app, settings);
         var vm = ToUpdateViewModel(app, settings, offering);
 
@@ -83,6 +90,10 @@ public class UIOpenPatronController(
                                         ?? BlockRegistry.CreateSectionsForPreset(existingSettings.PageLayoutPreset);
             existingSettings.Theme = null;
             existingSettings.PageLayout = null;
+
+            existingSettings.OfferingId = await ResolveOfferingId(
+                app, existingSettings.OfferingId, createIfMissing: true);
+
             app.SetSettings(existingSettings);
             await appService.UpdateOrCreateApp(app);
             TempData[WellKnownTempData.SuccessMessage] = "Template applied. You can now configure your page.";
@@ -131,7 +142,7 @@ public class UIOpenPatronController(
         settings.OfferingId = await ResolveOfferingId(
             app,
             viewModel.OfferingId,
-            createIfMissing: AllowsSubscriptions(settings));
+            createIfMissing: true);
 
         app.Name = viewModel.AppName.Trim();
         app.SetSettings(settings);
