@@ -18,7 +18,10 @@ public class UpdateOpenPatronViewModel
     // Section-based layout (JSON-serialized)
     public string PageLayoutPreset { get; set; } = "8-4";
     public string SectionsJson { get; set; } = "[]";
-    public bool HasBlocks { get; set; }
+
+    // True once the user has picked a template (or an existing app already has blocks).
+    // Drives the view to show the editor instead of the template picker.
+    public bool IsConfigured { get; set; }
 
     // Theme
     [Display(Name = "Accent color")]

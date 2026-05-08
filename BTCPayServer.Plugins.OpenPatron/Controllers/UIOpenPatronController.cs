@@ -93,6 +93,7 @@ public class UIOpenPatronController(
                                         ?? BlockRegistry.CreateSectionsForPreset(existingSettings.PageLayoutPreset);
             existingSettings.Theme = null;
             existingSettings.PageLayout = null;
+            existingSettings.Initialized = true;
 
             existingSettings.OfferingId = await ResolveOfferingId(
                 app, existingSettings.OfferingId, createIfMissing: true);
@@ -127,6 +128,7 @@ public class UIOpenPatronController(
         {
             PageLayoutPreset = viewModel.PageLayoutPreset,
             Sections = sections,
+            Initialized = true,
             Theme = NullIfDefault(new PageTheme
             {
                 AccentColor = NormalizeString(viewModel.ThemeAccentColor) ?? PageTheme.DefaultAccentColor,
@@ -512,7 +514,9 @@ public class UIOpenPatronController(
             Archived = app.Archived,
             PageLayoutPreset = settings.PageLayoutPreset,
             SectionsJson = JsonConvert.SerializeObject(settings.Sections ?? [], Formatting.None),
-            HasBlocks = BlockRegistry.AllBlocks(settings.Sections).Any(),
+            // Show the editor if the user has explicitly initialized the app (any template,
+            // including "empty"), or — for backward compat — if blocks already exist.
+            IsConfigured = settings.Initialized || BlockRegistry.AllBlocks(settings.Sections).Any(),
             ThemeAccentColor = theme.AccentColor,
             ThemeSecondaryColor = theme.SecondaryColor,
             ThemeBorderRadius = theme.BorderRadius,

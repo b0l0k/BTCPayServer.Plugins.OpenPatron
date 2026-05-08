@@ -23,7 +23,7 @@
     <input asp-for="PageLayoutPreset" type="hidden" id="pageLayoutPreset" />
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-    @if (!Model.HasBlocks)
+    @if (!Model.IsConfigured)
     {
         <div class="row g-4">
             <div class="col-12 col-lg-8">
@@ -310,7 +310,7 @@
     }
 </form>
 
-@if (Model.HasBlocks)
+@if (Model.IsConfigured)
 {
 <div class="d-grid d-sm-flex flex-wrap gap-3 mt-3" permission="@Policies.CanModifyStoreSettings">
         <form method="post" asp-area="" asp-controller="UIApps" asp-action="ToggleArchive" asp-route-appId="@Model.AppId">
@@ -328,7 +328,7 @@
 
 <partial name="_ValidationScriptsPartial" />
 
-@if (Model.HasBlocks)
+@if (Model.IsConfigured)
 {
 <script src="~/vendor/vue-sortable/sortable.min.js"></script>
 <script>

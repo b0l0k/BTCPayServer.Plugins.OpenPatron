@@ -12,6 +12,10 @@ public class OpenPatronAppSettings
     public string PageLayoutPreset { get; set; } = "8-4";
     public List<PageSection>? Sections { get; set; }
 
+    // True once the user has picked a template (including "empty") or saved settings.
+    // Distinguishes a freshly-created app from one explicitly initialized with no blocks.
+    public bool Initialized { get; set; }
+
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
     public PageTheme? Theme { get; set; }
 
