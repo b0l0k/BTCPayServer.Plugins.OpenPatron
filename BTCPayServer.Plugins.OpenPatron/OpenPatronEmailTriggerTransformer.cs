@@ -7,7 +7,6 @@ using BTCPayServer.Plugins.Emails.Views;
 using BTCPayServer.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
 
 namespace BTCPayServer.Plugins.OpenPatron;
@@ -48,16 +47,15 @@ public class OpenPatronEmailTriggerTransformer(
         if (app is null || app.AppType != OpenPatronAppType.AppType)
             return;
 
-        var subscriberId = ctx.Subscribers
-            .Include(s => s.Customer).ThenInclude(c => c.CustomerIdentities)
+        var customerId = ctx.Subscribers
             .Where(s => s.OfferingId == offeringId
                         && s.Customer.CustomerIdentities.Any(ci => ci.Type == "Email" && ci.Value == subscriberEmail))
-            .Select(s => (long?)s.Id)
+            .Select(s => s.CustomerId)
             .FirstOrDefault();
-        if (subscriberId is null)
+        if (customerId is null)
             return;
 
-        var portalUrl = linkGenerator.OpenPatronPortalLink(appId, subscriberId.Value, requestBase);
+        var portalUrl = linkGenerator.OpenPatronPortalLink(appId, customerId, requestBase);
         var openPatronObj = (JObject)(context.TriggerEvent.Model["OpenPatron"] ??= new JObject());
         openPatronObj["PortalUrl"] = portalUrl;
     }

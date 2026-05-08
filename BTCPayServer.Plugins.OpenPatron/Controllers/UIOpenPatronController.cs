@@ -299,19 +299,19 @@ public class UIOpenPatronController(
 
     [AllowAnonymous]
     [HttpGet("{appId}/openpatron/portal")]
-    public async Task<IActionResult> SubscriberPortalRedirect(string appId, long subscriberId)
+    public async Task<IActionResult> SubscriberPortalRedirect(string appId, string customerId)
     {
         var app = await appService.GetApp(appId, OpenPatronAppType.AppType, includeArchived: true);
         if (app is null)
             return NotFound();
 
         var settings = app.GetSettings<OpenPatronAppSettings>();
-        if (!AllowsSubscriptions(settings))
+        if (!AllowsSubscriptions(settings) || settings.OfferingId is null)
             return NotFound();
 
         await using var ctx = dbContextFactory.CreateContext();
-        var subscriber = await ctx.Subscribers.GetById(subscriberId);
-        if (subscriber is null || subscriber.Offering?.AppId != appId)
+        var subscriber = await ctx.Subscribers.GetByCustomerId(customerId, settings.OfferingId);
+        if (subscriber is null)
             return NotFound();
 
         var portal = new PortalSessionData

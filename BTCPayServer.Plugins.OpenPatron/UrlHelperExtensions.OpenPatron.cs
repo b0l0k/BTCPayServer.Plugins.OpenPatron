@@ -7,10 +7,10 @@ namespace Microsoft.AspNetCore.Mvc;
 
 public static class OpenPatronUrlHelperExtensions
 {
-    public static string OpenPatronPortalLink(this LinkGenerator linkGenerator, string appId, long subscriberId, RequestBaseUrl requestBaseUrl)
+    public static string OpenPatronPortalLink(this LinkGenerator linkGenerator, string appId, string customerId, RequestBaseUrl requestBaseUrl)
         => linkGenerator.GetUriByAction(
             action: "SubscriberPortalRedirect",
             controller: "UIOpenPatron",
-            values: new { area = OpenPatronPlugin.Area, appId, subscriberId },
+            values: new { area = OpenPatronPlugin.Area, appId, customerId },
             requestBaseUrl: requestBaseUrl);
 }
