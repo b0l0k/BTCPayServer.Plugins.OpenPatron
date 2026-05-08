@@ -39,7 +39,8 @@ public class UIOpenPatronController(
     SponsorWallService sponsorWallService,
     FundingProgressService fundingProgressService,
     GitHubRepoService gitHubRepoService,
-    LinkGenerator linkGenerator) : Controller
+    LinkGenerator linkGenerator,
+    SettingsRepository settingsRepository) : Controller
 {
     private const string UpdateViewPath = "/Views/UIOpenPatron/Update.cshtml";
     private const string PublicPageViewPath = "/Views/UIOpenPatron/PublicPage.cshtml";
@@ -55,6 +56,8 @@ public class UIOpenPatronController(
 
         if (!await IsAuthorized(app, Policies.CanViewStoreSettings))
             return Forbid();
+
+        await EnsureServerBaseUrlAsync();
 
         EnsurePageLayout(settings);
 
@@ -469,6 +472,20 @@ public class UIOpenPatronController(
 
     private async Task<bool> IsAuthorized(AppData app, string policy)
         => (await authorizationService.AuthorizeAsync(User, app.StoreDataId, policy)).Succeeded;
+
+    private async Task EnsureServerBaseUrlAsync()
+    {
+        var isAdmin = (await authorizationService.AuthorizeAsync(User, Policies.CanModifyServerSettings)).Succeeded;
+        if (!isAdmin)
+            return;
+
+        var serverSettings = await settingsRepository.GetSettingAsync<ServerSettings>() ?? new ServerSettings();
+        if (!string.IsNullOrEmpty(serverSettings.BaseUrl))
+            return;
+
+        serverSettings.BaseUrl = Request.GetRequestBaseUrl().ToString();
+        await settingsRepository.UpdateSetting(serverSettings);
+    }
 
     private async Task<(AppData App, OpenPatronAppSettings Settings)?> GetAppWithSettings(string appId)
     {
