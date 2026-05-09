@@ -100,7 +100,7 @@ public static class BlockRegistry
                         new() { Name = "Programming The Blockchain in C#", Url = "https://programmingblockchain.gitbook.io", Description = "Free book to learn Bitcoin development" },
                     ],
                 }) },
-                new() { Type = SubscriptionTiers, Settings = JObject.FromObject(new SubscriptionTiersSettings { Heading = "Become a sponsor", Subtitle = "Pick the level that fits you best" }) },
+                new() { Type = SubscriptionTiers, Settings = JObject.FromObject(new SubscriptionTiersSettings { Heading = "Become a sponsor", Subtitle = "Pick the level that fits you best", ColumnsPerRow = 3 }) },
                 new() { Type = QuickSupport, Settings = JObject.FromObject(new QuickSupportSettings { Heading = "Send a tip", SuggestedAmounts = [5, 21, 50, 100] }) },
                 new() { Type = SponsorWall, Settings = JObject.FromObject(new SponsorWallSettings { Heading = "Supporters" }) },
             ]
@@ -135,7 +135,7 @@ public static class BlockRegistry
                     Heading = "Why sponsor this work?",
                     Content = "BTCPay Server v3 is a ground-up rebuild of the plugin architecture, bringing a new dashboard, faster sync times, and first-class multi-tenant support.\n\nThis release requires months of dedicated full-time work from core contributors. Every contribution — large or small — goes directly toward developer salaries, infrastructure, and security audits.\n\nNo VCs. No token sales. Just open-source software funded by the people who use it.",
                 }) },
-                new() { Type = SubscriptionTiers, Settings = JObject.FromObject(new SubscriptionTiersSettings { Heading = "Become a project sponsor", Subtitle = "Recurring support keeps development sustainable" }) },
+                new() { Type = SubscriptionTiers, Settings = JObject.FromObject(new SubscriptionTiersSettings { Heading = "Become a project sponsor", Subtitle = "Recurring support keeps development sustainable", ColumnsPerRow = 3 }) },
                 new() { Type = QuickSupport, Settings = JObject.FromObject(new QuickSupportSettings { Heading = "One-time contribution", SuggestedAmounts = [21, 100, 500, 1000] }) },
                 new() { Type = SponsorWall, Settings = JObject.FromObject(new SponsorWallSettings { Heading = "Who's supporting this work" }) },
             ]
