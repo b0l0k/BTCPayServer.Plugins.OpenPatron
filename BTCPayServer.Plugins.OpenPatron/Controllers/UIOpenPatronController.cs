@@ -10,10 +10,12 @@ using BTCPayServer.Client.Models;
 using BTCPayServer.Controllers;
 using BTCPayServer.Data;
 using BTCPayServer.Data.Subscriptions;
+using BTCPayServer.Plugins.Emails;
 using BTCPayServer.Plugins.OpenPatron.Models;
 using BTCPayServer.Plugins.OpenPatron.Services;
 using BTCPayServer.Plugins.OpenPatron.ViewModels;
 using BTCPayServer.Plugins.Subscriptions;
+using BTCPayServer.Plugins.Subscriptions.Controllers;
 using BTCPayServer.Services;
 using BTCPayServer.Services.Apps;
 using BTCPayServer.Services.Invoices;
@@ -679,6 +681,8 @@ public class UIOpenPatronController(
             .Select(r => r.Trigger)
             .ToListAsync();
 
+        var offeringCondition = UIOfferingController.CreateOfferingCondition(offeringId);
+
         if (!existingTriggers.Contains(reminderTrigger))
         {
             ctx.EmailRules.Add(new EmailRuleData
@@ -686,14 +690,16 @@ public class UIOpenPatronController(
                 StoreId = storeId,
                 OfferingId = offeringId,
                 Trigger = reminderTrigger,
+                Condition = offeringCondition,
                 To = ["{Subscriber.Email}"],
                 Subject = "Time to renew your sponsorship for {Offering.Name}",
-                Body = "Hello {Customer.Name},\n\n"
-                     + "Your sponsorship for {Offering.Name} ({Plan.Name}) is coming up for renewal.\n\n"
-                     + "We truly appreciate your support! To continue your sponsorship, please visit your portal:\n"
-                     + "{OpenPatron.PortalUrl}\n\n"
-                     + "Thank you for making a difference.\n\n"
-                     + "Regards,\n{Store.Name}"
+                Body = EmailsPlugin.CreateEmailBody(
+                    "<p>Hi there,</p>"
+                  + "<p>Your sponsorship for <strong>{Offering.Name}</strong> (<em>{Plan.Name}</em>) is coming up for renewal.</p>"
+                  + "<p>We truly appreciate your support! To keep your sponsorship active, please visit your sponsor portal:</p>"
+                  + $"<p style='margin:1.5rem 0'>{EmailsPlugin.CallToAction("Renew sponsorship", "{OpenPatron.PortalUrl}")}</p>"
+                  + "<p>Thank you for making a difference.</p>"
+                  + "<p>Regards,<br/>{Store.Name}</p>")
             });
         }
 
@@ -704,14 +710,16 @@ public class UIOpenPatronController(
                 StoreId = storeId,
                 OfferingId = offeringId,
                 Trigger = createdTrigger,
+                Condition = offeringCondition,
                 To = ["{Subscriber.Email}"],
                 Subject = "Welcome to {Offering.Name}!",
-                Body = "Hello {Customer.Name},\n\n"
-                     + "Thank you for becoming a sponsor of {Offering.Name}!\n\n"
-                     + "Your support means the world to us and helps keep the project alive and growing.\n\n"
-                     + "You can manage your sponsorship anytime through your portal:\n"
-                     + "{OpenPatron.PortalUrl}\n\n"
-                     + "Regards,\n{Store.Name}"
+                Body = EmailsPlugin.CreateEmailBody(
+                    "<p>Hi there,</p>"
+                  + "<p>Thank you for becoming a sponsor of <strong>{Offering.Name}</strong>!</p>"
+                  + "<p>Your support means the world to us and helps keep the project alive and growing.</p>"
+                  + "<p>You can manage your sponsorship anytime from your sponsor portal:</p>"
+                  + $"<p style='margin:1.5rem 0'>{EmailsPlugin.CallToAction("Manage subscription", "{OpenPatron.PortalUrl}")}</p>"
+                  + "<p>Regards,<br/>{Store.Name}</p>")
             });
         }
 
