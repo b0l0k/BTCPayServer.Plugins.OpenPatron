@@ -762,4 +762,76 @@ public class FastTests
         Assert.NotNull(typed);
         Assert.Empty(typed!.DisplayName);
     }
+
+    // ── Default plans seeded from template ──
+
+    [Fact]
+    public void GetDefaultPlansForPersonalTemplate()
+    {
+        var plans = UIOpenPatronController.GetDefaultPlansForTemplate("personal", "USD", "offering-1");
+        Assert.Equal(3, plans.Count);
+
+        Assert.Equal("Monthly coffee", plans[0].Name);
+        Assert.Equal(3m, plans[0].Price);
+        Assert.Equal("Monthly lunch", plans[1].Name);
+        Assert.Equal(20m, plans[1].Price);
+        Assert.Equal("Monthly dinner", plans[2].Name);
+        Assert.Equal(50m, plans[2].Price);
+
+        Assert.All(plans, p =>
+        {
+            Assert.Equal(PlanData.RecurringInterval.Monthly, p.RecurringType);
+            Assert.Equal(PlanData.PlanStatus.Active, p.Status);
+            Assert.Equal("USD", p.Currency);
+            Assert.Equal("offering-1", p.OfferingId);
+            Assert.False(string.IsNullOrWhiteSpace(p.Description));
+        });
+    }
+
+    [Fact]
+    public void GetDefaultPlansForProjectTemplate()
+    {
+        var plans = UIOpenPatronController.GetDefaultPlansForTemplate("project", "USD", "offering-2");
+        Assert.Equal(3, plans.Count);
+
+        Assert.Equal("Silver", plans[0].Name);
+        Assert.Equal(5m, plans[0].Price);
+        Assert.Equal("Gold", plans[1].Name);
+        Assert.Equal(20m, plans[1].Price);
+        Assert.Equal("Diamond", plans[2].Name);
+        Assert.Equal(50m, plans[2].Price);
+
+        Assert.All(plans, p =>
+        {
+            Assert.Equal(PlanData.RecurringInterval.Monthly, p.RecurringType);
+            Assert.Equal(PlanData.PlanStatus.Active, p.Status);
+            Assert.Equal("USD", p.Currency);
+            Assert.Equal("offering-2", p.OfferingId);
+        });
+    }
+
+    [Fact]
+    public void GetDefaultPlansForEmptyTemplateReturnsNoPlans()
+    {
+        Assert.Empty(UIOpenPatronController.GetDefaultPlansForTemplate("empty", "USD", "offering-3"));
+        Assert.Empty(UIOpenPatronController.GetDefaultPlansForTemplate(null, "USD", "offering-3"));
+        Assert.Empty(UIOpenPatronController.GetDefaultPlansForTemplate("unknown-template", "USD", "offering-3"));
+    }
+
+    [Fact]
+    public void GetDefaultPlansPropagatesCurrency()
+    {
+        var personalEur = UIOpenPatronController.GetDefaultPlansForTemplate("personal", "EUR", "off");
+        Assert.All(personalEur, p => Assert.Equal("EUR", p.Currency));
+
+        var projectGbp = UIOpenPatronController.GetDefaultPlansForTemplate("project", "GBP", "off");
+        Assert.All(projectGbp, p => Assert.Equal("GBP", p.Currency));
+    }
+
+    [Fact]
+    public void GetDefaultPlansIsTemplateNameCaseInsensitive()
+    {
+        Assert.Equal(3, UIOpenPatronController.GetDefaultPlansForTemplate("Personal", "USD", "off").Count);
+        Assert.Equal(3, UIOpenPatronController.GetDefaultPlansForTemplate("PROJECT", "USD", "off").Count);
+    }
 }

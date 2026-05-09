@@ -96,7 +96,8 @@ public class UIOpenPatronController(
             existingSettings.Initialized = true;
 
             existingSettings.OfferingId = await ResolveOfferingId(
-                app, existingSettings.OfferingId, createIfMissing: true);
+                app, existingSettings.OfferingId, createIfMissing: true,
+                template: template, currency: existingSettings.DefaultCurrency);
 
             app.SetSettings(existingSettings);
             await appService.UpdateOrCreateApp(app);
@@ -590,7 +591,7 @@ public class UIOpenPatronController(
         return OpenPatronOfferingResolver.SelectPreferredOffering(offerings, settings.OfferingId);
     }
 
-    private async Task<string?> ResolveOfferingId(AppData app, string? preferredOfferingId, bool createIfMissing)
+    private async Task<string?> ResolveOfferingId(AppData app, string? preferredOfferingId, bool createIfMissing, string? template = null, string? currency = null)
     {
         var offerings = await GetOfferingsForApp(app);
         var existing = OpenPatronOfferingResolver.SelectPreferredOffering(offerings, preferredOfferingId);
@@ -601,8 +602,48 @@ public class UIOpenPatronController(
         var offering = new OfferingData { AppId = app.Id };
         ctx.Offerings.Add(offering);
         await ctx.SaveChangesAsync();
+
+        var planCurrency = string.IsNullOrWhiteSpace(currency) ? "USD" : currency.Trim().ToUpperInvariant();
+        foreach (var plan in GetDefaultPlansForTemplate(template, planCurrency, offering.Id))
+        {
+            ctx.Plans.Add(plan);
+        }
+        if (ctx.ChangeTracker.HasChanges())
+            await ctx.SaveChangesAsync();
+
         await CreateDefaultEmailRules(ctx, app.StoreDataId, offering.Id);
         return offering.Id;
+    }
+
+    public static IReadOnlyList<PlanData> GetDefaultPlansForTemplate(string? template, string currency, string offeringId)
+    {
+        var specs = template?.ToLowerInvariant() switch
+        {
+            "personal" => new[]
+            {
+                ("Monthly coffee", 3m, "Buy me a coffee every month"),
+                ("Monthly lunch", 20m, "Treat me to lunch every month"),
+                ("Monthly dinner", 50m, "Sponsor a monthly dinner"),
+            },
+            "project" => new[]
+            {
+                ("Silver", 5m, "Silver sponsor"),
+                ("Gold", 20m, "Gold sponsor"),
+                ("Diamond", 50m, "Diamond sponsor"),
+            },
+            _ => Array.Empty<(string, decimal, string)>()
+        };
+
+        return specs.Select(s => new PlanData
+        {
+            OfferingId = offeringId,
+            Name = s.Item1,
+            Price = s.Item2,
+            Description = s.Item3,
+            Currency = currency,
+            RecurringType = PlanData.RecurringInterval.Monthly,
+            Status = PlanData.PlanStatus.Active,
+        }).ToList();
     }
 
     private static async Task CreateDefaultEmailRules(ApplicationDbContext ctx, string storeId, string offeringId)
