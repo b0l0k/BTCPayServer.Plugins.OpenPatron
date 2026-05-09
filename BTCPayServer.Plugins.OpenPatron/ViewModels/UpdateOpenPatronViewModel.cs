@@ -49,7 +49,7 @@ public class UpdateOpenPatronViewModel
 
     // Global settings
     [Required]
-    [Display(Name = "Internal name")]
+    [Display(Name = "Name")]
     [MaxLength(50)]
     public string AppName { get; set; } = string.Empty;
 
