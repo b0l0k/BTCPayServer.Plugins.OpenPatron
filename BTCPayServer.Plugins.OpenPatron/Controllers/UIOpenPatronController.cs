@@ -595,24 +595,47 @@ public class UIOpenPatronController(
     {
         var offerings = await GetOfferingsForApp(app);
         var existing = OpenPatronOfferingResolver.SelectPreferredOffering(offerings, preferredOfferingId);
-        if (existing is not null || !createIfMissing)
-            return existing?.Id;
 
-        await using var ctx = dbContextFactory.CreateContext();
-        var offering = new OfferingData { AppId = app.Id };
-        ctx.Offerings.Add(offering);
-        await ctx.SaveChangesAsync();
+        if (existing is null && !createIfMissing)
+            return null;
 
-        var planCurrency = string.IsNullOrWhiteSpace(currency) ? "USD" : currency.Trim().ToUpperInvariant();
-        foreach (var plan in GetDefaultPlansForTemplate(template, planCurrency, offering.Id))
+        string offeringId;
+        bool offeringHasPlans;
+
+        if (existing is not null)
         {
-            ctx.Plans.Add(plan);
+            offeringId = existing.Id;
+            offeringHasPlans = existing.Plans is { Count: > 0 };
         }
-        if (ctx.ChangeTracker.HasChanges())
+        else
+        {
+            await using var ctx = dbContextFactory.CreateContext();
+            var offering = new OfferingData { AppId = app.Id };
+            ctx.Offerings.Add(offering);
             await ctx.SaveChangesAsync();
+            await CreateDefaultEmailRules(ctx, app.StoreDataId, offering.Id);
+            offeringId = offering.Id;
+            offeringHasPlans = false;
+        }
 
-        await CreateDefaultEmailRules(ctx, app.StoreDataId, offering.Id);
-        return offering.Id;
+        // Seed default plans when a template is applied and the offering has no plans yet.
+        // Covers the case where an empty offering was auto-created on a previous GET before the user picked a template.
+        if (!string.IsNullOrEmpty(template) && !offeringHasPlans)
+        {
+            var planCurrency = string.IsNullOrWhiteSpace(currency) ? "USD" : currency.Trim().ToUpperInvariant();
+            var defaultPlans = GetDefaultPlansForTemplate(template, planCurrency, offeringId);
+            if (defaultPlans.Count > 0)
+            {
+                await using var ctx = dbContextFactory.CreateContext();
+                foreach (var plan in defaultPlans)
+                {
+                    ctx.Plans.Add(plan);
+                }
+                await ctx.SaveChangesAsync();
+            }
+        }
+
+        return offeringId;
     }
 
     public static IReadOnlyList<PlanData> GetDefaultPlansForTemplate(string? template, string currency, string offeringId)
