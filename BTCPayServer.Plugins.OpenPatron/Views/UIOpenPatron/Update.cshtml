@@ -9,13 +9,28 @@
 }
 
 <div class="sticky-header-setup"></div>
-<div class="sticky-header">
-    <h2>
-        @ViewData["Title"]
-    </h2>
-</div>
 
 <form method="post" asp-action="Update" asp-route-appId="@Model.AppId" id="openpatronForm">
+    <div class="sticky-header">
+        <h2>
+            @ViewData["Title"]
+        </h2>
+        @if (Model.IsConfigured)
+        {
+            <div>
+                <button id="page-primary" type="submit" class="btn btn-primary order-sm-1" permissioned="@Policies.CanModifyStoreSettings">Save</button>
+                @if (Model.Archived)
+                {
+                    <button type="submit" form="openpatronArchiveForm" class="btn btn-outline-secondary" permissioned="@Policies.CanModifyStoreSettings">Unarchive</button>
+                }
+                else
+                {
+                    <a class="btn btn-secondary" href="@Model.PublicPageUrl" target="_blank" rel="noreferrer">Preview</a>
+                }
+            </div>
+        }
+    </div>
+
     <input asp-for="AppId" type="hidden" />
     <input asp-for="StoreId" type="hidden" />
     <input asp-for="OfferingId" type="hidden" />
@@ -282,10 +297,6 @@
                             <div class="text-muted small">An offering will be created automatically when you save.</div>
                         }
                     </div>
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary" id="saveBtn">Save changes</button>
-                        <a class="btn btn-secondary" href="@Model.PublicPageUrl" target="_blank" rel="noreferrer">Preview page</a>
-                    </div>
                 </div>
             </div>
         </div>
@@ -313,7 +324,7 @@
 @if (Model.IsConfigured)
 {
 <div class="d-grid d-sm-flex flex-wrap gap-3 mt-3" permission="@Policies.CanModifyStoreSettings">
-        <form method="post" asp-area="" asp-controller="UIApps" asp-action="ToggleArchive" asp-route-appId="@Model.AppId">
+        <form method="post" asp-area="" asp-controller="UIApps" asp-action="ToggleArchive" asp-route-appId="@Model.AppId" id="openpatronArchiveForm">
             <button type="submit" class="w-100 btn btn-outline-secondary" id="btn-archive-toggle">
                 @(Model.Archived ? "Unarchive this app" : "Archive this app")
             </button>
