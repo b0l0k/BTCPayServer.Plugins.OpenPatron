@@ -22,7 +22,6 @@ using BTCPayServer.Services.Invoices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -143,8 +142,7 @@ public class UIOpenPatronController(
                 BackgroundStyle = NormalizeString(viewModel.ThemeBackgroundStyle) ?? PageTheme.DefaultBackgroundStyle,
             }),
             OfferingId = viewModel.OfferingId,
-            DefaultCurrency = viewModel.DefaultCurrency.Trim().ToUpperInvariant(),
-            Visibility = viewModel.Visibility
+            DefaultCurrency = viewModel.DefaultCurrency.Trim().ToUpperInvariant()
         };
 
         settings.OfferingId = await ResolveOfferingId(
@@ -168,9 +166,6 @@ public class UIOpenPatronController(
         if (result is null)
             return NotFound();
         var (app, settings) = result.Value;
-
-        if (!IsPublished(settings) && !await IsAuthorized(app, Policies.CanViewStoreSettings))
-            return NotFound();
 
         EnsurePageLayout(settings);
 
@@ -213,9 +208,6 @@ public class UIOpenPatronController(
         var (app, settings) = result.Value;
 
         if (!AllowsOneTime(settings))
-            return NotFound();
-
-        if (!IsPublished(settings) && !await IsAuthorized(app, Policies.CanViewStoreSettings))
             return NotFound();
 
         if (!decimal.TryParse(amount, NumberStyles.Number, CultureInfo.InvariantCulture, out var parsedAmount) || parsedAmount <= 0m)
@@ -268,9 +260,6 @@ public class UIOpenPatronController(
         var (app, settings) = result.Value;
 
         if (!AllowsSubscriptions(settings))
-            return NotFound();
-
-        if (!IsPublished(settings) && !await IsAuthorized(app, Policies.CanViewStoreSettings))
             return NotFound();
 
         var offering = await GetOffering(app, settings);
@@ -425,10 +414,7 @@ public class UIOpenPatronController(
         var result = await GetAppWithSettings(appId);
         if (result is null)
             return NotFound();
-        var (app, settings) = result.Value;
-
-        if (!IsPublished(settings) && !await IsAuthorized(app, Policies.CanViewStoreSettings))
-            return NotFound();
+        var (_, settings) = result.Value;
 
         var accentColor = settings.Theme?.AccentColor ?? PageTheme.DefaultAccentColor;
         var badgeLabel = string.IsNullOrWhiteSpace(label) ? "\u20bf" : label.Trim();
@@ -528,8 +514,7 @@ public class UIOpenPatronController(
             ThemeTypographyStyle = theme.TypographyStyle,
             ThemeBackgroundStyle = theme.BackgroundStyle,
             AppName = app.Name,
-            DefaultCurrency = settings.DefaultCurrency,
-            Visibility = settings.Visibility
+            DefaultCurrency = settings.DefaultCurrency
         };
     }
 
@@ -791,9 +776,6 @@ public class UIOpenPatronController(
     private static bool AllowsSubscriptions(OpenPatronAppSettings settings)
         => BlockRegistry.AllBlocks(settings.Sections).Any(b =>
             string.Equals(b.Type, BlockRegistry.SubscriptionTiers, StringComparison.OrdinalIgnoreCase));
-
-    private static bool IsPublished(OpenPatronAppSettings settings)
-        => settings.Visibility == OpenPatronVisibility.Published;
 
     private static string? NormalizeString(string? value)
         => string.IsNullOrWhiteSpace(value) ? null : value.Trim();

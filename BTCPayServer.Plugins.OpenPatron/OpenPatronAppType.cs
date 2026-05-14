@@ -36,8 +36,7 @@ public class OpenPatronAppType(
     {
         appData.SetSettings(new OpenPatronAppSettings
         {
-            DefaultCurrency = defaultCurrency,
-            Visibility = OpenPatronVisibility.Unpublished
+            DefaultCurrency = defaultCurrency
         });
 
         return Task.CompletedTask;

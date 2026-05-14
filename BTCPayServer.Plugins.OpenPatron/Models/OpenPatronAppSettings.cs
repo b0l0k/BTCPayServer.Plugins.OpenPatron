@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -26,7 +25,6 @@ public class OpenPatronAppSettings
     // Global settings
     public string? OfferingId { get; set; }
     public string DefaultCurrency { get; set; } = "USD";
-    public OpenPatronVisibility Visibility { get; set; } = OpenPatronVisibility.Unpublished;
 }
 
 public class PageSection
@@ -81,13 +79,5 @@ public class PageTheme
         ShadowStyle == DefaultShadowStyle &&
         TypographyStyle == DefaultTypographyStyle &&
         BackgroundStyle == DefaultBackgroundStyle;
-}
-
-public enum OpenPatronVisibility
-{
-    [Display(Name = "Not published")]
-    Unpublished = 0,
-    [Display(Name = "Published")]
-    Published = 1
 }
 

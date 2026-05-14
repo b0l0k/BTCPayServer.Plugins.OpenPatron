@@ -220,7 +220,6 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
         var contentField = s.Page.Locator("#blockList .block-row").Nth(2).Locator(".block-field[data-key='content']");
         await contentField.FillAsync("A great project");
 
-        await s.Page.Locator("[name='Visibility']").SelectOptionAsync("1");
         await s.Page.Locator("#saveBtn").ClickAsync();
         await s.FindAlertMessage(partialText: "updated");
 
@@ -246,7 +245,6 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
 
         await s.Page.Locator("[name='ThemeAccentColor']").ClearAsync();
         await s.Page.Locator("[name='ThemeAccentColor']").FillAsync("#ff5500");
-        await s.Page.Locator("[name='Visibility']").SelectOptionAsync("1");
         await s.Page.Locator("#saveBtn").ClickAsync();
         await s.FindAlertMessage(partialText: "updated");
 
@@ -268,7 +266,6 @@ public class PlaywrightTests(ITestOutputHelper helper) : UnitTestBase(helper)
         await s.FindAlertMessage(partialText: "Template applied");
 
         await s.Page.EvaluateAsync("() => { document.getElementById('pageLayoutJson').value = '[]'; }");
-        await s.Page.Locator("[name='Visibility']").SelectOptionAsync("1");
         await s.Page.Locator("#saveBtn").ClickAsync();
         await s.FindAlertMessage(partialText: "updated");
 

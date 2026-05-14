@@ -263,17 +263,12 @@
                             <button type="button" class="btn btn-outline-secondary" onclick="copySnippet('badgeHtml', this)">Copy</button>
                         </div>
                     </div>
-                    <div class="form-text">Badge is only visible when the page is published.</div>
                 </div>
             </div>
 
             <div class="card">
                 <div class="card-body">
-                    <h3 class="h5 mb-3">Publishing</h3>
-                    <div class="form-group mb-3">
-                        <label asp-for="Visibility" class="form-label"></label>
-                        <select asp-for="Visibility" asp-items="Html.GetEnumSelectList<OpenPatronVisibility>()" class="form-select"></select>
-                    </div>
+                    <h3 class="h5 mb-3">Page</h3>
                     <div class="mb-3">
                         <div class="text-muted small">Public page</div>
                         <a href="@Model.PublicPageUrl" target="_blank" rel="noreferrer">@Model.PublicPageUrl</a>

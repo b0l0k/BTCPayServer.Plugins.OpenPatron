@@ -57,7 +57,4 @@ public class UpdateOpenPatronViewModel
     [Display(Name = "Default currency")]
     [MaxLength(12)]
     public string DefaultCurrency { get; set; } = "USD";
-
-    [Display(Name = "Status")]
-    public OpenPatronVisibility Visibility { get; set; } = OpenPatronVisibility.Unpublished;
 }

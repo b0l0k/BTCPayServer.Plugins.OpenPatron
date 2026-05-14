@@ -19,10 +19,9 @@ public class FastTests
     // ── Settings defaults ──
 
     [Fact]
-    public void SettingsDefaultsToUnpublished()
+    public void SettingsDefaultsHaveNoOffering()
     {
         var settings = new OpenPatronAppSettings();
-        Assert.Equal(OpenPatronVisibility.Unpublished, settings.Visibility);
         Assert.Null(settings.OfferingId);
     }
 

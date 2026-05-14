@@ -73,7 +73,7 @@ OpenPatron stores **all settings** inside BTCPay Server's `Apps` table using the
 
 The `Settings` column holds a JSON-serialized `OpenPatronAppSettings` object containing:
 
-- **Page metadata** — `PageType` (Personal / Project), `PageTypeConfirmed`, `Visibility`
+- **Page metadata** — `PageType` (Personal / Project), `PageTypeConfirmed`
 - **Layout** — `PageLayoutPreset` (e.g. `"8-4"`), `Sections` (list of columns with blocks)
 - **Theme** — `PageTheme` (accent color, border radius, spacing, shadow, typography, background)
 - **Global settings** — `DefaultCurrency`, `OfferingId` (link to Subscriptions offering)
@@ -97,7 +97,6 @@ OpenPatronAppSettings
 │   ├── TypographyStyle: "standard"
 │   └── BackgroundStyle: "flat"
 ├── DefaultCurrency: "USD"
-├── Visibility: Published
 └── OfferingId: "abc123..."
 ```
 
