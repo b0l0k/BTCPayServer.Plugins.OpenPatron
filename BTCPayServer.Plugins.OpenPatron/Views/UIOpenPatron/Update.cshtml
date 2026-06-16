@@ -1,4 +1,5 @@
 @using BTCPayServer.Client
+@using BTCPayServer.Plugins.Emails
 @using BTCPayServer.Plugins.OpenPatron.Models
 @using BTCPayServer.Plugins.OpenPatron.Services
 @model BTCPayServer.Plugins.OpenPatron.ViewModels.UpdateOpenPatronViewModel
@@ -37,6 +38,23 @@
     <input asp-for="SectionsJson" type="hidden" id="sectionsJson" />
     <input asp-for="PageLayoutPreset" type="hidden" id="pageLayoutPreset" />
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    @if (!Model.EmailConfigured)
+    {
+        <div class="alert alert-warning d-flex flex-wrap align-items-center justify-content-between gap-2" role="alert">
+            <div>
+                <strong>Email not configured.</strong>
+                <span>No email server is set up for this store, so subscribers won't receive welcome emails, renewal reminders, or receipts.</span>
+            </div>
+            <a asp-area="@EmailsPlugin.Area"
+               asp-controller="UIStoresEmail"
+               asp-action="StoreEmailSettings"
+               asp-route-storeId="@Model.StoreId"
+               target="_blank"
+               rel="noreferrer"
+               class="btn btn-warning btn-sm flex-shrink-0">Configure email</a>
+        </div>
+    }
 
     @if (!Model.IsConfigured)
     {

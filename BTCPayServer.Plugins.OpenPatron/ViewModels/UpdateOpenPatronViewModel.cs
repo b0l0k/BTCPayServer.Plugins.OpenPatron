@@ -15,6 +15,9 @@ public class UpdateOpenPatronViewModel
     public int ActivePlanCount { get; set; }
     public bool Archived { get; set; }
 
+    // Whether the store has a working email configuration. Drives a setup warning.
+    public bool EmailConfigured { get; set; }
+
     // Section-based layout (JSON-serialized)
     public string PageLayoutPreset { get; set; } = "8-4";
     public string SectionsJson { get; set; } = "[]";

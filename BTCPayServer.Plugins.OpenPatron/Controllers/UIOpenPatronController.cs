@@ -13,6 +13,7 @@ using BTCPayServer.Data.Subscriptions;
 using BTCPayServer.Filters;
 using BTCPayServer.Plugins.Crowdfund;
 using BTCPayServer.Plugins.Emails;
+using BTCPayServer.Plugins.Emails.Services;
 using BTCPayServer.Plugins.OpenPatron.Models;
 using BTCPayServer.Plugins.OpenPatron.Services;
 using BTCPayServer.Plugins.OpenPatron.ViewModels;
@@ -45,6 +46,7 @@ public class UIOpenPatronController(
     FundingProgressService fundingProgressService,
     GitHubRepoService gitHubRepoService,
     LinkGenerator linkGenerator,
+    EmailSenderFactory emailSenderFactory,
     SettingsRepository settingsRepository) : Controller
 {
     private const string UpdateViewPath = "/Views/UIOpenPatron/Update.cshtml";
@@ -75,6 +77,7 @@ public class UIOpenPatronController(
 
         var offering = await GetOffering(app, settings);
         var vm = ToUpdateViewModel(app, settings, offering);
+        vm.EmailConfigured = (await emailSenderFactory.GetSettings(app.StoreDataId))?.IsComplete() is true;
 
         return View(UpdateViewPath, vm);
     }
