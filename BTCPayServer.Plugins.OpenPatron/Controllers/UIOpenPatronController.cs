@@ -133,6 +133,9 @@ public class UIOpenPatronController(
             sections = existingSettings.Sections ?? BlockRegistry.CreateSectionsForPreset(viewModel.PageLayoutPreset);
         }
 
+        var previousDefaultCurrency = NormalizeCurrencyCode(existingSettings.DefaultCurrency);
+        var defaultCurrency = NormalizeCurrencyCode(viewModel.DefaultCurrency);
+
         var settings = new OpenPatronAppSettings
         {
             PageLayoutPreset = viewModel.PageLayoutPreset,
@@ -149,7 +152,7 @@ public class UIOpenPatronController(
                 BackgroundStyle = NormalizeString(viewModel.ThemeBackgroundStyle) ?? PageTheme.DefaultBackgroundStyle,
             }),
             OfferingId = viewModel.OfferingId,
-            DefaultCurrency = viewModel.DefaultCurrency.Trim().ToUpperInvariant()
+            DefaultCurrency = defaultCurrency
         };
 
         settings.OfferingId = await ResolveOfferingId(
@@ -160,7 +163,17 @@ public class UIOpenPatronController(
         app.Name = viewModel.AppName.Trim();
         app.SetSettings(settings);
         await appService.UpdateOrCreateApp(app);
-        TempData[WellKnownTempData.SuccessMessage] = "OpenPatron page updated.";
+        var updatedPlanCount = await UpdateSubscriptionPlanCurrenciesForDefaultCurrencyChange(
+            settings.OfferingId,
+            previousDefaultCurrency,
+            settings.DefaultCurrency);
+
+        TempData[WellKnownTempData.SuccessMessage] = updatedPlanCount switch
+        {
+            0 => "OpenPatron page updated.",
+            1 => "OpenPatron page updated. Updated 1 subscription plan currency.",
+            _ => $"OpenPatron page updated. Updated {updatedPlanCount} subscription plan currencies."
+        };
 
         return RedirectToAction(nameof(Update), new { appId = app.Id });
     }
@@ -594,6 +607,67 @@ public class UIOpenPatronController(
         return OpenPatronOfferingResolver.SelectPreferredOffering(offerings, settings.OfferingId);
     }
 
+    private async Task<int> UpdateSubscriptionPlanCurrenciesForDefaultCurrencyChange(
+        string? offeringId,
+        string? previousDefaultCurrency,
+        string? newDefaultCurrency)
+    {
+        if (string.IsNullOrWhiteSpace(offeringId))
+            return 0;
+
+        var previousCurrency = NormalizeCurrencyCode(previousDefaultCurrency);
+        var targetCurrency = NormalizeCurrencyCode(newDefaultCurrency);
+        if (string.IsNullOrEmpty(previousCurrency) ||
+            string.IsNullOrEmpty(targetCurrency) ||
+            string.Equals(previousCurrency, targetCurrency, StringComparison.OrdinalIgnoreCase))
+        {
+            return 0;
+        }
+
+        await using var ctx = dbContextFactory.CreateContext();
+        var plans = await ctx.Plans
+            .Where(p => p.OfferingId == offeringId)
+            .ToListAsync();
+
+        var updated = UpdateSubscriptionPlanCurrenciesForDefaultCurrencyChange(
+            plans,
+            previousCurrency,
+            targetCurrency);
+
+        if (updated > 0)
+            await ctx.SaveChangesAsync();
+
+        return updated;
+    }
+
+    public static int UpdateSubscriptionPlanCurrenciesForDefaultCurrencyChange(
+        IEnumerable<PlanData> plans,
+        string? previousDefaultCurrency,
+        string? newDefaultCurrency)
+    {
+        var previousCurrency = NormalizeCurrencyCode(previousDefaultCurrency);
+        var targetCurrency = NormalizeCurrencyCode(newDefaultCurrency);
+
+        if (string.IsNullOrEmpty(previousCurrency) ||
+            string.IsNullOrEmpty(targetCurrency) ||
+            string.Equals(previousCurrency, targetCurrency, StringComparison.OrdinalIgnoreCase))
+        {
+            return 0;
+        }
+
+        var updated = 0;
+        foreach (var plan in plans)
+        {
+            if (!string.Equals(NormalizeCurrencyCode(plan.Currency), previousCurrency, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            plan.Currency = targetCurrency;
+            updated++;
+        }
+
+        return updated;
+    }
+
     private async Task<string?> ResolveOfferingId(AppData app, string? preferredOfferingId, bool createIfMissing, string? template = null, string? currency = null)
     {
         var offerings = await GetOfferingsForApp(app);
@@ -795,6 +869,9 @@ public class UIOpenPatronController(
 
     private static string? NormalizeString(string? value)
         => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static string NormalizeCurrencyCode(string? currency)
+        => (currency ?? string.Empty).Trim().ToUpperInvariant();
 
     private static PageTheme? NullIfDefault(PageTheme theme)
         => theme.IsDefault() ? null : theme;

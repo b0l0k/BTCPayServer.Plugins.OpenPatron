@@ -833,4 +833,38 @@ public class FastTests
         Assert.Equal(3, UIOpenPatronController.GetDefaultPlansForTemplate("Personal", "USD", "off").Count);
         Assert.Equal(3, UIOpenPatronController.GetDefaultPlansForTemplate("PROJECT", "USD", "off").Count);
     }
+
+    [Fact]
+    public void UpdateSubscriptionPlanCurrenciesForDefaultCurrencyChangeUpdatesOnlyPreviousDefaultCurrency()
+    {
+        var plans = new List<PlanData>
+        {
+            new() { Currency = "USD" },
+            new() { Currency = "EUR" },
+            new() { Currency = "usd" }
+        };
+
+        var updated = UIOpenPatronController.UpdateSubscriptionPlanCurrenciesForDefaultCurrencyChange(plans, "USD", "GBP");
+
+        Assert.Equal(2, updated);
+        Assert.Equal("GBP", plans[0].Currency);
+        Assert.Equal("EUR", plans[1].Currency);
+        Assert.Equal("GBP", plans[2].Currency);
+    }
+
+    [Fact]
+    public void UpdateSubscriptionPlanCurrenciesForDefaultCurrencyChangeDoesNothingWhenDefaultCurrencyUnchanged()
+    {
+        var plans = new List<PlanData>
+        {
+            new() { Currency = "USD" },
+            new() { Currency = "EUR" }
+        };
+
+        var updated = UIOpenPatronController.UpdateSubscriptionPlanCurrenciesForDefaultCurrencyChange(plans, "usd", "USD");
+
+        Assert.Equal(0, updated);
+        Assert.Equal("USD", plans[0].Currency);
+        Assert.Equal("EUR", plans[1].Currency);
+    }
 }
