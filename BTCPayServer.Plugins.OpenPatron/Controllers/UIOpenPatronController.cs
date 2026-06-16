@@ -10,6 +10,8 @@ using BTCPayServer.Client.Models;
 using BTCPayServer.Controllers;
 using BTCPayServer.Data;
 using BTCPayServer.Data.Subscriptions;
+using BTCPayServer.Filters;
+using BTCPayServer.Plugins.Crowdfund;
 using BTCPayServer.Plugins.Emails;
 using BTCPayServer.Plugins.OpenPatron.Models;
 using BTCPayServer.Plugins.OpenPatron.Services;
@@ -20,11 +22,13 @@ using BTCPayServer.Services;
 using BTCPayServer.Services.Apps;
 using BTCPayServer.Services.Invoices;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using NicolasDorier.RateLimits;
 using NJsonSchema;
 using NJsonSchema.Generation;
 
@@ -159,7 +163,10 @@ public class UIOpenPatronController(
     }
 
     [AllowAnonymous]
+    [HttpGet("/")]
     [HttpGet("{appId}/openpatron")]
+    [XFrameOptions(XFrameOptionsAttribute.XFrameOptions.Unset)]
+    [DomainMappingConstraint(OpenPatronAppType.AppType)]
     public async Task<IActionResult> PublicPage(string appId)
     {
         var result = await GetAppWithSettings(appId);
@@ -199,7 +206,13 @@ public class UIOpenPatronController(
     }
 
     [AllowAnonymous]
+    [HttpPost("/")]
     [HttpPost("{appId}/openpatron/contribute")]
+    [XFrameOptions(XFrameOptionsAttribute.XFrameOptions.Unset)]
+    [IgnoreAntiforgeryToken]
+    [EnableCors(CorsPolicies.All)]
+    [DomainMappingConstraint(OpenPatronAppType.AppType)]
+    [RateLimitsFilter(ZoneLimits.PublicInvoices, Scope = RateLimitsScope.RemoteAddress)]
     public async Task<IActionResult> Contribute(string appId, string amount)
     {
         var result = await GetAppWithSettings(appId);
