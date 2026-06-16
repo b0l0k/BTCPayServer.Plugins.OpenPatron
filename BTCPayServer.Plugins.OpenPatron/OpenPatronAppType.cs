@@ -9,10 +9,20 @@ using Microsoft.Extensions.Options;
 
 namespace BTCPayServer.Plugins.OpenPatron;
 
-public class OpenPatronAppType(
-    LinkGenerator linkGenerator,
-    IOptions<BTCPayServerOptions> btcPayServerOptions) : AppBaseType(AppType)
+public class OpenPatronAppType : AppBaseType
 {
+    private readonly LinkGenerator linkGenerator;
+    private readonly IOptions<BTCPayServerOptions> btcPayServerOptions;
+
+    public OpenPatronAppType(
+        LinkGenerator linkGenerator, 
+        IOptions<BTCPayServerOptions> btcPayServerOptions) : base(AppType)
+    {
+        this.linkGenerator = linkGenerator;
+        this.btcPayServerOptions = btcPayServerOptions;
+        Description = "Open Patron";
+    }
+
     public const string AppType = "OpenPatron";
 
     public override Task<object?> GetInfo(AppData appData)
