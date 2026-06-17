@@ -47,7 +47,8 @@ public class UIOpenPatronController(
     GitHubRepoService gitHubRepoService,
     LinkGenerator linkGenerator,
     EmailSenderFactory emailSenderFactory,
-    SettingsRepository settingsRepository) : Controller
+    SettingsRepository settingsRepository,
+    DisplayFormatter displayFormatter) : Controller
 {
     private const string UpdateViewPath = "/Views/UIOpenPatron/Update.cshtml";
     private const string PublicPageViewPath = "/Views/UIOpenPatron/PublicPage.cshtml";
@@ -571,7 +572,7 @@ public class UIOpenPatronController(
                     Id = plan.Id,
                     Name = plan.Name,
                     Description = plan.Description ?? string.Empty,
-                    Price = $"{plan.Currency} {plan.Price:0.##}",
+                    Price = displayFormatter.Currency(plan.Price, plan.Currency, DisplayFormatter.CurrencyFormat.Symbol),
                     BillingPeriod = plan.RecurringType switch
                     {
                         PlanData.RecurringInterval.Monthly => "per month",

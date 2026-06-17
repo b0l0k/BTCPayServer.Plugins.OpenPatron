@@ -1,6 +1,8 @@
 @using BTCPayServer.Plugins.OpenPatron.Models
 @using BTCPayServer.Plugins.OpenPatron.Services
+@using BTCPayServer.Services
 @model BTCPayServer.Plugins.OpenPatron.ViewModels.BlockRenderContext
+@inject DisplayFormatter DisplayFormatter
 @{
     var settings = BlockSettingsHelper.GetTyped<SponsorWallSettings>(Model.Block) ?? new();
     var heading = !string.IsNullOrWhiteSpace(settings.Heading) ? settings.Heading : "Who's supporting this work";
@@ -17,7 +19,7 @@
             {
                 <div class="openpatron-wall-entry">
                     <span>Anonymous</span>
-                    <span class="fw-semibold">@entry.Currency @entry.Amount.ToString("N2")</span>
+                    <span class="fw-semibold">@DisplayFormatter.Currency(entry.Amount, entry.Currency, DisplayFormatter.CurrencyFormat.Symbol)</span>
                     <span class="text-muted small">@entry.Timestamp.ToString("MMM d, yyyy")</span>
                 </div>
             }

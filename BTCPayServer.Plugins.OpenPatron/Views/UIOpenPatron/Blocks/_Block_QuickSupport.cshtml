@@ -1,6 +1,8 @@
 @using BTCPayServer.Plugins.OpenPatron.Models
 @using BTCPayServer.Plugins.OpenPatron.Services
+@using BTCPayServer.Services
 @model BTCPayServer.Plugins.OpenPatron.ViewModels.BlockRenderContext
+@inject DisplayFormatter DisplayFormatter
 @{
     var settings = BlockSettingsHelper.GetTyped<QuickSupportSettings>(Model.Block) ?? new();
     var heading = !string.IsNullOrWhiteSpace(settings.Heading) ? settings.Heading : "Send quick support";
@@ -25,7 +27,7 @@
                 <form method="post" asp-action="Contribute" asp-route-appId="@Model.Page.AppId" asp-route-area="OpenPatron" class="d-inline">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="amount" value="@amount.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
-                    <button type="submit" class="openpatron-amount-pill">@currency @amount.ToString("0.##")</button>
+                    <button type="submit" class="openpatron-amount-pill">@DisplayFormatter.Currency(amount, currency, DisplayFormatter.CurrencyFormat.Symbol)</button>
                 </form>
             }
         </div>
