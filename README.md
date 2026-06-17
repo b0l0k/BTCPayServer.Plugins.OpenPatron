@@ -1,4 +1,8 @@
 <p align="center">
+  <img alt="OpenPatron logo" src="Assets/openpatron-logo.svg" width="180">
+</p>
+
+<p align="center">
   <a href="https://github.com/b0l0k/BTCPayServer.Plugins.OpenPatron/actions/workflows/dotnet.yml">
     <img alt="Build" src="https://github.com/b0l0k/BTCPayServer.Plugins.OpenPatron/actions/workflows/dotnet.yml/badge.svg">
   </a>

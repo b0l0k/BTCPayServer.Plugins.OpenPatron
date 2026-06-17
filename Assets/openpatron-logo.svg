@@ -1,0 +1,28 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="OpenPatron logo">
+  <defs>
+    <linearGradient id="bg" x1="160" y1="120" x2="864" y2="904" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF8F1"/>
+      <stop offset="1" stop-color="#FFE9D6"/>
+    </linearGradient>
+    <linearGradient id="heart" x1="260" y1="235" x2="760" y2="690" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FF756B"/>
+      <stop offset="0.55" stop-color="#F45555"/>
+      <stop offset="1" stop-color="#D93B4A"/>
+    </linearGradient>
+    <filter id="shadow" x="150" y="160" width="724" height="600" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="24" stdDeviation="22" flood-color="#AA3945" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="1024" rx="192" fill="url(#bg)"/>
+  <circle cx="512" cy="407" r="285" fill="#FFFFFF" opacity="0.62"/>
+
+  <g filter="url(#shadow)">
+    <path d="M512 688C493 671 379 569 330 519C275 463 250 414 250 361C250 284 305 232 377 232C433 232 478 263 512 314C546 263 591 232 647 232C719 232 774 284 774 361C774 414 749 463 694 519C645 569 531 671 512 688Z" fill="url(#heart)"/>
+  </g>
+
+  <path d="M512 614C491 596 407 521 367 480C324 436 304 398 304 359C304 312 336 281 380 281C427 281 461 314 491 366L512 403L533 366C563 314 597 281 644 281C688 281 720 312 720 359C720 398 700 436 657 480C617 521 533 596 512 614Z" fill="#FFFFFF" opacity="0.17"/>
+
+  <text x="512" y="794" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="112" font-weight="800" letter-spacing="-4" fill="#24181C">Open<tspan fill="#E14851">Patron</tspan></text>
+  <text x="512" y="850" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="32" font-weight="600" letter-spacing="3.5" fill="#775760" opacity="0.78">SELF-HOSTED SPONSORSHIP</text>
+</svg>
