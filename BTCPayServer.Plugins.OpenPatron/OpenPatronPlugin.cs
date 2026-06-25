@@ -22,7 +22,7 @@ public class OpenPatronPlugin : BaseBTCPayServerPlugin
         new IBTCPayServerPlugin.PluginDependency
         {
             Identifier = nameof(BTCPayServer),
-            Condition = ">=2.0.0"
+            Condition = ">=2.4.0"
         }
     ];
 
