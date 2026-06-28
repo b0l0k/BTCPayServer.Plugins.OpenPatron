@@ -202,7 +202,7 @@ public class UIOpenPatronController(
             string.Equals(b.Type, BlockRegistry.FundingProgress, StringComparison.OrdinalIgnoreCase));
         if (fundingBlock != null)
         {
-            var goal = fundingBlock.Settings?.ToObject<FundingProgressSettings>()?.Goal;
+            var goal = BlockSettingsHelper.GetTyped<FundingProgressSettings>(fundingBlock)?.Goal;
             if (goal is > 0)
             {
                 vm.AmountRaised = await fundingProgressService.GetTotalRaisedAsync(app.Id, settings.DefaultCurrency);
@@ -835,7 +835,7 @@ public class UIOpenPatronController(
 
         foreach (var block in projectsBlocks)
         {
-            var gridSettings = block.Settings?.ToObject<ProjectsGridSettings>();
+            var gridSettings = BlockSettingsHelper.GetTyped<ProjectsGridSettings>(block);
             if (gridSettings?.Projects is not { Count: > 0 })
                 continue;
 
