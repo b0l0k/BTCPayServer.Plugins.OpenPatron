@@ -762,6 +762,36 @@ public class FastTests
         Assert.Empty(typed!.DisplayName);
     }
 
+    [Fact]
+    public void GetTypedUsesDefaultForNullNonNullableValueType()
+    {
+        var block = new BlockDefinition
+        {
+            Type = "subscription-tiers",
+            Settings = JObject.FromObject(new { ColumnsPerRow = (int?)null })
+        };
+
+        var typed = BlockSettingsHelper.GetTyped<SubscriptionTiersSettings>(block);
+
+        Assert.NotNull(typed);
+        Assert.Equal(2, typed!.ColumnsPerRow);
+    }
+
+    [Fact]
+    public void GetTypedUsesDefaultForBlankNonNullableValueType()
+    {
+        var block = new BlockDefinition
+        {
+            Type = "subscription-tiers",
+            Settings = JObject.FromObject(new { ColumnsPerRow = "" })
+        };
+
+        var typed = BlockSettingsHelper.GetTyped<SubscriptionTiersSettings>(block);
+
+        Assert.NotNull(typed);
+        Assert.Equal(2, typed!.ColumnsPerRow);
+    }
+
     // ── Default plans seeded from template ──
 
     [Fact]

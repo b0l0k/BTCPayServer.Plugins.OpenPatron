@@ -12,7 +12,39 @@ namespace BTCPayServer.Plugins.OpenPatron.Services;
 public static class BlockSettingsHelper
 {
     public static T? GetTyped<T>(BlockDefinition block) where T : class
-        => block.Settings?.ToObject<T>();
+    {
+        if (block.Settings is null)
+            return null;
+
+        var settings = (JObject)block.Settings.DeepClone();
+        RemoveTokensThatShouldUseDefaults<T>(settings);
+        return settings.ToObject<T>();
+    }
+
+    private static void RemoveTokensThatShouldUseDefaults<T>(JObject settings)
+    {
+        foreach (var property in typeof(T).GetProperties())
+        {
+            var token = settings[property.Name];
+            if (token is null)
+                continue;
+
+            if (token.Type is JTokenType.Null or JTokenType.Undefined)
+            {
+                settings.Remove(property.Name);
+                continue;
+            }
+
+            var propertyType = property.PropertyType;
+            var isNonNullableValueType = propertyType.IsValueType && Nullable.GetUnderlyingType(propertyType) is null;
+            if (isNonNullableValueType &&
+                token.Type == JTokenType.String &&
+                string.IsNullOrWhiteSpace(token.Value<string>()))
+            {
+                settings.Remove(property.Name);
+            }
+        }
+    }
 
     private static readonly MarkdownPipeline MarkdownPipeline = new MarkdownPipelineBuilder()
         .DisableHtml()
